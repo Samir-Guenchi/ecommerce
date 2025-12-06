@@ -1,0 +1,23 @@
+# Markdownlint Configuration
+# Used by pre-commit markdown linting
+
+default: true
+
+# Allow inline HTML (useful for badges, icons)
+MD033: false
+
+# Allow long lines (tables, links)
+MD013:
+  line_length: 200
+  tables: false
+  code_blocks: false
+
+# Allow multiple headers with same content
+MD024:
+  siblings_only: true
+
+# Allow trailing punctuation in headers
+MD026: false
+
+# Allow multiple blank lines
+MD012: false

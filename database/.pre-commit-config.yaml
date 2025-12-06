@@ -1,0 +1,110 @@
+# Pre-commit Configuration
+# https://pre-commit.com/
+
+# Install: pip install pre-commit
+# Setup:   pre-commit install
+# Run:     pre-commit run --all-files
+
+repos:
+  # ─────────────────────────────────────────────────────────────
+  # SQL Linting with sqlfluff
+  # ─────────────────────────────────────────────────────────────
+  - repo: https://github.com/sqlfluff/sqlfluff
+    rev: 3.0.7
+    hooks:
+      - id: sqlfluff-lint
+        name: SQL Lint
+        description: Lint SQL files for syntax and style issues
+        files: \.(sql)$
+        args:
+          - --dialect=mysql
+          - --exclude-rules=L003  # Indentation (can be noisy)
+        stages: [commit]
+
+      - id: sqlfluff-fix
+        name: SQL Auto-fix
+        description: Auto-fix SQL style issues
+        files: \.(sql)$
+        args:
+          - --dialect=mysql
+          - --exclude-rules=L003
+        stages: [manual]  # Run manually: pre-commit run sqlfluff-fix
+
+  # ─────────────────────────────────────────────────────────────
+  # Credential Protection
+  # ─────────────────────────────────────────────────────────────
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.4.0
+    hooks:
+      - id: detect-secrets
+        name: Detect Secrets
+        description: Prevent committing hardcoded passwords/keys
+        args:
+          - --baseline
+          - .secrets.baseline
+        exclude: |
+          (?x)^(
+            .*\.example.*|
+            .*\.template.*|
+            CONTRIBUTING\.md|
+            README\.md
+          )$
+
+  # ─────────────────────────────────────────────────────────────
+  # General File Checks
+  # ─────────────────────────────────────────────────────────────
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.5.0
+    hooks:
+      - id: trailing-whitespace
+        name: Trim Trailing Whitespace
+        description: Remove trailing whitespace from files
+        files: \.(sql|md|yaml|yml|sh)$
+
+      - id: end-of-file-fixer
+        name: Fix End of File
+        description: Ensure files end with a newline
+        files: \.(sql|md|yaml|yml|sh)$
+
+      - id: check-yaml
+        name: Check YAML Syntax
+        description: Validate YAML file syntax
+        files: \.(yaml|yml)$
+
+      - id: check-merge-conflict
+        name: Check Merge Conflicts
+        description: Prevent committing merge conflict markers
+
+      - id: check-added-large-files
+        name: Check Large Files
+        description: Prevent committing large files
+        args: ['--maxkb=1000']  # 1MB limit
+
+      - id: no-commit-to-branch
+        name: Protect Main Branch
+        description: Prevent direct commits to main
+        args: ['--branch', 'main']
+
+  # ─────────────────────────────────────────────────────────────
+  # Markdown Linting
+  # ─────────────────────────────────────────────────────────────
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.39.0
+    hooks:
+      - id: markdownlint
+        name: Markdown Lint
+        description: Check Markdown style and formatting
+        args:
+          - --config=.markdownlint.yaml
+          - --fix
+        files: \.(md)$
+
+# ─────────────────────────────────────────────────────────────
+# Configuration
+# ─────────────────────────────────────────────────────────────
+default_language_version:
+  python: python3
+
+default_stages: [commit]
+
+fail_fast: false  # Run all hooks even if one fails

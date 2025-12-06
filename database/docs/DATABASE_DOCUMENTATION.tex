@@ -1,0 +1,1063 @@
+\documentclass[12pt,a4paper]{report}
+
+% ============================================
+% PACKAGES
+% ============================================
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french,english]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{enumitem}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows, positioning, fit, calc}
+
+% ============================================
+% DOCUMENT SETTINGS
+% ============================================
+\geometry{margin=2.5cm}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    urlcolor=blue!60!black,
+    citecolor=blue!60!black
+}
+
+% Colors
+\definecolor{primarycolor}{RGB}{0, 100, 180}
+\definecolor{secondarycolor}{RGB}{40, 40, 40}
+\definecolor{codebackground}{RGB}{245, 245, 245}
+\definecolor{codecomment}{RGB}{0, 128, 0}
+\definecolor{codekeyword}{RGB}{0, 0, 255}
+\definecolor{codestring}{RGB}{163, 21, 21}
+
+% Code listing style
+\lstdefinestyle{sqlstyle}{
+    backgroundcolor=\color{codebackground},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    captionpos=b,
+    commentstyle=\color{codecomment},
+    keywordstyle=\color{codekeyword}\bfseries,
+    stringstyle=\color{codestring},
+    language=SQL,
+    showstringspaces=false,
+    frame=single,
+    rulecolor=\color{gray!30},
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    tabsize=2
+}
+\lstset{style=sqlstyle}
+
+% Headers and footers
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{Algérie Poste E-Commerce}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Chapter formatting
+\titleformat{\chapter}[display]
+{\normalfont\huge\bfseries\color{primarycolor}}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+
+% ============================================
+% DOCUMENT START
+% ============================================
+\begin{document}
+
+% ============================================
+% TITLE PAGE
+% ============================================
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    
+    {\Huge\bfseries\color{primarycolor} Database Technical Documentation\par}
+    \vspace{0.5cm}
+    {\LARGE Algérie Poste E-Commerce Platform\par}
+    
+    \vspace{2cm}
+    
+    \includegraphics[width=0.3\textwidth]{OIP.png}
+    
+    \vspace{2cm}
+    
+    {\Large\itshape Complete Database Architecture,\\Entity Relationships, and Normalization Analysis\par}
+    
+    \vfill
+    
+    \begin{tabular}{ll}
+        \textbf{Version:} & 2.0 \\
+        \textbf{Database:} & MySQL 8.0+ \\
+        \textbf{Date:} & December 2025 \\
+        \textbf{Author:} & Development Team \\
+    \end{tabular}
+    
+    \vspace{1cm}
+    
+\end{titlepage}
+
+% ============================================
+% TABLE OF CONTENTS
+% ============================================
+\tableofcontents
+\newpage
+
+% ============================================
+% CHAPTER 1: INTRODUCTION
+% ============================================
+\chapter{Introduction}
+
+\section{Purpose}
+
+This document provides comprehensive technical documentation for the Algérie Poste E-Commerce database. It is intended for:
+
+\begin{itemize}
+    \item Backend developers implementing API features
+    \item Database administrators managing the production environment
+    \item New team members onboarding to the project
+    \item Auditors reviewing data architecture
+\end{itemize}
+
+\section{Scope}
+
+The database supports a multi-vendor e-commerce marketplace with the following key features:
+
+\begin{enumerate}
+    \item \textbf{Multi-vendor Marketplace} -- Multiple sellers with individual storefronts
+    \item \textbf{Escrow Payment System} -- Secure buyer protection with fund holding
+    \item \textbf{Hybrid Tracking} -- Algérie Poste API + internal last-mile tracking
+    \item \textbf{Home Delivery} -- Courier management with GPS tracking
+    \item \textbf{OTP Verification} -- Secure package handoff confirmation
+\end{enumerate}
+
+\section{Technology Stack}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{ll}
+\toprule
+\textbf{Component} & \textbf{Technology} \\
+\midrule
+Database Engine & MySQL 8.0+ \\
+Character Set & utf8mb4 (Arabic/French support) \\
+Storage Engine & InnoDB (ACID transactions) \\
+ORM & TypeORM (NestJS backend) \\
+\bottomrule
+\end{tabular}
+\caption{Technology Stack}
+\end{table}
+
+\section{Document Conventions}
+
+\begin{itemize}
+    \item \texttt{PK} -- Primary Key
+    \item \texttt{FK} -- Foreign Key
+    \item \texttt{UK} -- Unique Key
+    \item \texttt{1:N} -- One-to-Many relationship
+    \item \texttt{1:1} -- One-to-One relationship
+    \item \texttt{N:M} -- Many-to-Many relationship
+\end{itemize}
+
+% ============================================
+% CHAPTER 2: DATABASE ARCHITECTURE
+% ============================================
+\chapter{Database Architecture}
+
+\section{Overview}
+
+The database is organized into logical modules:
+
+\begin{center}
+\begin{tikzpicture}[
+    module/.style={rectangle, rounded corners, draw=primarycolor, fill=primarycolor!10, minimum width=3cm, minimum height=1cm, text centered, font=\small\bfseries},
+    arrow/.style={->, >=stealth, thick}
+]
+
+% Modules
+\node[module] (users) at (0,4) {Users Module};
+\node[module] (commerce) at (4,4) {Commerce Module};
+\node[module] (orders) at (8,4) {Orders Module};
+\node[module] (payments) at (0,2) {Payments Module};
+\node[module] (logistics) at (4,2) {Logistics Module};
+\node[module] (config) at (8,2) {Config Module};
+\node[module] (reference) at (4,0) {Reference Data};
+
+% Arrows
+\draw[arrow] (users) -- (commerce);
+\draw[arrow] (users) -- (orders);
+\draw[arrow] (commerce) -- (orders);
+\draw[arrow] (orders) -- (payments);
+\draw[arrow] (orders) -- (logistics);
+\draw[arrow] (config) -- (commerce);
+\draw[arrow] (reference) -- (logistics);
+\draw[arrow] (reference) -- (users);
+
+\end{tikzpicture}
+\end{center}
+
+\section{Module Descriptions}
+
+\subsection{Users Module}
+Handles user accounts, authentication, addresses, and seller verification.
+
+\begin{itemize}
+    \item \texttt{users} -- Central user accounts
+    \item \texttt{user\_addresses} -- Shipping/billing addresses
+    \item \texttt{seller\_registrations} -- Seller verification documents
+\end{itemize}
+
+\subsection{Commerce Module}
+Manages stores, products, categories, and reviews.
+
+\begin{itemize}
+    \item \texttt{stores} -- Seller storefronts
+    \item \texttt{products} -- Product catalog
+    \item \texttt{categories} -- Hierarchical categories
+    \item \texttt{reviews} -- Product reviews
+\end{itemize}
+
+\subsection{Orders Module}
+Handles order lifecycle from cart to delivery.
+
+\begin{itemize}
+    \item \texttt{orders} -- Customer orders
+    \item \texttt{order\_items} -- Line items with snapshots
+\end{itemize}
+
+\subsection{Payments Module}
+Manages payment transactions and escrow accounts.
+
+\begin{itemize}
+    \item \texttt{payments} -- Payment transactions
+    \item \texttt{escrow\_accounts} -- Fund holding
+    \item \texttt{disputes} -- Payment disputes
+\end{itemize}
+
+\subsection{Logistics Module}
+Handles shipping with hybrid tracking (Algérie Poste + last-mile).
+
+\begin{itemize}
+    \item \texttt{shipments} -- Shipping records
+    \item \texttt{tracking\_events} -- Tracking history
+    \item \texttt{couriers} -- Delivery personnel
+    \item \texttt{courier\_assignments} -- Delivery assignments
+    \item \texttt{delivery\_zones} -- Geographic zones
+    \item \texttt{delivery\_ratings} -- Courier ratings
+\end{itemize}
+
+\subsection{Reference Data}
+Static reference tables.
+
+\begin{itemize}
+    \item \texttt{wilayas} -- 58 Algerian provinces
+    \item \texttt{themes} -- Store themes
+    \item \texttt{plans} -- Subscription plans
+\end{itemize}
+
+% ============================================
+% CHAPTER 3: ENTITY RELATIONSHIP MODEL
+% ============================================
+\chapter{Entity-Relationship Model}
+
+\section{Core Entities}
+
+\subsection{Users Entity}
+
+The \texttt{users} table is the central entity for all user types.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Attribute} & \textbf{Type} & \textbf{Description} \\
+\midrule
+id & INT PK & Auto-increment primary key \\
+email & VARCHAR(255) UK & Unique login email \\
+password\_hash & VARCHAR(255) & Bcrypt hashed password \\
+full\_name & VARCHAR(255) & Display name \\
+phone & VARCHAR(20) & Phone (+213...) \\
+account\_type & ENUM & buyer, seller, both \\
+account\_status & ENUM & active, inactive, pending, suspended \\
+language\_preference & VARCHAR(10) & fr, ar, en \\
+\bottomrule
+\end{tabular}
+\caption{Users Entity Attributes}
+\end{table}
+
+\subsection{Products Entity}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Attribute} & \textbf{Type} & \textbf{Description} \\
+\midrule
+id & INT PK & Auto-increment primary key \\
+store\_id & INT FK & Reference to stores \\
+category\_id & INT FK & Reference to categories \\
+name & VARCHAR(255) & Product title \\
+price & DECIMAL(10,2) & Price in DZD \\
+stock & INT & Available quantity \\
+status & ENUM & active, draft, sold\_out \\
+images & JSON & Array of image URLs \\
+\bottomrule
+\end{tabular}
+\caption{Products Entity Attributes}
+\end{table}
+
+\subsection{Orders Entity}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Attribute} & \textbf{Type} & \textbf{Description} \\
+\midrule
+id & INT PK & Auto-increment primary key \\
+buyer\_id & INT FK & Customer who placed order \\
+store\_id & INT FK & Seller's store \\
+order\_number & VARCHAR(50) UK & Human-readable ID \\
+status & ENUM & pending, confirmed, shipped, delivered, etc. \\
+total\_amount & DECIMAL(10,2) & Total in DZD \\
+shipping\_address & JSON & Delivery address snapshot \\
+\bottomrule
+\end{tabular}
+\caption{Orders Entity Attributes}
+\end{table}
+
+\subsection{Shipments Entity (Enhanced)}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{llp{6cm}}
+\toprule
+\textbf{Attribute} & \textbf{Type} & \textbf{Description} \\
+\midrule
+id & INT PK & Auto-increment primary key \\
+order\_id & INT FK & Related order \\
+tracking\_number & VARCHAR(100) UK & Algérie Poste tracking \\
+last\_mile\_tracking & VARCHAR(100) UK & Internal tracking (AP-LM-xxx) \\
+status & ENUM & pending, at\_bureau, out\_for\_delivery, delivered \\
+delivery\_type & ENUM & bureau\_pickup, home\_delivery \\
+courier\_id & INT FK & Assigned courier \\
+current\_latitude & DECIMAL(10,7) & GPS latitude \\
+current\_longitude & DECIMAL(10,7) & GPS longitude \\
+delivery\_otp & VARCHAR(6) & 6-digit verification code \\
+delivery\_attempts & INT & Number of attempts (max 3) \\
+\bottomrule
+\end{tabular}
+\caption{Shipments Entity Attributes (Enhanced for Last-Mile)}
+\end{table}
+
+
+% Add to your preamble:
+% \usepackage{tikz}
+% \usetikzlibrary{shapes.geometric, positioning, arrows.meta}
+
+
+
+\section{Relationship Diagram}
+\begin{center}
+\begin{tikzpicture}[
+    entity/.style={rectangle, draw=black, fill=blue!10, minimum width=2.6cm, minimum height=0.9cm, font=\small\bfseries, align=center},
+    rel/.style={diamond, draw=black, fill=green!10, aspect=1.8, font=\scriptsize, inner sep=2pt},
+    edge/.style={-},
+    every label/.style={font=\small}
+]
+
+% -------------------- Entities --------------------
+\node[entity] (users)    at (-4,-2)    {USERS};
+\node[entity] (stores)   at (5.5,0)  {STORES};
+\node[entity] (categories) at (11,0) {CATEGORIES};
+
+\node[entity] (addresses) at (0,-3)   {ADDRESSES};
+\node[entity] (products)  at (5.5,-3) {PRODUCTS};
+
+\node[entity] (orders)    at (0,-6)   {ORDERS};
+\node[entity] (items)     at (7,-6.5) {ORDER\_ITEMS};
+
+\node[entity] (payments)  at (-4,-10.7)  {PAYMENTS};
+\node[entity] (shipments) at (3.5,-10) {SHIPMENTS};
+\node[entity] (couriers)  at (10.5,-9){COURIERS};
+
+\node[entity] (escrow)    at (-1,-14) {ESCROW};
+\node[entity] (events)    at (3.5,-14) {EVENTS};
+\node[entity] (zones)     at (10.5,-12){ZONES};
+
+% -------------------- Relationship diamonds --------------------
+\node[rel] (has)     at (0,-1)   {has};
+\node[rel] (owns)    at (1,1)   {owns};
+\node[rel] (places)  at (0,-4.5)   {places};
+
+\node[rel] (sells)   at (5.5,-1.5) {sells};
+\node[rel] (incat)   at (8.25,-1.5){in};
+
+\node[rel] (parent)  at (11,-1.8)  {parent};
+
+\node[rel] (contains) at (2.75,-6) {contains};
+
+\node[rel] (paidby)  at (-4,-9){paid by};
+\node[rel] (ships)   at (1.75,-8.5)  {ships};
+\node[rel] (secures) at (-4,-12){secures};
+
+\node[rel] (tracks)  at (3.5,-12) {tracks};
+\node[rel] (handled) at (7.0,-9)   {handled by};
+
+\node[rel] (covers)  at (10.5,-10.5){covers};
+
+
+% -------------------- Edges with improved cardinality labels --------------------
+
+% USERS -- has -- ADDRESSES  (1 : N)
+\draw[edge] (users) -- (has);
+\draw[edge] (has)   -- (addresses);
+\node[font=\footnotesize] at (-2.5, -1.5) {1};
+\node[font=\footnotesize] at (-0.4, -2.2) {N};
+
+% USERS -- owns -- STORES (1 : 1)
+\draw[edge] (users) -- (owns);
+\draw[edge] (owns)  -- (stores);
+\node[font=\footnotesize] at (-3.5, -1.2) {1};
+\node[font=\footnotesize] at (4, 0.7) {1};
+
+% USERS -- places -- ORDERS (1 : N)
+\draw[edge] (users) -- (places);
+\draw[edge] (places)-- (orders);
+\node[font=\footnotesize] at (-2.5, -3.1) {1};
+\node[font=\footnotesize] at (-0.4, -5.3) {N};
+
+% STORES -- sells -- PRODUCTS (1 : N)
+\draw[edge] (stores) -- (sells);
+\draw[edge] (sells)  -- (products);
+\node[font=\footnotesize] at (5.9, -0.6) {1};
+\node[font=\footnotesize] at (5.9, -2.4) {N};
+
+% CATEGORIES -- in -- PRODUCTS (1 : N)
+\draw[edge] (categories) -- (incat);
+\draw[edge] (incat)      -- (products);
+\node[font=\footnotesize] at (9.6, -1.2) {1};
+\node[font=\footnotesize] at (6.9, -1.8) {N};
+
+% CATEGORY self-reference: parent (1 : N)
+\draw[edge] (categories) -- (parent);
+\draw[edge] (parent) to[out=0,in=90] (categories);
+\node[font=\footnotesize] at (11.5, -0.7) {1};
+\node[font=\footnotesize] at (12, 1) {N};
+
+% ORDERS -- contains -- ORDER_ITEMS (1 : N)
+\draw[edge] (orders) -- (contains);
+\draw[edge] (contains) -- (items);
+\node[font=\footnotesize] at (1.6, -5.7) {1};
+\node[font=\footnotesize] at (4.6, -5.9) {N};
+
+% ORDER_ITEMS -> PRODUCTS (Product side 1 : N OrderItems)
+\draw[edge] (items) to[out=90,in=-90] (products);
+\node[font=\footnotesize] at (6.2, -3.6) {1};
+\node[font=\footnotesize] at (6.4, -5.8) {N};
+
+% ORDERS -> PAYMENTS (1 : 1)
+\draw[edge] (orders) to[out=180,in=90] (paidby);
+\draw[edge] (paidby) -- (payments);
+\node[font=\footnotesize] at (-2, -6.6) {1};
+\node[font=\footnotesize] at (-4.2, -9.8) {1};
+
+% PAYMENTS -> ESCROW (1 : 1)
+\draw[edge] (payments) -- (secures);
+\draw[edge] (secures)  -- (escrow);
+\node[font=\footnotesize] at (-4.5, -11.5) {1};
+\node[font=\footnotesize] at (-3.2, -13.5) {1};
+
+% ORDERS -> SHIPMENTS (1 : 1)
+\draw[edge] (orders) to[out=-10,in=150] (ships);
+\draw[edge] (ships)   -- (shipments);
+\node[font=\footnotesize] at (0.7, -7) {1};
+\node[font=\footnotesize] at (2.9, -8.9) {1};
+
+% SHIPMENTS -- tracks --> EVENTS  (1 : N)
+\draw[edge] (shipments) -- (tracks);
+\draw[edge] (tracks)    -- (events);
+\node[font=\footnotesize] at (3.9, -11) {1};
+\node[font=\footnotesize] at (3.9, -13) {N};
+
+% SHIPMENTS -- handled by --> COURIERS (N : 1)
+\draw[edge] (shipments) -- (handled);
+\draw[edge] (handled)   -- (couriers);
+\node[font=\footnotesize] at (5.0, -9) {N};
+\node[font=\footnotesize] at (8.7, -8.7) {1};
+
+% COURIERS -- covers --> ZONES (N : 1)
+\draw[edge] (couriers) -- (covers);
+\draw[edge] (covers)   -- (zones);
+\node[font=\footnotesize] at (10.9, -9.8) {N};
+\node[font=\footnotesize] at (10.9, -11.2) {1};
+
+
+% -------------------- small spacing tweak (if needed) --------------------
+
+\end{tikzpicture}
+\end{center}
+
+
+\section{Cardinality Matrix}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lll}
+\toprule
+\textbf{Relationship} & \textbf{Type} & \textbf{Description} \\
+\midrule
+User $\rightarrow$ Addresses & 1:N & One user has many addresses \\
+User $\rightarrow$ Store & 1:1 & One seller owns one store \\
+User $\rightarrow$ Orders & 1:N & One buyer places many orders \\
+Store $\rightarrow$ Products & 1:N & One store sells many products \\
+Category $\rightarrow$ Products & 1:N & One category contains many products \\
+Category $\rightarrow$ Subcategories & 1:N & Self-referencing hierarchy \\
+Order $\rightarrow$ Items & 1:N & One order has many line items \\
+Order $\rightarrow$ Payment & 1:1 & One order has one payment \\
+Order $\rightarrow$ Escrow & 1:1 & One order has one escrow account \\
+Order $\rightarrow$ Shipment & 1:1 & One order has one shipment \\
+Shipment $\rightarrow$ Events & 1:N & One shipment has many tracking events \\
+Shipment $\rightarrow$ Courier & N:1 & Many shipments assigned to one courier \\
+Courier $\rightarrow$ Zone & N:1 & Many couriers cover one zone \\
+\bottomrule
+\end{tabular}
+\caption{Relationship Cardinality Matrix}
+\end{table}
+
+% ============================================
+% CHAPTER 4: NORMALIZATION
+% ============================================
+\chapter{Normalization Analysis}
+
+\section{Normal Forms Applied}
+
+The database schema adheres to the following normal forms:
+
+\subsection{First Normal Form (1NF)}
+
+\textbf{Requirements:}
+\begin{itemize}
+    \item All tables have a primary key
+    \item All columns contain atomic values
+    \item No repeating groups
+\end{itemize}
+
+\textbf{Status:} $\checkmark$ All tables satisfy 1NF, with documented exceptions for JSON fields used for flexibility (images, attributes, addresses).
+
+\subsection{Second Normal Form (2NF)}
+
+\textbf{Requirements:}
+\begin{itemize}
+    \item Must satisfy 1NF
+    \item No partial dependencies on composite keys
+\end{itemize}
+
+\textbf{Status:} $\checkmark$ All tables use single-column primary keys, eliminating partial dependencies.
+
+\subsection{Third Normal Form (3NF)}
+
+\textbf{Requirements:}
+\begin{itemize}
+    \item Must satisfy 2NF
+    \item No transitive dependencies
+\end{itemize}
+
+\textbf{Status:} $\checkmark$ Most tables satisfy 3NF. Intentional denormalizations are documented.
+
+\section{Normalization Status by Table}
+
+\begin{longtable}{lcccp{4cm}}
+\toprule
+\textbf{Table} & \textbf{1NF} & \textbf{2NF} & \textbf{3NF} & \textbf{Notes} \\
+\midrule
+\endhead
+users & $\checkmark$ & $\checkmark$ & $\checkmark$ & Fully normalized \\
+user\_addresses & $\checkmark$ & $\checkmark$ & $\checkmark$ & Fully normalized \\
+seller\_registrations & $\checkmark$ & $\checkmark$ & $\checkmark$ & Fully normalized \\
+stores & $\checkmark$ & $\checkmark$ & $\checkmark$ & Fully normalized \\
+products & $\triangle$ & $\checkmark$ & $\triangle$ & JSON fields, derived rating \\
+orders & $\triangle$ & $\checkmark$ & $\triangle$ & JSON address snapshots \\
+order\_items & $\triangle$ & $\checkmark$ & $\triangle$ & Product snapshots \\
+payments & $\checkmark$ & $\checkmark$ & $\checkmark$ & Fully normalized \\
+escrow\_accounts & $\checkmark$ & $\checkmark$ & $\checkmark$ & \textbf{Critical: Fully normalized} \\
+shipments & $\checkmark$ & $\checkmark$ & $\triangle$ & Courier info cached \\
+tracking\_events & $\checkmark$ & $\checkmark$ & $\checkmark$ & Fully normalized \\
+couriers & $\checkmark$ & $\checkmark$ & $\checkmark$ & Fully normalized \\
+wilayas & $\checkmark$ & $\checkmark$ & $\checkmark$ & Reference data \\
+\bottomrule
+\caption{Normalization Status ($\checkmark$ = Pass, $\triangle$ = Intentional deviation)}
+\end{longtable}
+
+\section{Intentional Denormalizations}
+
+\subsection{Product Snapshots in Order Items}
+
+\textbf{Fields:} \texttt{product\_name}, \texttt{product\_price}, \texttt{product\_snapshot}
+
+\textbf{Justification:}
+\begin{itemize}
+    \item Products may be renamed or deleted after order
+    \item Prices may change
+    \item Legal requirement to preserve original transaction details
+    \item Common e-commerce pattern (Amazon, Shopify)
+\end{itemize}
+
+\subsection{Address Snapshots in Orders}
+
+\textbf{Fields:} \texttt{shipping\_address} (JSON), \texttt{billing\_address} (JSON)
+
+\textbf{Justification:}
+\begin{itemize}
+    \item User may modify or delete addresses after order
+    \item Historical orders must show original delivery location
+    \item Immutability requirement for audit trails
+\end{itemize}
+
+\subsection{Derived Fields in Products}
+
+\textbf{Fields:} \texttt{rating}, \texttt{review\_count}
+
+\textbf{Calculation:}
+\begin{align}
+    rating &= \text{AVG}(\text{reviews.rating}) \\
+    review\_count &= \text{COUNT}(\text{reviews})
+\end{align}
+
+\textbf{Justification:}
+\begin{itemize}
+    \item Avoids expensive JOIN on every product listing
+    \item Updated via application logic when reviews change
+\end{itemize}
+
+% ============================================
+% CHAPTER 5: DATA DICTIONARY
+% ============================================
+\chapter{Data Dictionary}
+
+\section{Users Table}
+
+\begin{lstlisting}[caption=Users Table DDL]
+CREATE TABLE users (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  full_name VARCHAR(255),
+  phone VARCHAR(20),
+  bio TEXT,
+  account_type ENUM('buyer', 'seller', 'both') 
+    DEFAULT 'buyer',
+  account_status ENUM('active', 'inactive', 
+    'pending', 'suspended') DEFAULT 'pending',
+  language_preference VARCHAR(10) DEFAULT 'fr',
+  last_login TIMESTAMP NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
+    ON UPDATE CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\section{Products Table}
+
+\begin{lstlisting}[caption=Products Table DDL]
+CREATE TABLE products (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  store_id INT NOT NULL,
+  category_id INT,
+  name VARCHAR(255) NOT NULL,
+  slug VARCHAR(255) NOT NULL UNIQUE,
+  description TEXT,
+  price DECIMAL(10,2) NOT NULL,
+  compare_price DECIMAL(10,2),
+  stock INT DEFAULT 0,
+  sku VARCHAR(100),
+  status ENUM('active', 'draft', 'sold_out') 
+    DEFAULT 'draft',
+  images JSON,
+  attributes JSON,
+  weight DECIMAL(5,2),
+  dimensions JSON,
+  
+  FOREIGN KEY (store_id) REFERENCES stores(id),
+  FOREIGN KEY (category_id) REFERENCES categories(id)
+);
+\end{lstlisting}
+
+\section{Shipments Table (Enhanced)}
+
+\begin{lstlisting}[caption=Shipments Table DDL with Last-Mile Tracking]
+CREATE TABLE shipments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL UNIQUE,
+  tracking_number VARCHAR(100) NOT NULL UNIQUE,
+  last_mile_tracking VARCHAR(100) UNIQUE,
+  provider ENUM('ems_standard', 'ems_express', 
+    'colis') NOT NULL,
+  status ENUM('pending', 'label_created', 
+    'picked_up', 'in_transit', 'at_bureau', 
+    'out_for_delivery', 'delivery_attempted', 
+    'delivered', 'failed_delivery', 'returned') 
+    DEFAULT 'pending',
+  delivery_type ENUM('bureau_pickup', 
+    'home_delivery', 'relay_point') 
+    DEFAULT 'home_delivery',
+  courier_id INT,
+  current_latitude DECIMAL(10,7),
+  current_longitude DECIMAL(10,7),
+  delivery_otp VARCHAR(6),
+  otp_expires_at TIMESTAMP,
+  delivery_attempts INT DEFAULT 0,
+  max_delivery_attempts INT DEFAULT 3,
+  
+  FOREIGN KEY (order_id) REFERENCES orders(id),
+  FOREIGN KEY (courier_id) REFERENCES couriers(id)
+);
+\end{lstlisting}
+
+\section{Escrow Accounts Table}
+
+\begin{lstlisting}[caption=Escrow Accounts Table DDL]
+CREATE TABLE escrow_accounts (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  order_id INT NOT NULL UNIQUE,
+  payment_id INT NOT NULL,
+  amount DECIMAL(10,2) NOT NULL,
+  status ENUM('pending', 'locked', 'released', 
+    'disputed', 'refunded') DEFAULT 'pending',
+  locked_at TIMESTAMP,
+  releasable_at TIMESTAMP,
+  released_at TIMESTAMP,
+  
+  FOREIGN KEY (order_id) REFERENCES orders(id),
+  FOREIGN KEY (payment_id) REFERENCES payments(id)
+);
+\end{lstlisting}
+
+% ============================================
+% CHAPTER 6: DATA FLOWS
+% ============================================
+\chapter{Data Flows}
+
+\section{Order Creation Flow}
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.5cm,
+    process/.style={rectangle, draw, fill=blue!10, minimum width=3cm, minimum height=0.8cm, font=\small},
+    data/.style={rectangle, draw, fill=green!10, minimum width=2.5cm, minimum height=0.6cm, font=\small},
+    arrow/.style={->, >=stealth, thick}
+]
+
+\node[process] (cart) {Buyer adds to cart};
+\node[process, below of=cart] (checkout) {Checkout initiated};
+\node[data, below of=checkout] (order) {\texttt{orders} (pending)};
+\node[data, below of=order] (items) {\texttt{order\_items}};
+\node[process, below of=items] (payment) {Payment submitted};
+\node[data, below of=payment] (paymentdb) {\texttt{payments} (pending)};
+\node[process, below of=paymentdb] (confirm) {Payment confirmed};
+\node[data, below of=confirm] (escrow) {\texttt{escrow\_accounts} (locked)};
+
+\draw[arrow] (cart) -- (checkout);
+\draw[arrow] (checkout) -- (order);
+\draw[arrow] (order) -- (items);
+\draw[arrow] (items) -- (payment);
+\draw[arrow] (payment) -- (paymentdb);
+\draw[arrow] (paymentdb) -- (confirm);
+\draw[arrow] (confirm) -- (escrow);
+
+\end{tikzpicture}
+\end{center}
+
+\section{Shipping Flow}
+
+\begin{center}
+\begin{tikzpicture}[
+    node distance=1.2cm,
+    process/.style={rectangle, draw, fill=blue!10, minimum width=4cm, minimum height=0.7cm, font=\small},
+    data/.style={rectangle, draw, fill=green!10, minimum width=3.5cm, minimum height=0.6cm, font=\small},
+    arrow/.style={->, >=stealth, thick}
+]
+
+\node[process] (confirmed) {Order confirmed};
+\node[data, below of=confirmed] (shipment) {\texttt{shipments} (pending)};
+\node[process, below of=shipment] (api) {Algérie Poste API};
+\node[data, below of=api] (transit) {\texttt{shipments} (in\_transit)};
+\node[data, below of=transit] (bureau) {\texttt{shipments} (at\_bureau)};
+\node[process, below of=bureau] (assign) {Courier assigned};
+\node[data, below of=assign] (courier) {\texttt{courier\_assignments}};
+\node[process, below of=courier] (delivery) {Out for delivery (GPS)};
+\node[data, below of=delivery] (events) {\texttt{tracking\_events}};
+\node[process, below of=events] (otp) {OTP verified at door};
+\node[data, below of=otp] (delivered) {\texttt{shipments} (delivered)};
+\node[process, below of=delivered] (release) {Escrow released};
+
+\draw[arrow] (confirmed) -- (shipment);
+\draw[arrow] (shipment) -- (api);
+\draw[arrow] (api) -- (transit);
+\draw[arrow] (transit) -- (bureau);
+\draw[arrow] (bureau) -- (assign);
+\draw[arrow] (assign) -- (courier);
+\draw[arrow] (courier) -- (delivery);
+\draw[arrow] (delivery) -- (events);
+\draw[arrow] (events) -- (otp);
+\draw[arrow] (otp) -- (delivered);
+\draw[arrow] (delivered) -- (release);
+
+\end{tikzpicture}
+\end{center}
+
+\section{Escrow Flow}
+\begin{center}
+\begin{tikzpicture}[
+    node distance=2cm and 3cm,
+    state/.style={rectangle, rounded corners, draw, fill=yellow!20, minimum width=2cm, minimum height=0.8cm, font=\small\bfseries},
+    arrow/.style={->, >=stealth, thick}
+]
+\node[state] (pending) {PENDING};
+\node[state, right=3cm of pending] (locked) {LOCKED};
+\node[state, right=3cm of locked] (released) {RELEASED};
+\node[state, below=2cm of locked] (disputed) {DISPUTED};
+\node[state, right=3cm of disputed] (refunded) {REFUNDED};
+
+\draw[arrow] (pending) -- node[above, font=\tiny] {payment confirmed} (locked);
+\draw[arrow] (locked) -- node[above, font=\tiny] {delivery confirmed} (released);
+\draw[arrow] (locked) -- node[left, font=\tiny] {dispute raised} (disputed);
+\draw[arrow] (disputed) -- node[above, font=\tiny] {resolved for buyer} (refunded);
+\draw[arrow] (disputed.north) to[bend right=30] node[right, font=\tiny] {resolved for seller} (released.south);
+\end{tikzpicture}
+\end{center}
+
+
+\end{center}
+
+% ============================================
+% CHAPTER 7: INDEXES AND PERFORMANCE
+% ============================================
+\chapter{Indexes and Performance}
+
+\section{Index Strategy}
+
+\subsection{Primary Indexes}
+All tables use auto-increment integer primary keys for optimal JOIN performance.
+
+\subsection{Unique Indexes}
+\begin{itemize}
+    \item \texttt{users.email} -- Fast login lookup
+    \item \texttt{products.slug} -- URL routing
+    \item \texttt{orders.order\_number} -- Customer-facing lookup
+    \item \texttt{shipments.tracking\_number} -- Tracking queries
+\end{itemize}
+
+\subsection{Foreign Key Indexes}
+All foreign keys are automatically indexed by MySQL InnoDB.
+
+\subsection{Composite Indexes}
+
+\begin{lstlisting}[caption=Key Composite Indexes]
+-- Products by store and status
+CREATE INDEX idx_products_store_status 
+  ON products(store_id, status);
+
+-- Orders by buyer and status
+CREATE INDEX idx_orders_buyer_status 
+  ON orders(buyer_id, status);
+
+-- Shipments awaiting delivery
+CREATE INDEX idx_shipments_delivery_pending 
+  ON shipments(status, delivery_type);
+
+-- Tracking events by shipment and time
+CREATE INDEX idx_tracking_shipment_time 
+  ON tracking_events(shipment_id, event_time DESC);
+\end{lstlisting}
+
+\section{Query Optimization Tips}
+
+\begin{enumerate}
+    \item Use \texttt{EXPLAIN} to analyze query plans
+    \item Avoid \texttt{SELECT *} -- specify needed columns
+    \item Use pagination with \texttt{LIMIT} and \texttt{OFFSET}
+    \item Cache derived data (product ratings)
+    \item Use connection pooling (TypeORM default)
+\end{enumerate}
+
+% ============================================
+% CHAPTER 8: SECURITY
+% ============================================
+\chapter{Security Considerations}
+
+\section{Data Protection}
+
+\subsection{Password Storage}
+Passwords are hashed using bcrypt with salt rounds of 12:
+
+\begin{lstlisting}[language=TypeScript, caption=Password Hashing Example]
+import * as bcrypt from 'bcrypt';
+
+const saltRounds = 12;
+const hash = await bcrypt.hash(password, saltRounds);
+\end{lstlisting}
+
+\subsection{Sensitive Data}
+\begin{itemize}
+    \item \texttt{password\_hash} -- Never exposed via API
+    \item \texttt{ssid}, \texttt{cnrc\_number} -- Seller documents, admin-only access
+    \item \texttt{ccp\_account} -- Payment info, encrypted at rest
+\end{itemize}
+
+\section{Access Control}
+
+Row-level security is implemented at the application layer:
+
+\begin{itemize}
+    \item Buyers can only view their own orders
+    \item Sellers can only view their store's orders
+    \item Couriers can only view assigned shipments
+    \item Admins have full access with audit logging
+\end{itemize}
+
+\section{Audit Trail}
+
+The \texttt{audit\_logs} table records all sensitive operations:
+
+\begin{lstlisting}[caption=Audit Log Structure]
+audit_logs (
+  user_id     -- Who performed the action
+  action      -- CREATE, UPDATE, DELETE
+  entity_type -- 'order', 'payment', etc.
+  entity_id   -- Affected record ID
+  old_values  -- JSON of previous state
+  new_values  -- JSON of new state
+  ip_address  -- Request IP
+  user_agent  -- Browser/client info
+  created_at  -- Timestamp
+)
+\end{lstlisting}
+
+% ============================================
+% CHAPTER 9: BACKUP AND RECOVERY
+% ============================================
+\chapter{Backup and Recovery}
+
+\section{Backup Strategy}
+
+\subsection{Full Backup}
+
+\begin{lstlisting}[language=bash, caption=Full Database Backup]
+mysqldump -u root -p \
+  --single-transaction \
+  --routines \
+  --triggers \
+  ap_ecommerce > backup_$(date +%Y%m%d_%H%M%S).sql
+\end{lstlisting}
+
+\subsection{Incremental Backup}
+
+Enable binary logging for point-in-time recovery:
+
+\begin{lstlisting}[caption=MySQL Binary Log Configuration]
+[mysqld]
+log-bin=mysql-bin
+binlog_format=ROW
+expire_logs_days=7
+\end{lstlisting}
+
+\section{Recovery Procedures}
+
+\subsection{Full Restore}
+
+\begin{lstlisting}[language=bash, caption=Database Restore]
+mysql -u root -p ap_ecommerce < backup_20251206.sql
+\end{lstlisting}
+
+\subsection{Point-in-Time Recovery}
+
+\begin{lstlisting}[language=bash, caption=Point-in-Time Recovery]
+mysqlbinlog mysql-bin.000001 \
+  --stop-datetime="2025-12-06 14:00:00" \
+  | mysql -u root -p ap_ecommerce
+\end{lstlisting}
+
+% ============================================
+% APPENDIX
+% ============================================
+\appendix
+
+\chapter{Complete Table List}
+
+\begin{longtable}{llp{6cm}}
+\toprule
+\textbf{Table} & \textbf{Module} & \textbf{Description} \\
+\midrule
+\endhead
+users & Users & User accounts and authentication \\
+user\_addresses & Users & Shipping/billing addresses \\
+seller\_registrations & Users & Seller verification documents \\
+stores & Commerce & Seller storefronts \\
+themes & Commerce & Store visual themes \\
+categories & Commerce & Product category hierarchy \\
+products & Commerce & Product catalog \\
+reviews & Commerce & Product reviews and ratings \\
+orders & Orders & Customer orders \\
+order\_items & Orders & Order line items \\
+payments & Payments & Payment transactions \\
+escrow\_accounts & Payments & Held funds for buyer protection \\
+disputes & Payments & Payment/delivery disputes \\
+shipments & Logistics & Shipping with GPS tracking \\
+tracking\_events & Logistics & Shipment tracking history \\
+couriers & Logistics & Delivery personnel \\
+courier\_assignments & Logistics & Courier-shipment assignments \\
+delivery\_zones & Logistics & Geographic delivery areas \\
+delivery\_ratings & Logistics & Courier ratings \\
+wilayas & Reference & 58 Algerian provinces \\
+plans & Config & Subscription plans \\
+subscriptions & Config & Store subscriptions \\
+notifications & Config & User notifications \\
+audit\_logs & Config & System audit trail \\
+\bottomrule
+\caption{Complete Table Reference}
+\end{longtable}
+
+\chapter{Environment Variables}
+
+\begin{lstlisting}[caption=Environment Configuration]
+# Database Connection
+DB_HOST=localhost
+DB_PORT=3306
+DB_USERNAME=root
+DB_PASSWORD=your_secure_password
+DB_DATABASE=ap_ecommerce
+
+# TypeORM Settings
+DB_SYNCHRONIZE=false  # Never true in production!
+DB_LOGGING=false
+DB_SSL=true           # Enable for production
+
+# Connection Pool
+DB_POOL_SIZE=10
+DB_CONNECTION_TIMEOUT=30000
+\end{lstlisting}
+
+% ============================================
+% END DOCUMENT
+% ============================================
+\end{document}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.5\linewidth]{OIP.png}
+    \caption{Enter Caption}
+    \label{fig:placeholder}
+\end{figure}

@@ -1,0 +1,24 @@
+# Database Module Code Owners
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owner for everything in this module
+*                       @Samir-Guenchi
+
+# Schema changes require database team review
+/migrations/            @Samir-Guenchi
+*.sql                   @Samir-Guenchi
+
+# Seed data
+/seeds/                 @Samir-Guenchi
+
+# Scripts and automation
+/scripts/               @Samir-Guenchi
+
+# Documentation
+/docs/                  @Samir-Guenchi
+*.md                    @Samir-Guenchi
+*.tex                   @Samir-Guenchi
+
+# Configuration files
+.gitignore              @Samir-Guenchi
+.pre-commit-config.yaml @Samir-Guenchi

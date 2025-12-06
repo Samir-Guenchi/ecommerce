@@ -1,0 +1,120 @@
+name: Database CI
+
+on:
+  push:
+    branches: [dev, main]
+    paths:
+      - 'database/**'
+  pull_request:
+    branches: [dev, main]
+    paths:
+      - 'database/**'
+
+jobs:
+  test-migrations:
+    name: Test Migrations
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root123
+          MYSQL_DATABASE: ap_ecommerce
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Wait for MySQL
+        run: |
+          until mysqladmin ping -h 127.0.0.1 -P 3306 -u root -proot123 --silent; do
+            echo "Waiting for MySQL..."
+            sleep 2
+          done
+
+      - name: Run migrations
+        run: |
+          for file in database/migrations/*.sql; do
+            echo "Applying: $file"
+            mysql -h 127.0.0.1 -P 3306 -u root -proot123 ap_ecommerce < "$file"
+          done
+
+      - name: Verify table count
+        run: |
+          TABLE_COUNT=$(mysql -h 127.0.0.1 -P 3306 -u root -proot123 -N -e \
+            "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = 'ap_ecommerce';")
+          echo "Tables created: $TABLE_COUNT"
+          if [ "$TABLE_COUNT" -lt 20 ]; then
+            echo "Expected at least 20 tables, got $TABLE_COUNT"
+            exit 1
+          fi
+
+      - name: Run seeds
+        run: |
+          for file in database/seeds/*.sql; do
+            echo "Seeding: $file"
+            mysql -h 127.0.0.1 -P 3306 -u root -proot123 ap_ecommerce < "$file"
+          done
+
+      - name: Verify seed data
+        run: |
+          mysql -h 127.0.0.1 -P 3306 -u root -proot123 ap_ecommerce -e "
+            SELECT 'users' AS tbl, COUNT(*) AS cnt FROM users
+            UNION ALL
+            SELECT 'wilayas', COUNT(*) FROM wilayas
+            UNION ALL
+            SELECT 'products', COUNT(*) FROM products;
+          "
+
+  lint-sql:
+    name: Lint SQL
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install sqlfluff
+        run: pip install sqlfluff
+
+      - name: Lint migrations
+        run: |
+          sqlfluff lint database/migrations/*.sql \
+            --dialect mysql \
+            --exclude-rules L003,L016,L031 \
+            || echo "Linting complete (warnings allowed)"
+
+      - name: Lint seeds
+        run: |
+          sqlfluff lint database/seeds/*.sql \
+            --dialect mysql \
+            --exclude-rules L003,L016,L031 \
+            || echo "Linting complete (warnings allowed)"
+
+  check-secrets:
+    name: Check for Secrets
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Scan for secrets
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./database
+          base: ""
+          extra_args: --only-verified
