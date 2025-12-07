@@ -1,7 +1,7 @@
 # Algerie Poste E-Commerce Database
 
 <p align="center">
-  <img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=flat&logo=mysql&logoColor=white" alt="MySQL 8.0">
+  <img src="https://img.shields.io/badge/PostgreSQL-16-336791?style=flat&logo=postgresql&logoColor=white" alt="PostgreSQL 16">
   <img src="https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white" alt="Docker Ready">
   <img src="https://img.shields.io/badge/Status-Production--Ready-success?style=flat" alt="Status">
   <img src="https://img.shields.io/badge/Tables-24-blue?style=flat" alt="24 Tables">
@@ -47,16 +47,17 @@ cd ap-e-com
 .\database\scripts\setup-local.ps1
 ```
 
-This spins up a MySQL 8.0 container, runs all migrations, and seeds it with demo data. Done in under a minute.
+This spins up a PostgreSQL 16 container, runs all migrations, and seeds it with demo data. Done in under a minute.
 
 ### Manual Setup
 
-If you prefer to use your own MySQL installation:
+If you prefer to use your own PostgreSQL installation:
 
 ```bash
-mysql -u root -p < database/migrations/001_initial_schema.sql
-mysql -u root -p ap_ecommerce < database/migrations/002_enhanced_tracking.sql
-mysql -u root -p ap_ecommerce < database/seeds/001_initial_data.sql
+psql -U postgres -c "CREATE DATABASE ap_ecommerce;"
+psql -U postgres -d ap_ecommerce -f database/migrations/001_initial_schema.sql
+psql -U postgres -d ap_ecommerce -f database/migrations/002_enhanced_tracking.sql
+psql -U postgres -d ap_ecommerce -f database/seeds/001_initial_data.sql
 ```
 
 ### Connection Details
@@ -64,12 +65,12 @@ mysql -u root -p ap_ecommerce < database/seeds/001_initial_data.sql
 | Setting | Value |
 |---------|-------|
 | Host | `localhost` |
-| Port | `3306` |
+| Port | `5432` |
 | Database | `ap_ecommerce` |
-| Username | `root` |
-| Password | `root123` |
+| Username | `postgres` |
+| Password | `postgres123` |
 
-**Connection string:** `mysql://root:root123@localhost:3306/ap_ecommerce`
+**Connection string:** `postgresql://postgres:postgres123@localhost:5432/ap_ecommerce`
 
 ### Demo Accounts
 
@@ -85,37 +86,37 @@ mysql -u root -p ap_ecommerce < database/seeds/001_initial_data.sql
 
 ```
 database/
-|
-+-- migrations/                 Schema versions (run in order)
-|   +-- 001_initial_schema.sql  Core tables: users, products, orders
-|   +-- 002_enhanced_tracking.sql  Last-mile: couriers, GPS tracking
-|
-+-- seeds/                      Demo data for development
-|   +-- 001_initial_data.sql    Users, products, categories, wilayas
-|
-+-- scripts/                    Automation helpers
-|   +-- setup-local.ps1         Docker setup (Windows)
-|   +-- setup-mysql.ps1         Local MySQL setup
-|   +-- git-workflow.ps1        Git workflow commands
-|   +-- backup.sh               Database backup
-|   +-- restore.sh              Database restore
-|
-+-- docs/                       Technical documentation
-|   +-- DATABASE_DOCUMENTATION.tex   Full LaTeX docs (50+ pages)
-|   +-- ER_DIAGRAM.md               Entity-relationship diagrams
-|   +-- NORMALIZATION.md            Normal form analysis
-|   +-- README.md                   Documentation index
-|
-+-- .github/                    GitHub templates
-|   +-- PULL_REQUEST_TEMPLATE.md
-|   +-- ISSUE_TEMPLATE.md
-|
-+-- .gitignore                  Git ignore rules
-+-- .pre-commit-config.yaml     Pre-commit hooks
-+-- CHANGELOG.md                Version history
-+-- CONTRIBUTING.md             Contribution guidelines
-+-- GITHUB_SETTINGS.md          Repository configuration
-+-- README.md                   You are here
+│
+├── migrations/                 Schema versions (run in order)
+│   ├── 001_initial_schema.sql  Core tables: users, products, orders
+│   └── 002_enhanced_tracking.sql  Last-mile: couriers, GPS tracking
+│
+├── seeds/                      Demo data for development
+│   └── 001_initial_data.sql    Users, products, categories, wilayas
+│
+├── scripts/                    Automation helpers
+│   ├── setup-local.ps1         Docker setup (Windows)
+│   ├── setup-postgres.ps1      Local PostgreSQL setup
+│   ├── git-workflow.ps1        Git workflow commands
+│   ├── backup.sh               Database backup
+│   └── restore.sh              Database restore
+│
+├── docs/                       Technical documentation
+│   ├── DATABASE_DOCUMENTATION.tex   Full LaTeX docs (50+ pages)
+│   ├── ER_DIAGRAM.md               Entity-relationship diagrams
+│   ├── NORMALIZATION.md            Normal form analysis
+│   └── README.md                   Documentation index
+│
+├── .github/                    GitHub templates
+│   ├── PULL_REQUEST_TEMPLATE.md
+│   └── ISSUE_TEMPLATE.md
+│
+├── .gitignore                  Git ignore rules
+├── .pre-commit-config.yaml     Pre-commit hooks
+├── CHANGELOG.md                Version history
+├── CONTRIBUTING.md             Contribution guidelines
+├── GITHUB_SETTINGS.md          Repository configuration
+└── README.md                   You are here
 ```
 
 ---
@@ -125,36 +126,37 @@ database/
 We organized the database into **six logical modules**. Each one handles a specific part of the business:
 
 ```
-+-----------------------------------------------------------------------+
-|                        AP E-COMMERCE DATABASE                          |
-+-------------------+-------------------+-------------------------------+
-|      USERS        |     COMMERCE      |          LOGISTICS            |
-+-------------------+-------------------+-------------------------------+
-| users             | stores            | shipments                     |
-| seller_regs       | products          | tracking_events               |
-| user_addresses    | categories        | couriers                      |
-|                   | orders            | courier_assignments           |
-|                   | order_items       | delivery_zones                |
-|                   | reviews           | delivery_ratings              |
-+-------------------+-------------------+-------------------------------+
-|     PAYMENTS      |      CONFIG       |          REFERENCE            |
-+-------------------+-------------------+-------------------------------+
-| payments          | themes            | wilayas (58 provinces)        |
-| escrow_accounts   | plans             |                               |
-| disputes          | subscriptions     |                               |
-|                   | notifications     |                               |
-|                   | audit_logs        |                               |
-+-------------------+-------------------+-------------------------------+
+┌───────────────────────────────────────────────────────────────────────┐
+│                        AP E-COMMERCE DATABASE                          │
+├───────────────────┬───────────────────┬───────────────────────────────┤
+│      USERS        │     COMMERCE      │          LOGISTICS            │
+├───────────────────┼───────────────────┼───────────────────────────────┤
+│ users             │ stores            │ shipments                     │
+│ seller_regs       │ products          │ tracking_events               │
+│ user_addresses    │ categories        │ couriers                      │
+│                   │ orders            │ courier_assignments           │
+│                   │ order_items       │ delivery_zones                │
+│                   │ reviews           │ delivery_ratings              │
+├───────────────────┼───────────────────┼───────────────────────────────┤
+│     PAYMENTS      │      CONFIG       │          REFERENCE            │
+├───────────────────┼───────────────────┼───────────────────────────────┤
+│ payments          │ themes            │ wilayas (58 provinces)        │
+│ escrow_accounts   │ plans             │                               │
+│ disputes          │ subscriptions     │                               │
+│                   │ notifications     │                               │
+│                   │ audit_logs        │                               │
+└───────────────────┴───────────────────┴───────────────────────────────┘
 ```
 
 ### Technology Choices
 
 | Choice | Why |
 |--------|-----|
-| **MySQL 8.0** | Rock solid, great JSON support, works everywhere |
-| **utf8mb4** | Full Arabic and French character support |
-| **InnoDB** | ACID transactions, foreign key constraints |
-| **JSON columns** | Flexible storage for images, addresses, settings |
+| **PostgreSQL 16** | Powerful open-source RDBMS with excellent JSON, full-text search, and extension support |
+| **UTF-8** | Full Arabic and French character support |
+| **JSONB columns** | Flexible storage for images, addresses, settings with indexing capability |
+| **Custom ENUM types** | Type-safe status fields with database-level validation |
+| **GIN indexes** | Fast full-text search for products and content |
 
 ---
 
@@ -219,33 +221,33 @@ This is what happens when someone places an order:
 
 ```
 Customer adds items to cart
-            |
-            v
-+------------------------+
-| orders (pending)       |
-| order_items created    |
-+------------------------+
-            |
-            v
+            │
+            ▼
+┌────────────────────────┐
+│ orders (pending)       │
+│ order_items created    │
+└────────────────────────┘
+            │
+            ▼
    Customer chooses payment
    (CCP, Baridi Mob, etc.)
-            |
-            v
-+------------------------+
-| payments (pending)     |
-+------------------------+
-            |
-            v
+            │
+            ▼
+┌────────────────────────┐
+│ payments (pending)     │
+└────────────────────────┘
+            │
+            ▼
    Payment confirmed
    (receipt uploaded or API callback)
-            |
-            v
-+------------------------+
-| escrow_accounts        |
-| (money held safely)    |
-+------------------------+
-            |
-            v
+            │
+            ▼
+┌────────────────────────┐
+│ escrow_accounts        │
+│ (money held safely)    │
+└────────────────────────┘
+            │
+            ▼
    Seller ships the order
 ```
 
@@ -255,61 +257,61 @@ The interesting part — how a package gets from seller to buyer:
 
 ```
 Seller creates shipping label
-            |
-            v
-+---------------------------+
-| shipments (pending)       |
-| tracking_number generated |
-+---------------------------+
-            |
-            v
+            │
+            ▼
+┌───────────────────────────┐
+│ shipments (pending)       │
+│ tracking_number generated │
+└───────────────────────────┘
+            │
+            ▼
    Package handed to Algerie Poste
    (bureau-to-bureau transport)
-            |
-            v
-+---------------------------+
-| shipments (in_transit)    |
-| tracking_events logged    |
-+---------------------------+
-            |
-            v
+            │
+            ▼
+┌───────────────────────────┐
+│ shipments (in_transit)    │
+│ tracking_events logged    │
+└───────────────────────────┘
+            │
+            ▼
    Package arrives at destination bureau
-            |
-            v
-+---------------------------+
-| shipments (at_bureau)     |
-+---------------------------+
-            |
-            v
+            │
+            ▼
+┌───────────────────────────┐
+│ shipments (at_bureau)     │
+└───────────────────────────┘
+            │
+            ▼
    Courier assigned for last-mile
-            |
-            v
-+---------------------------+
-| courier_assignments       |
-| shipments.courier_id set  |
-+---------------------------+
-            |
-            v
+            │
+            ▼
+┌───────────────────────────┐
+│ courier_assignments       │
+│ shipments.courier_id set  │
+└───────────────────────────┘
+            │
+            ▼
    Courier picks up, starts delivery
    (GPS tracking begins)
-            |
-            v
-+---------------------------+
-| shipments (out_for_delivery) |
-| current_lat/lng updating     |
-+---------------------------+
-            |
-            v
+            │
+            ▼
+┌──────────────────────────────┐
+│ shipments (out_for_delivery) │
+│ current_lat/lng updating     │
+└──────────────────────────────┘
+            │
+            ▼
    At customer's door
    OTP verification required
-            |
-            v
-+---------------------------+
-| shipments (delivered)     |
-| delivery_signature saved  |
-+---------------------------+
-            |
-            v
+            │
+            ▼
+┌───────────────────────────┐
+│ shipments (delivered)     │
+│ delivery_signature saved  │
+└───────────────────────────┘
+            │
+            ▼
    Escrow released to seller
 ```
 
@@ -350,14 +352,16 @@ Example:
 -- 003_add_wishlist.sql
 
 CREATE TABLE wishlists (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
-  product_id INT NOT NULL,
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL,
+  product_id INTEGER NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
-  UNIQUE KEY unique_wishlist (user_id, product_id)
+  CONSTRAINT fk_wishlist_user FOREIGN KEY (user_id) 
+    REFERENCES users(id) ON DELETE CASCADE,
+  CONSTRAINT fk_wishlist_product FOREIGN KEY (product_id) 
+    REFERENCES products(id) ON DELETE CASCADE,
+  CONSTRAINT unique_wishlist UNIQUE (user_id, product_id)
 );
 ```
 
@@ -389,9 +393,9 @@ For the backend application:
 
 ```env
 DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
-DB_PASSWORD=root123
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=postgres123
 DB_DATABASE=ap_ecommerce
 DB_SYNCHRONIZE=false   # NEVER true in production
 ```
@@ -403,7 +407,7 @@ DB_SYNCHRONIZE=false   # NEVER true in production
 ### Verify Tables Exist
 
 ```powershell
-docker exec ap-ecommerce-mysql mysql -uroot -proot123 ap_ecommerce -e "SHOW TABLES;"
+docker exec ap-ecommerce-postgres psql -U postgres -d ap_ecommerce -c "\dt"
 ```
 
 You should see 24 tables.
@@ -462,7 +466,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
 
 ## Resources
 
-- [MySQL 8.0 Reference](https://dev.mysql.com/doc/refman/8.0/en/)
+- [PostgreSQL 16 Documentation](https://www.postgresql.org/docs/16/)
 - [NestJS TypeORM Docs](https://docs.nestjs.com/techniques/database)
 - [Algerie Poste EMS](https://www.poste.dz/services/ems)
 
@@ -471,5 +475,5 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on:
 <p align="center">
   <strong>Last Updated:</strong> December 2025
   <br>
-  <strong>Version:</strong> 1.1.0 (Enhanced Tracking)
+  <strong>Version:</strong> 2.0.0 (PostgreSQL Migration)
 </p>

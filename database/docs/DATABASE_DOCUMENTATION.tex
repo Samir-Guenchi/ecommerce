@@ -101,7 +101,7 @@
     
     \begin{tabular}{ll}
         \textbf{Version:} & 2.0 \\
-        \textbf{Database:} & MySQL 8.0+ \\
+        \textbf{Database:} & PostgreSQL 16+ \\
         \textbf{Date:} & December 2025 \\
         \textbf{Author:} & Development Team \\
     \end{tabular}
@@ -152,9 +152,9 @@ The database supports a multi-vendor e-commerce marketplace with the following k
 \toprule
 \textbf{Component} & \textbf{Technology} \\
 \midrule
-Database Engine & MySQL 8.0+ \\
-Character Set & utf8mb4 (Arabic/French support) \\
-Storage Engine & InnoDB (ACID transactions) \\
+Database Engine & PostgreSQL 16+ \\
+Character Set & UTF-8 (Arabic/French support) \\
+Features & ACID transactions, JSONB, Full-text Search \\
 ORM & TypeORM (NestJS backend) \\
 \bottomrule
 \end{tabular}
@@ -652,21 +652,18 @@ wilayas & $\checkmark$ & $\checkmark$ & $\checkmark$ & Reference data \\
 
 \begin{lstlisting}[caption=Users Table DDL]
 CREATE TABLE users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   email VARCHAR(255) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   full_name VARCHAR(255),
   phone VARCHAR(20),
   bio TEXT,
-  account_type ENUM('buyer', 'seller', 'both') 
-    DEFAULT 'buyer',
-  account_status ENUM('active', 'inactive', 
-    'pending', 'suspended') DEFAULT 'pending',
+  account_type user_account_type DEFAULT 'buyer',
+  account_status user_account_status DEFAULT 'pending',
   language_preference VARCHAR(10) DEFAULT 'fr',
   last_login TIMESTAMP NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP 
-    ON UPDATE CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 \end{lstlisting}
 
@@ -674,25 +671,24 @@ CREATE TABLE users (
 
 \begin{lstlisting}[caption=Products Table DDL]
 CREATE TABLE products (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  store_id INT NOT NULL,
-  category_id INT,
+  id SERIAL PRIMARY KEY,
+  store_id INTEGER NOT NULL,
+  category_id INTEGER,
   name VARCHAR(255) NOT NULL,
   slug VARCHAR(255) NOT NULL UNIQUE,
   description TEXT,
   price DECIMAL(10,2) NOT NULL,
   compare_price DECIMAL(10,2),
-  stock INT DEFAULT 0,
+  stock INTEGER DEFAULT 0,
   sku VARCHAR(100),
-  status ENUM('active', 'draft', 'sold_out') 
-    DEFAULT 'draft',
-  images JSON,
-  attributes JSON,
+  status product_status DEFAULT 'draft',
+  images JSONB,
+  attributes JSONB,
   weight DECIMAL(5,2),
-  dimensions JSON,
+  dimensions JSONB,
   
-  FOREIGN KEY (store_id) REFERENCES stores(id),
-  FOREIGN KEY (category_id) REFERENCES categories(id)
+  CONSTRAINT fk_product_store FOREIGN KEY (store_id) REFERENCES stores(id),
+  CONSTRAINT fk_product_category FOREIGN KEY (category_id) REFERENCES categories(id)
 );
 \end{lstlisting}
 
@@ -700,30 +696,23 @@ CREATE TABLE products (
 
 \begin{lstlisting}[caption=Shipments Table DDL with Last-Mile Tracking]
 CREATE TABLE shipments (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  order_id INT NOT NULL UNIQUE,
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER NOT NULL UNIQUE,
   tracking_number VARCHAR(100) NOT NULL UNIQUE,
   last_mile_tracking VARCHAR(100) UNIQUE,
-  provider ENUM('ems_standard', 'ems_express', 
-    'colis') NOT NULL,
-  status ENUM('pending', 'label_created', 
-    'picked_up', 'in_transit', 'at_bureau', 
-    'out_for_delivery', 'delivery_attempted', 
-    'delivered', 'failed_delivery', 'returned') 
-    DEFAULT 'pending',
-  delivery_type ENUM('bureau_pickup', 
-    'home_delivery', 'relay_point') 
-    DEFAULT 'home_delivery',
-  courier_id INT,
+  provider shipment_provider NOT NULL,
+  status shipment_status DEFAULT 'pending',
+  delivery_type delivery_type DEFAULT 'home_delivery',
+  courier_id INTEGER,
   current_latitude DECIMAL(10,7),
   current_longitude DECIMAL(10,7),
   delivery_otp VARCHAR(6),
   otp_expires_at TIMESTAMP,
-  delivery_attempts INT DEFAULT 0,
-  max_delivery_attempts INT DEFAULT 3,
+  delivery_attempts INTEGER DEFAULT 0,
+  max_delivery_attempts INTEGER DEFAULT 3,
   
-  FOREIGN KEY (order_id) REFERENCES orders(id),
-  FOREIGN KEY (courier_id) REFERENCES couriers(id)
+  CONSTRAINT fk_shipment_order FOREIGN KEY (order_id) REFERENCES orders(id),
+  CONSTRAINT fk_shipment_courier FOREIGN KEY (courier_id) REFERENCES couriers(id)
 );
 \end{lstlisting}
 
@@ -731,18 +720,17 @@ CREATE TABLE shipments (
 
 \begin{lstlisting}[caption=Escrow Accounts Table DDL]
 CREATE TABLE escrow_accounts (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  order_id INT NOT NULL UNIQUE,
-  payment_id INT NOT NULL,
+  id SERIAL PRIMARY KEY,
+  order_id INTEGER NOT NULL UNIQUE,
+  payment_id INTEGER NOT NULL,
   amount DECIMAL(10,2) NOT NULL,
-  status ENUM('pending', 'locked', 'released', 
-    'disputed', 'refunded') DEFAULT 'pending',
+  status escrow_status DEFAULT 'pending',
   locked_at TIMESTAMP,
   releasable_at TIMESTAMP,
   released_at TIMESTAMP,
   
-  FOREIGN KEY (order_id) REFERENCES orders(id),
-  FOREIGN KEY (payment_id) REFERENCES payments(id)
+  CONSTRAINT fk_escrow_order FOREIGN KEY (order_id) REFERENCES orders(id),
+  CONSTRAINT fk_escrow_payment FOREIGN KEY (payment_id) REFERENCES payments(id)
 );
 \end{lstlisting}
 
@@ -862,7 +850,7 @@ All tables use auto-increment integer primary keys for optimal JOIN performance.
 \end{itemize}
 
 \subsection{Foreign Key Indexes}
-All foreign keys are automatically indexed by MySQL InnoDB.
+Explicit indexes are created for foreign key columns to optimize JOIN performance.
 
 \subsection{Composite Indexes}
 
@@ -957,22 +945,21 @@ audit_logs (
 \subsection{Full Backup}
 
 \begin{lstlisting}[language=bash, caption=Full Database Backup]
-mysqldump -u root -p \
-  --single-transaction \
-  --routines \
-  --triggers \
-  ap_ecommerce > backup_$(date +%Y%m%d_%H%M%S).sql
+pg_dump -U postgres \
+  -d ap_ecommerce \
+  -F c \
+  -f backup_$(date +%Y%m%d_%H%M%S).dump
 \end{lstlisting}
 
 \subsection{Incremental Backup}
 
-Enable binary logging for point-in-time recovery:
+Enable WAL archiving for point-in-time recovery:
 
-\begin{lstlisting}[caption=MySQL Binary Log Configuration]
-[mysqld]
-log-bin=mysql-bin
-binlog_format=ROW
-expire_logs_days=7
+\begin{lstlisting}[caption=PostgreSQL WAL Configuration]
+# postgresql.conf
+archive_mode = on
+archive_command = 'cp %p /archive/%f'
+wal_level = replica
 \end{lstlisting}
 
 \section{Recovery Procedures}
@@ -980,15 +967,17 @@ expire_logs_days=7
 \subsection{Full Restore}
 
 \begin{lstlisting}[language=bash, caption=Database Restore]
-mysql -u root -p ap_ecommerce < backup_20251206.sql
+pg_restore -U postgres \
+  -d ap_ecommerce \
+  -c backup_20251206.dump
 \end{lstlisting}
 
 \subsection{Point-in-Time Recovery}
 
 \begin{lstlisting}[language=bash, caption=Point-in-Time Recovery]
-mysqlbinlog mysql-bin.000001 \
-  --stop-datetime="2025-12-06 14:00:00" \
-  | mysql -u root -p ap_ecommerce
+# In recovery.conf or postgresql.auto.conf
+restore_command = 'cp /archive/%f %p'
+recovery_target_time = '2025-12-06 14:00:00'
 \end{lstlisting}
 
 % ============================================
@@ -1036,8 +1025,8 @@ audit\_logs & Config & System audit trail \\
 \begin{lstlisting}[caption=Environment Configuration]
 # Database Connection
 DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
+DB_PORT=5432
+DB_USERNAME=postgres
 DB_PASSWORD=your_secure_password
 DB_DATABASE=ap_ecommerce
 

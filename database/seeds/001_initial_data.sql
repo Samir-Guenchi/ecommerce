@@ -1,9 +1,8 @@
 -- ============================================
 -- Algérie Poste E-Commerce Database Seeds
 -- Development & Testing Data
+-- PostgreSQL Version
 -- ============================================
-
-USE ap_ecommerce;
 
 -- ============================================
 -- WILAYAS (All 58 Algerian Provinces)
@@ -67,7 +66,8 @@ INSERT INTO wilayas (code, name_ar, name_fr, shipping_zone) VALUES
 ('55', 'توقرت', 'Touggourt', 'zone2'),
 ('56', 'جانت', 'Djanet', 'zone3'),
 ('57', 'المغير', 'El M''Ghair', 'zone2'),
-('58', 'المنيعة', 'El Meniaa', 'zone3');
+('58', 'المنيعة', 'El Meniaa', 'zone3')
+ON CONFLICT (code) DO NOTHING;
 
 -- ============================================
 -- THEMES
@@ -77,7 +77,8 @@ INSERT INTO themes (name, description, preview_image, is_active) VALUES
 ('Classic', 'Clean and professional theme suitable for all products', '/themes/classic.png', TRUE),
 ('Modern', 'Contemporary design with bold colors', '/themes/modern.png', TRUE),
 ('Minimal', 'Simple and elegant minimalist design', '/themes/minimal.png', TRUE),
-('Traditional', 'Theme inspired by Algerian traditional patterns', '/themes/traditional.png', TRUE);
+('Traditional', 'Theme inspired by Algerian traditional patterns', '/themes/traditional.png', TRUE)
+ON CONFLICT DO NOTHING;
 
 -- ============================================
 -- SUBSCRIPTION PLANS
@@ -98,7 +99,8 @@ INSERT INTO plans (name, description, price, billing_period, features, max_produ
 
 ('Enterprise', 'Custom solutions for large enterprises', 19999.00, 'monthly', 
   '{"features": ["Everything in Business", "White-label option", "SLA guarantee", "Account manager", "Custom integrations"]}', 
-  -1, -1, 2.50, TRUE);
+  -1, -1, 2.50, TRUE)
+ON CONFLICT DO NOTHING;
 
 -- ============================================
 -- CATEGORIES
@@ -112,21 +114,24 @@ INSERT INTO categories (name, slug, parent_id, description, is_active, sort_orde
 ('Sports & Outdoors', 'sports-outdoors', NULL, 'Sports equipment and outdoor gear', TRUE, 5),
 ('Books & Media', 'books-media', NULL, 'Books, music, and movies', TRUE, 6),
 ('Food & Groceries', 'food-groceries', NULL, 'Food products and groceries', TRUE, 7),
-('Handmade & Crafts', 'handmade-crafts', NULL, 'Handmade and artisan products', TRUE, 8);
+('Handmade & Crafts', 'handmade-crafts', NULL, 'Handmade and artisan products', TRUE, 8)
+ON CONFLICT (slug) DO NOTHING;
 
--- Sub-categories for Electronics
+-- Sub-categories for Electronics (parent_id = 1)
 INSERT INTO categories (name, slug, parent_id, description, is_active, sort_order) VALUES
 ('Smartphones', 'smartphones', 1, 'Mobile phones and accessories', TRUE, 1),
 ('Computers', 'computers', 1, 'Laptops, desktops, and accessories', TRUE, 2),
 ('Audio', 'audio', 1, 'Headphones, speakers, and audio equipment', TRUE, 3),
-('Cameras', 'cameras', 1, 'Cameras and photography equipment', TRUE, 4);
+('Cameras', 'cameras', 1, 'Cameras and photography equipment', TRUE, 4)
+ON CONFLICT (slug) DO NOTHING;
 
--- Sub-categories for Fashion
+-- Sub-categories for Fashion (parent_id = 2)
 INSERT INTO categories (name, slug, parent_id, description, is_active, sort_order) VALUES
 ('Men''s Clothing', 'mens-clothing', 2, 'Clothing for men', TRUE, 1),
 ('Women''s Clothing', 'womens-clothing', 2, 'Clothing for women', TRUE, 2),
 ('Shoes', 'shoes', 2, 'Footwear for all', TRUE, 3),
-('Accessories', 'accessories', 2, 'Fashion accessories', TRUE, 4);
+('Accessories', 'accessories', 2, 'Fashion accessories', TRUE, 4)
+ON CONFLICT (slug) DO NOTHING;
 
 -- ============================================
 -- DEMO USERS (Passwords: Test123!)
@@ -136,27 +141,35 @@ INSERT INTO categories (name, slug, parent_id, description, is_active, sort_orde
 INSERT INTO users (email, password_hash, full_name, phone, account_type, account_status) VALUES
 ('admin@algerie-poste.dz', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.G8xG4Gs8xS5TA2', 'Admin System', '+213555000001', 'both', 'active'),
 ('seller@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.G8xG4Gs8xS5TA2', 'Mohamed Seller', '+213555000002', 'seller', 'active'),
-('buyer@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.G8xG4Gs8xS5TA2', 'Amina Buyer', '+213555000003', 'buyer', 'active');
+('buyer@example.com', '$2b$12$LQv3c1yqBWVHxkd0LHAkCOYz6TtxMQJqhN8/X4.G8xG4Gs8xS5TA2', 'Amina Buyer', '+213555000003', 'buyer', 'active')
+ON CONFLICT (email) DO NOTHING;
 
 -- Seller Registration for demo seller
-INSERT INTO seller_registrations (user_id, full_name, ssid, business_id, cnrc_number, verification_status, verified_at, verified_by) VALUES
-(2, 'Mohamed Seller', '123456789012345', 'BIZ-2024-001', 'CNRC-16-123456', 'approved', NOW(), 1);
+INSERT INTO seller_registrations (user_id, full_name, ssid, business_id, cnrc_number, verification_status, verified_at, verified_by)
+SELECT 2, 'Mohamed Seller', '123456789012345', 'BIZ-2024-001', 'CNRC-16-123456', 'approved', NOW(), 1
+WHERE EXISTS (SELECT 1 FROM users WHERE id = 2);
 
 -- Demo Store
-INSERT INTO stores (user_id, name, status, location, wilaya, description, theme_id, trust_score, total_sales) VALUES
-(2, 'Tech Algérie', 'active', 'Alger Centre', 'Alger', 'Your trusted source for electronics and gadgets in Algeria', 1, 4.50, 150);
+INSERT INTO stores (user_id, name, status, location, wilaya, description, theme_id, trust_score, total_sales)
+SELECT 2, 'Tech Algérie', 'active', 'Alger Centre', 'Alger', 'Your trusted source for electronics and gadgets in Algeria', 1, 4.50, 150
+WHERE EXISTS (SELECT 1 FROM users WHERE id = 2);
 
 -- Demo Products
 INSERT INTO products (store_id, name, description, price, stock, status, category, category_id, rating, review_count) VALUES
-(1, 'Smartphone Galaxy Pro', 'Latest smartphone with amazing features', 85000.00, 50, 'active', 'Smartphones', 9, 4.5, 23),
-(1, 'Wireless Earbuds', 'High quality wireless earbuds with noise cancellation', 12500.00, 100, 'active', 'Audio', 11, 4.2, 45),
-(1, 'Laptop ProBook 15', 'Powerful laptop for work and gaming', 145000.00, 20, 'active', 'Computers', 10, 4.7, 12),
-(1, 'Smartwatch Fit', 'Track your fitness with this smart watch', 25000.00, 75, 'active', 'Electronics', NULL, 4.0, 30),
-(1, 'Bluetooth Speaker', 'Portable speaker with amazing sound', 8500.00, 200, 'active', 'Audio', 11, 4.3, 67);
+(1, 'Smartphone Galaxy A54', 'Latest Samsung Galaxy A54 with 128GB storage', 85000.00, 25, 'active', 'smartphones', 9, 4.5, 45),
+(1, 'Wireless Earbuds Pro', 'True wireless earbuds with active noise cancellation', 12500.00, 50, 'active', 'audio', 11, 4.3, 28),
+(1, 'Laptop HP Pavilion', '15.6" Full HD, Intel Core i5, 8GB RAM, 512GB SSD', 145000.00, 10, 'active', 'computers', 10, 4.7, 15),
+(1, 'Smart Watch X200', 'Fitness tracker with heart rate monitor and GPS', 18000.00, 35, 'active', 'electronics', 1, 4.2, 22),
+(1, 'Portable Bluetooth Speaker', 'Waterproof speaker with 20-hour battery life', 8500.00, 40, 'active', 'audio', 11, 4.4, 33)
+ON CONFLICT DO NOTHING;
 
--- Demo Addresses
-INSERT INTO user_addresses (user_id, name, full_name, phone, wilaya, commune, street, postal_code, is_default, address_type) VALUES
-(3, 'Home', 'Amina Buyer', '+213555000003', 'Alger', 'Bab El Oued', '12 Rue Larbi Ben M''hidi', '16000', TRUE, 'both');
+-- ============================================
+-- DEMO USER ADDRESSES
+-- ============================================
+
+INSERT INTO user_addresses (user_id, name, full_name, phone, wilaya, commune, street, postal_code, is_default, address_type)
+SELECT 3, 'Home', 'Amina Buyer', '+213555000003', 'Alger', 'Hussein Dey', '123 Rue de la Liberté', '16000', TRUE, 'both'
+WHERE EXISTS (SELECT 1 FROM users WHERE id = 3);
 
 -- ============================================
 -- END OF SEEDS

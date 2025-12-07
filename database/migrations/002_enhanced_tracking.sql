@@ -1,194 +1,191 @@
 -- ============================================
 -- Enhanced Tracking System Migration
 -- Last-Mile Delivery & Home Tracking
--- ============================================
--- This migration extends the Algérie Poste tracking
--- to support home delivery beyond bureau-to-bureau
-
-CREATE DATABASE IF NOT EXISTS ap_ecommerce 
-  CHARACTER SET utf8mb4 
-  COLLATE utf8mb4_unicode_ci;
-
-USE ap_ecommerce;
--- ============================================
--- ADD COURIER TABLE FOR LAST-MILE DELIVERY
+-- PostgreSQL Version
 -- ============================================
 
-CREATE TABLE couriers (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  user_id INT NOT NULL,
+-- ============================================
+-- NEW ENUM TYPES FOR ENHANCED TRACKING
+-- ============================================
+
+DO $$ BEGIN
+  CREATE TYPE vehicle_type AS ENUM ('bicycle', 'motorcycle', 'car', 'van');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE courier_status AS ENUM ('available', 'busy', 'offline', 'suspended');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE delivery_type AS ENUM ('bureau_pickup', 'home_delivery', 'relay_point');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE tracking_source AS ENUM ('ap_api', 'courier_app', 'customer_app', 'system');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+DO $$ BEGIN
+  CREATE TYPE assignment_status AS ENUM ('assigned', 'accepted', 'rejected', 'completed', 'cancelled');
+EXCEPTION WHEN duplicate_object THEN NULL;
+END $$;
+
+-- ============================================
+-- UPDATE SHIPMENT STATUS ENUM
+-- ============================================
+
+-- Add new values to shipment_status enum
+ALTER TYPE shipment_status ADD VALUE IF NOT EXISTS 'at_bureau';
+ALTER TYPE shipment_status ADD VALUE IF NOT EXISTS 'delivery_attempted';
+
+-- ============================================
+-- COURIER TABLE FOR LAST-MILE DELIVERY
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS couriers (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   full_name VARCHAR(255) NOT NULL,
   phone VARCHAR(20) NOT NULL,
   wilaya VARCHAR(100) NOT NULL,
   commune VARCHAR(100) NOT NULL,
-  vehicle_type ENUM('bicycle', 'motorcycle', 'car', 'van') DEFAULT 'motorcycle',
+  vehicle_type vehicle_type DEFAULT 'motorcycle',
   license_number VARCHAR(50),
-  status ENUM('available', 'busy', 'offline', 'suspended') DEFAULT 'offline',
+  status courier_status DEFAULT 'offline',
   current_latitude DECIMAL(10,7),
   current_longitude DECIMAL(10,7),
-  last_location_update TIMESTAMP NULL,
+  last_location_update TIMESTAMP,
   total_deliveries INT DEFAULT 0,
   rating DECIMAL(2,1) DEFAULT 5.0,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_wilaya_status (wilaya, status),
-  INDEX idx_is_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_couriers_wilaya_status ON couriers(wilaya, status);
+CREATE INDEX IF NOT EXISTS idx_couriers_active ON couriers(is_active);
 
 -- ============================================
 -- ALTER SHIPMENTS TABLE FOR ENHANCED TRACKING
 -- ============================================
 
--- Add new shipment status values
-ALTER TABLE shipments 
-  MODIFY COLUMN status ENUM(
-    'pending', 
-    'label_created', 
-    'picked_up', 
-    'in_transit', 
-    'at_bureau',           -- NEW: Package at destination bureau (AP API limit)
-    'out_for_delivery',    -- Courier assigned for home delivery
-    'delivery_attempted',  -- NEW: Attempted but recipient not home
-    'delivered', 
-    'failed_delivery', 
-    'returned'
-  ) DEFAULT 'pending';
-
 -- Add last-mile tracking columns
 ALTER TABLE shipments
-  ADD COLUMN last_mile_tracking VARCHAR(100) AFTER tracking_number,
-  ADD COLUMN delivery_type ENUM('bureau_pickup', 'home_delivery', 'relay_point') DEFAULT 'home_delivery' AFTER status,
-  ADD COLUMN courier_id INT NULL AFTER delivery_type,
-  ADD COLUMN courier_name VARCHAR(100) AFTER courier_id,
-  ADD COLUMN courier_phone VARCHAR(20) AFTER courier_name,
-  ADD COLUMN current_latitude DECIMAL(10,7) AFTER courier_phone,
-  ADD COLUMN current_longitude DECIMAL(10,7) AFTER current_latitude,
-  ADD COLUMN last_location_update TIMESTAMP NULL AFTER current_longitude,
-  ADD COLUMN destination_bureau VARCHAR(100) AFTER recipient_address,
-  ADD COLUMN bureau_arrival_time TIMESTAMP NULL AFTER destination_bureau,
-  ADD COLUMN recipient_name_confirmed VARCHAR(100) AFTER delivery_photo,
-  ADD COLUMN delivery_attempts INT DEFAULT 0 AFTER recipient_name_confirmed,
-  ADD COLUMN max_delivery_attempts INT DEFAULT 3 AFTER delivery_attempts,
-  ADD COLUMN preferred_time_slot JSON AFTER max_delivery_attempts,
-  ADD COLUMN delivery_otp VARCHAR(6) AFTER preferred_time_slot,
-  ADD COLUMN otp_expires_at TIMESTAMP NULL AFTER delivery_otp;
+  ADD COLUMN IF NOT EXISTS last_mile_tracking VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS delivery_type delivery_type DEFAULT 'home_delivery',
+  ADD COLUMN IF NOT EXISTS courier_id INT REFERENCES couriers(id) ON DELETE SET NULL,
+  ADD COLUMN IF NOT EXISTS courier_name VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS courier_phone VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS current_latitude DECIMAL(10,7),
+  ADD COLUMN IF NOT EXISTS current_longitude DECIMAL(10,7),
+  ADD COLUMN IF NOT EXISTS last_location_update TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS destination_bureau VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS bureau_arrival_time TIMESTAMP,
+  ADD COLUMN IF NOT EXISTS recipient_name_confirmed VARCHAR(100),
+  ADD COLUMN IF NOT EXISTS delivery_attempts INT DEFAULT 0,
+  ADD COLUMN IF NOT EXISTS max_delivery_attempts INT DEFAULT 3,
+  ADD COLUMN IF NOT EXISTS preferred_time_slot JSONB,
+  ADD COLUMN IF NOT EXISTS delivery_otp VARCHAR(6),
+  ADD COLUMN IF NOT EXISTS otp_expires_at TIMESTAMP;
 
 -- Add indexes for courier and delivery type
-ALTER TABLE shipments
-  ADD INDEX idx_courier_id (courier_id),
-  ADD INDEX idx_delivery_type_status (delivery_type, status),
-  ADD INDEX idx_last_mile_tracking (last_mile_tracking);
-
--- Add foreign key for courier
-ALTER TABLE shipments
-  ADD CONSTRAINT fk_shipments_courier
-  FOREIGN KEY (courier_id) REFERENCES couriers(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS idx_shipments_courier ON shipments(courier_id);
+CREATE INDEX IF NOT EXISTS idx_shipments_delivery_type_status ON shipments(delivery_type, status);
+CREATE INDEX IF NOT EXISTS idx_shipments_last_mile ON shipments(last_mile_tracking);
 
 -- ============================================
 -- ALTER TRACKING EVENTS FOR SOURCE TRACKING
 -- ============================================
 
--- Add tracking source to differentiate AP API vs our tracking
 ALTER TABLE tracking_events
-  MODIFY COLUMN status ENUM(
-    'pending', 
-    'label_created', 
-    'picked_up', 
-    'in_transit', 
-    'at_bureau',
-    'out_for_delivery',
-    'delivery_attempted',
-    'delivered', 
-    'failed_delivery', 
-    'returned'
-  ) NOT NULL;
+  ADD COLUMN IF NOT EXISTS source tracking_source DEFAULT 'system',
+  ADD COLUMN IF NOT EXISTS latitude DECIMAL(10,7),
+  ADD COLUMN IF NOT EXISTS longitude DECIMAL(10,7),
+  ADD COLUMN IF NOT EXISTS actor_id INT,
+  ADD COLUMN IF NOT EXISTS actor_type VARCHAR(50);
 
-ALTER TABLE tracking_events
-  ADD COLUMN source ENUM('ap_api', 'courier_app', 'customer_app', 'system') DEFAULT 'system' AFTER status,
-  ADD COLUMN latitude DECIMAL(10,7) AFTER wilaya,
-  ADD COLUMN longitude DECIMAL(10,7) AFTER latitude,
-  ADD COLUMN actor_id INT AFTER longitude,
-  ADD COLUMN actor_type VARCHAR(50) AFTER actor_id;
-
-ALTER TABLE tracking_events
-  ADD INDEX idx_source (source);
+CREATE INDEX IF NOT EXISTS idx_tracking_source ON tracking_events(source);
 
 -- ============================================
 -- DELIVERY ZONES FOR COURIER ASSIGNMENT
 -- ============================================
 
-CREATE TABLE delivery_zones (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS delivery_zones (
+  id SERIAL PRIMARY KEY,
   name VARCHAR(100) NOT NULL,
   wilaya VARCHAR(100) NOT NULL,
-  communes JSON, -- Array of communes covered
+  communes JSONB,
   base_fee DECIMAL(10,2) NOT NULL DEFAULT 200.00,
   per_km_fee DECIMAL(10,2) DEFAULT 50.00,
   estimated_time_minutes INT DEFAULT 60,
   is_active BOOLEAN DEFAULT TRUE,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  INDEX idx_wilaya (wilaya),
-  INDEX idx_is_active (is_active)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_delivery_zones_wilaya ON delivery_zones(wilaya);
+CREATE INDEX IF NOT EXISTS idx_delivery_zones_active ON delivery_zones(is_active);
 
 -- ============================================
 -- COURIER ASSIGNMENTS (DISPATCH LOG)
 -- ============================================
 
-CREATE TABLE courier_assignments (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  shipment_id INT NOT NULL,
-  courier_id INT NOT NULL,
+CREATE TABLE IF NOT EXISTS courier_assignments (
+  id SERIAL PRIMARY KEY,
+  shipment_id INT NOT NULL REFERENCES shipments(id) ON DELETE CASCADE,
+  courier_id INT NOT NULL REFERENCES couriers(id) ON DELETE CASCADE,
   assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  assigned_by INT NULL, -- Admin/dispatcher who assigned
-  status ENUM('assigned', 'accepted', 'rejected', 'completed', 'cancelled') DEFAULT 'assigned',
-  accepted_at TIMESTAMP NULL,
-  completed_at TIMESTAMP NULL,
+  assigned_by INT REFERENCES users(id) ON DELETE SET NULL,
+  status assignment_status DEFAULT 'assigned',
+  accepted_at TIMESTAMP,
+  completed_at TIMESTAMP,
   rejection_reason TEXT,
-  notes TEXT,
-  
-  FOREIGN KEY (shipment_id) REFERENCES shipments(id) ON DELETE CASCADE,
-  FOREIGN KEY (courier_id) REFERENCES couriers(id) ON DELETE CASCADE,
-  FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL,
-  INDEX idx_courier_status (courier_id, status),
-  INDEX idx_shipment (shipment_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  notes TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_courier_assignments_courier ON courier_assignments(courier_id, status);
+CREATE INDEX IF NOT EXISTS idx_courier_assignments_shipment ON courier_assignments(shipment_id);
 
 -- ============================================
 -- DELIVERY FEEDBACK/RATING
 -- ============================================
 
-CREATE TABLE delivery_ratings (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  shipment_id INT NOT NULL UNIQUE,
-  courier_id INT NOT NULL,
-  user_id INT NOT NULL,
+CREATE TABLE IF NOT EXISTS delivery_ratings (
+  id SERIAL PRIMARY KEY,
+  shipment_id INT NOT NULL UNIQUE REFERENCES shipments(id) ON DELETE CASCADE,
+  courier_id INT NOT NULL REFERENCES couriers(id) ON DELETE CASCADE,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   rating INT NOT NULL CHECK (rating >= 1 AND rating <= 5),
   comment TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  
-  FOREIGN KEY (shipment_id) REFERENCES shipments(id) ON DELETE CASCADE,
-  FOREIGN KEY (courier_id) REFERENCES couriers(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  INDEX idx_courier (courier_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_delivery_ratings_courier ON delivery_ratings(courier_id);
 
 -- ============================================
 -- UPDATE USER ADDRESSES WITH GPS COORDINATES
 -- ============================================
 
 ALTER TABLE user_addresses
-  ADD COLUMN latitude DECIMAL(10,7) AFTER postal_code,
-  ADD COLUMN longitude DECIMAL(10,7) AFTER latitude,
-  ADD COLUMN delivery_instructions TEXT AFTER longitude;
+  ADD COLUMN IF NOT EXISTS latitude DECIMAL(10,7),
+  ADD COLUMN IF NOT EXISTS longitude DECIMAL(10,7),
+  ADD COLUMN IF NOT EXISTS delivery_instructions TEXT;
 
 -- ============================================
--- INSERT DEFAULT DELIVERY ZONES (58 WILAYAS)
+-- TRIGGERS FOR NEW TABLES
+-- ============================================
+
+DROP TRIGGER IF EXISTS update_couriers_updated_at ON couriers;
+CREATE TRIGGER update_couriers_updated_at BEFORE UPDATE ON couriers FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_delivery_zones_updated_at ON delivery_zones;
+CREATE TRIGGER update_delivery_zones_updated_at BEFORE UPDATE ON delivery_zones FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- ============================================
+-- INSERT DEFAULT DELIVERY ZONES
 -- ============================================
 
 INSERT INTO delivery_zones (name, wilaya, communes, base_fee, per_km_fee, estimated_time_minutes) VALUES
@@ -198,37 +195,12 @@ INSERT INTO delivery_zones (name, wilaya, communes, base_fee, per_km_fee, estima
 ('Oran Centre', 'Oran', '["Oran", "Bir El Djir", "Es Senia", "Sidi Chahmi"]', 200.00, 40.00, 45),
 ('Constantine', 'Constantine', '["Constantine", "El Khroub", "Hamma Bouziane", "Didouche Mourad"]', 200.00, 40.00, 45),
 ('Annaba', 'Annaba', '["Annaba", "El Bouni", "Sidi Amar", "El Hadjar"]', 200.00, 40.00, 45),
-('Blida', 'Blida', '["Blida", "Boufarik", "Ouled Yaïch", "Beni Mered"]', 200.00, 40.00, 45),
-('Sétif', 'Sétif', '["Sétif", "El Eulma", "Aïn Arnat", "Aïn Oulmene"]', 200.00, 40.00, 45),
-('Batna', 'Batna', '["Batna", "Barika", "Aïn Touta", "N''Gaous"]', 200.00, 40.00, 45),
-('Tizi Ouzou', 'Tizi Ouzou', '["Tizi Ouzou", "Azazga", "Draa El Mizan", "Tigzirt"]', 200.00, 40.00, 45);
+('Sétif', 'Sétif', '["Sétif", "El Eulma", "Ain Oulmene", "Bougaa"]', 200.00, 40.00, 50),
+('Blida', 'Blida', '["Blida", "Boufarik", "El Affroun", "Beni Mered"]', 200.00, 40.00, 45),
+('Tizi Ouzou', 'Tizi Ouzou', '["Tizi Ouzou", "Draa Ben Khedda", "Azazga", "Ouaguenoun"]', 250.00, 45.00, 55),
+('Béjaïa', 'Béjaïa', '["Béjaïa", "Akbou", "El Kseur", "Tichy"]', 250.00, 45.00, 55)
+ON CONFLICT DO NOTHING;
 
 -- ============================================
--- TRIGGERS FOR COURIER RATING UPDATE
+-- END OF ENHANCED TRACKING
 -- ============================================
-
-DELIMITER //
-
-CREATE TRIGGER update_courier_rating
-AFTER INSERT ON delivery_ratings
-FOR EACH ROW
-BEGIN
-  UPDATE couriers c
-  SET c.rating = (
-    SELECT AVG(rating) 
-    FROM delivery_ratings 
-    WHERE courier_id = NEW.courier_id
-  ),
-  c.total_deliveries = c.total_deliveries + 1
-  WHERE c.id = NEW.courier_id;
-END//
-
-DELIMITER ;
-
--- ============================================
--- INDEX OPTIMIZATION
--- ============================================
-
--- Add composite index for common queries (pending home deliveries)
--- Note: MySQL doesn't support partial indexes, so we use a regular composite index
-CREATE INDEX idx_shipments_pending_home ON shipments (status, delivery_type, courier_id);
