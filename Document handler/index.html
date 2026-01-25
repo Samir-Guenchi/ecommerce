@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document Handler - Seller Registrations</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .registration {
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            background: #fafafa;
+        }
+        .registration h3 {
+            margin-top: 0;
+            color: #555;
+        }
+        .status {
+            padding: 5px 10px;
+            border-radius: 3px;
+            color: white;
+            font-weight: bold;
+        }
+        .status.pending { background: #ffc107; }
+        .status.approved { background: #28a745; }
+        .status.rejected { background: #dc3545; }
+        .documents {
+            margin: 10px 0;
+        }
+        .document-link {
+            display: inline-block;
+            margin: 5px;
+            padding: 8px 12px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 3px;
+        }
+        .document-link:hover {
+            background: #0056b3;
+        }
+        .buttons {
+            margin-top: 10px;
+        }
+        button {
+            padding: 8px 16px;
+            margin: 0 5px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .approve { background: #28a745; color: white; }
+        .reject { background: #dc3545; color: white; }
+        .loading {
+            text-align: center;
+            padding: 20px;
+        }
+        .error {
+            color: red;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Seller Registration Document Handler</h1>
+        <div id="content">
+            <div class="loading">Loading seller registrations...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:3000/api';
+        // For simplicity, assuming admin token is stored or hardcoded
+        // In real app, implement proper auth
+        const AUTH_TOKEN = 'your-admin-token-here'; // Replace with actual token
+
+        async function fetchRegistrations() {
+            try {
+                const response = await fetch(`${API_BASE}/seller-registrations`, {
+                    headers: {
+                        'Authorization': `Bearer ${AUTH_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                displayRegistrations(data.registrations);
+            } catch (error) {
+                document.getElementById('content').innerHTML = `<div class="error">Error loading registrations: ${error.message}</div>`;
+            }
+        }
+
+        function displayRegistrations(registrations) {
+            if (!registrations || registrations.length === 0) {
+                document.getElementById('content').innerHTML = '<p>No seller registrations found.</p>';
+                return;
+            }
+
+            const html = registrations.map(reg => `
+                <div class="registration">
+                    <h3>${reg.fullName} (User ID: ${reg.userId})</h3>
+                    <p><strong>Email:</strong> ${reg.user ? reg.user.email : 'N/A'}</p>
+                    <p><strong>SSID:</strong> ${reg.ssid}</p>
+                    <p><strong>Business ID:</strong> ${reg.businessId}</p>
+                    <p><strong>Status:</strong> <span class="status ${reg.verificationStatus.toLowerCase()}">${reg.verificationStatus}</span></p>
+                    <div class="documents">
+                        <strong>Documents:</strong><br>
+                        ${reg.document1Path ? `<a href="${getDocumentUrl(reg.document1Path)}" class="document-link" target="_blank">Document 1</a>` : ''}
+                        ${reg.document2Path ? `<a href="${getDocumentUrl(reg.document2Path)}" class="document-link" target="_blank">Document 2</a>` : ''}
+                        ${reg.document3Path ? `<a href="${getDocumentUrl(reg.document3Path)}" class="document-link" target="_blank">Document 3</a>` : ''}
+                    </div>
+                    ${reg.verificationStatus === 'pending' ? `
+                        <div class="buttons">
+                            <button class="approve" onclick="approveRegistration(${reg.id})">Approve</button>
+                            <button class="reject" onclick="rejectRegistration(${reg.id})">Reject</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function getDocumentUrl(path) {
+            // Assuming documents are served from backend static folder
+            // Adjust based on actual setup
+            return `http://localhost:3000/uploads/${path}`;
+        }
+
+        async function approveRegistration(id) {
+            await updateStatus(id, 'approve');
+        }
+
+        async function rejectRegistration(id) {
+            await updateStatus(id, 'reject');
+        }
+
+        async function updateStatus(id, action) {
+            try {
+                const response = await fetch(`${API_BASE}/seller-registrations/${id}/${action}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Authorization': `Bearer ${AUTH_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const result = await response.json();
+                alert(result.message);
+                fetchRegistrations(); // Refresh the list
+            } catch (error) {
+                alert(`Error updating registration: ${error.message}`);
+            }
+        }
+
+        // Load registrations on page load
+        window.onload = fetchRegistrations;
+    </script>
+</body>
+</html>

@@ -8,11 +8,12 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Share,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { orderAPI } from '../services/api.service';
 
 // Order Icon
+import { Svg, Path } from 'react-native-svg';
+import * as API from '../services/api.service';
 const OrderIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
@@ -172,7 +173,16 @@ interface Order {
   user?: {
     fullName: string | null;
     email: string;
+    phone: string | null;
   };
+  shippingAddress?: {
+    addressLine1: string;
+    addressLine2?: string | null;
+    city: string;
+    stateProvince?: string | null;
+    postalCode?: string | null;
+    country: string;
+  } | null;
 }
 
 const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate }) => {
@@ -183,7 +193,7 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate }) => {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await orderAPI.getAllOrders();
+      const response = await API.orderAPI.getAllOrders();
       setOrders(response.orders);
     } catch (error: any) {
       console.error('Error fetching orders:', error);
@@ -210,6 +220,32 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate }) => {
         return { bg: '#FFEBEE', text: '#C62828' };
       default:
         return { bg: '#F5F5F5', text: '#666' };
+    }
+  };
+
+  const handleExportOrders = async () => {
+    try {
+      let documentContent = 'Orders Document\n\n';
+      orders.forEach((order, index) => {
+        const customerName = order.user?.fullName || order.user?.email || 'Unknown Customer';
+        const phone = order.user?.phone || 'N/A';
+        const location = order.shippingAddress ? `${order.shippingAddress.addressLine1}${order.shippingAddress.addressLine2 ? ', ' + order.shippingAddress.addressLine2 : ''}, ${order.shippingAddress.city}${order.shippingAddress.stateProvince ? ', ' + order.shippingAddress.stateProvince : ''}${order.shippingAddress.postalCode ? ' ' + order.shippingAddress.postalCode : ''}, ${order.shippingAddress.country}` : 'N/A';
+        const price = `$${(order.totalAmount != null ? Number(order.totalAmount) : 0).toFixed(2)}`;
+        documentContent += `${index + 1}. Order Number: ${order.orderNumber}\n`;
+        documentContent += `   Customer: ${customerName}\n`;
+        documentContent += `   Phone: ${phone}\n`;
+        documentContent += `   Location: ${location}\n`;
+        documentContent += `   Price: ${price}\n`;
+        documentContent += `   Status: ${order.status}\n`;
+        documentContent += `   Date: ${new Date(order.orderDate).toLocaleDateString()}\n\n`;
+      });
+      await Share.share({
+        message: documentContent,
+        title: 'Orders Document',
+      });
+    } catch (error: any) {
+      console.error('Share error:', error);
+      Alert.alert('Error', error.message || 'Failed to share the document.');
     }
   };
 
@@ -260,6 +296,10 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate }) => {
         <Text style={styles.subheading}>
           View and manage your store orders.
         </Text>
+
+        <TouchableOpacity style={styles.exportButton} onPress={handleExportOrders} activeOpacity={0.7}>
+          <Text style={styles.exportButtonText}>Export Orders to Document</Text>
+        </TouchableOpacity>
 
         {orders.length === 0 ? (
           <View style={styles.emptyState}>
@@ -529,6 +569,20 @@ const styles = StyleSheet.create({
   emptyStateSubtext: {
     fontSize: 13,
     color: '#666',
+    textAlign: 'center',
+  },
+  exportButton: {
+    backgroundColor: '#000000',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    marginBottom: 24,
+    alignSelf: 'center',
+  },
+  exportButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '600',
     textAlign: 'center',
   },
 });

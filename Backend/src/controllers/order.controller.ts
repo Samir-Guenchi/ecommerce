@@ -1,4 +1,4 @@
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { AppDataSource } from '../config/database';
 import { Order, OrderStatus } from '../entities';
 import { AuthRequest } from '../middleware/auth.middleware';
