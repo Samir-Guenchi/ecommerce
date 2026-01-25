@@ -115,6 +115,8 @@ CREATE TABLE stores (
   description TEXT,
   theme_id INTEGER,
   domain VARCHAR(255) UNIQUE,
+  metapixleid VARCHAR(255),
+  tiktokpixleid VARCHAR(255),
   created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_stores_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,

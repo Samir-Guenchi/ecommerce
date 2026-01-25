@@ -12,6 +12,7 @@ import taxRoutes from './routes/tax.routes';
 import addressRoutes from './routes/address.routes';
 import subscriptionRoutes from './routes/subscription.routes';
 import storefrontRoutes from './routes/storefront.routes';
+import eventRoutes from './routes/event.routes';
 
 const app: Express = express();
 
@@ -21,7 +22,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Root route - API information
-app.get('/', (req: Request, res: Response) => {
+app.get('/', (_req: Request, res: Response) => {
   res.json({
     message: 'Algerie Post API',
     version: '1.0.0',
@@ -47,7 +48,7 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 // Health check
-app.get('/health', (req: Request, res: Response) => {
+app.get('/health', (_req: Request, res: Response) => {
   res.json({ status: 'ok', message: 'Algerie Post API is running' });
 });
 
@@ -64,14 +65,15 @@ app.use('/api/taxes', taxRoutes);
 app.use('/api/addresses', addressRoutes);
 app.use('/api/subscriptions', subscriptionRoutes);
 app.use('/api/storefront', storefrontRoutes);
+app.use('/api/events', eventRoutes);
 
 // 404 handler
-app.use((req: Request, res: Response) => {
+app.use((_req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
 
 // Error handler
-app.use((err: any, req: Request, res: Response, next: any) => {
+app.use((err: any, _req: Request, res: Response, _next: any) => {
   console.error('Error:', err);
   res.status(err.status || 500).json({
     error: err.message || 'Internal server error',

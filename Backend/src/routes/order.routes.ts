@@ -4,7 +4,10 @@ import { authenticate } from '../middleware/auth.middleware';
 
 const router = Router();
 
-// All order routes require authentication
+// Public route for tracking
+router.get('/track/:orderNumber', orderController.getOrderByOrderNumber.bind(orderController));
+
+// All other order routes require authentication
 router.use(authenticate);
 
 router.get('/', orderController.getAllOrders.bind(orderController));

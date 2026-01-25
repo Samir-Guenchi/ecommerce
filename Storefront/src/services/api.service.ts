@@ -68,6 +68,46 @@ export const storefrontAPI = {
     });
     return handleResponse(response);
   },
+
+  /**
+   * Create an order for a store
+   */
+  createOrderForStore: async (
+    domain: string,
+    data: {
+      productId: number;
+      quantity?: number;
+      fullName: string;
+      phone: string;
+      wilaya: string;
+      commune: string;
+      deliveryType: 'stop_desk' | 'domicile';
+      shippingAddress?: string;
+    }
+  ): Promise<{ message: string; order: any; transaction: any }> => {
+    const response = await fetch(`${API_URL}/storefront/${domain}/orders`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Track an event for a store
+   */
+  trackEventForStore: async (
+    domain: string,
+    eventType: string,
+    eventData?: Record<string, any>
+  ): Promise<{ message: string; event: any }> => {
+    const response = await fetch(`${API_URL}/storefront/${domain}/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventType, eventData }),
+    });
+    return handleResponse(response);
+  },
 };
 
 

@@ -22,6 +22,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {
   AccountTypeSelectorScreen,
   LoginSignUpScreen,
+  EmailVerificationScreen,
   WelcomeScreen,
   UserSettingsScreen,
   SellerRegistrationScreen,
@@ -72,6 +73,12 @@ const SCREEN_REGISTRY = {
     description: 'Email + password form with social entry points.',
     component: LoginSignUpScreen,
     showInGallery: true,
+  },
+  emailVerification: {
+    title: 'Email Verification',
+    description: 'Verify email address with code sent to user.',
+    component: EmailVerificationScreen,
+    showInGallery: false,
   },
   accountType: {
     title: 'Account Type Selector',
@@ -323,7 +330,7 @@ function RootNavigator() {
   };
 
   const handleAuthenticated = () => {
-    resetTo('dashboard');
+    resetTo('accountType');
   };
 
   const handleLogout = async () => {

@@ -10,6 +10,7 @@ import {
   Platform,
   Animated,
   Alert,
+  Image,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
@@ -383,7 +384,43 @@ const LoginSignUpScreen = ({
           const data = await response.json().catch(() => ({}));
 
           if (!response.ok) {
+            // Check if account needs verification
+            if (data?.needsVerification) {
+              setIsLoading(false);
+              setLoadingStatus('');
+              Animated.timing(screenFade, {
+                toValue: 1,
+                duration: 300,
+                useNativeDriver: true,
+              }).start();
+              
+              // Navigate to email verification screen
+              _navigate?.('emailVerification', {
+                email: payload.email,
+                user: data.user,
+              });
+              return;
+            }
+            
             throw new Error(data?.error || 'Authentication failed');
+          }
+
+          // Check if account needs verification (for successful signup)
+          if (data?.needsVerification) {
+            setIsLoading(false);
+            setLoadingStatus('');
+            Animated.timing(screenFade, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }).start();
+            
+            // Navigate to email verification screen
+            _navigate?.('emailVerification', {
+              email: payload.email,
+              user: data.user,
+            });
+            return;
           }
 
           if (!data?.token) {
@@ -526,9 +563,7 @@ const LoginSignUpScreen = ({
               <Animated.View style={animatedStyle}>
         {/* Logo */}
         <View style={styles.logoContainer}>
-          <View style={styles.logo}>
-            <View style={styles.logoInner} />
-          </View>
+          <Image source={require('./logo.png')} style={styles.logo} />
         </View>
 
         {/* Main Heading */}
@@ -605,7 +640,13 @@ const LoginSignUpScreen = ({
                   onPress={() => setShowPassword(!showPassword)}
                   style={styles.eyeIcon}
                 >
-                  <Text style={styles.eyeIconText}>{showPassword ? '👁' : '👁'}</Text>
+                  <Svg width={20} height={20} viewBox="0 0 24 24">
+                    {showPassword ? (
+                      <Path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="black"/>
+                    ) : (
+                      <Path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92 1.11-1.11c-1.73-4.39-6-7.5-11-7.5-1.55 0-3.04.3-4.38.84l1.47 1.47C8.95 6.17 10.43 6 12 6c-3.31 0-6 2.69-6 6 0 1.32.43 2.54 1.17 3.53L4.27 17.27C2.54 15.61 1 13.87 1 12c1.73-4.39 6-7.5 11-7.5zM3.51 3.51L2.1 2.1l19.8 19.8 1.41-1.41L3.51 3.51zM12 9c1.66 0 3 1.34 3 3 0 .35-.07.68-.19.98L13.6 11.4c.05-.08.1-.16.1-.4 0-.55-.45-1-1-1s-1 .45-1 1c0 .24.05.52.14.76l-1.75 1.75c-.31-.12-.64-.21-.99-.21-1.66 0-3 1.34-3 3 0 .35.07.68.19.98l-1.75 1.75C7.32 16.68 7 16.35 7 16c0-2.76 2.24-5 5-5z" fill="black"/>
+                    )}
+                  </Svg>
                 </TouchableOpacity>
               </View>
             </View>
@@ -660,7 +701,13 @@ const LoginSignUpScreen = ({
                   onPress={() => setShowPassword(!showPassword)}
                   style={styles.eyeIcon}
                 >
-                  <Text style={styles.eyeIconText}>{showPassword ? '👁' : '👁'}</Text>
+                  <Svg width={20} height={20} viewBox="0 0 24 24">
+                    {showPassword ? (
+                      <Path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="black"/>
+                    ) : (
+                      <Path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92 1.11-1.11c-1.73-4.39-6-7.5-11-7.5-1.55 0-3.04.3-4.38.84l1.47 1.47C8.95 6.17 10.43 6 12 6c-3.31 0-6 2.69-6 6 0 1.32.43 2.54 1.17 3.53L4.27 17.27C2.54 15.61 1 13.87 1 12c1.73-4.39 6-7.5 11-7.5zM3.51 3.51L2.1 2.1l19.8 19.8 1.41-1.41L3.51 3.51zM12 9c1.66 0 3 1.34 3 3 0 .35-.07.68-.19.98L13.6 11.4c.05-.08.1-.16.1-.4 0-.55-.45-1-1-1s-1 .45-1 1c0 .24.05.52.14.76l-1.75 1.75c-.31-.12-.64-.21-.99-.21-1.66 0-3 1.34-3 3 0 .35.07.68.19.98l-1.75 1.75C7.32 16.68 7 16.35 7 16c0-2.76 2.24-5 5-5z" fill="black"/>
+                    )}
+                  </Svg>
                 </TouchableOpacity>
               </View>
             </View>
@@ -681,9 +728,13 @@ const LoginSignUpScreen = ({
                     onPress={() => setShowConfirmPassword(!showConfirmPassword)}
                     style={styles.eyeIcon}
                   >
-                    <Text style={styles.eyeIconText}>
-                      {showConfirmPassword ? '👁' : '👁'}
-                    </Text>
+                    <Svg width={20} height={20} viewBox="0 0 24 24">
+                      {showConfirmPassword ? (
+                        <Path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" fill="black"/>
+                      ) : (
+                        <Path d="M12 7c2.76 0 5 2.24 5 5 0 .65-.13 1.26-.36 1.83l2.92 2.92 1.11-1.11c-1.73-4.39-6-7.5-11-7.5-1.55 0-3.04.3-4.38.84l1.47 1.47C8.95 6.17 10.43 6 12 6c-3.31 0-6 2.69-6 6 0 1.32.43 2.54 1.17 3.53L4.27 17.27C2.54 15.61 1 13.87 1 12c1.73-4.39 6-7.5 11-7.5zM3.51 3.51L2.1 2.1l19.8 19.8 1.41-1.41L3.51 3.51zM12 9c1.66 0 3 1.34 3 3 0 .35-.07.68-.19.98L13.6 11.4c.05-.08.1-.16.1-.4 0-.55-.45-1-1-1s-1 .45-1 1c0 .24.05.52.14.76l-1.75 1.75c-.31-.12-.64-.21-.99-.21-1.66 0-3 1.34-3 3 0 .35.07.68.19.98l-1.75 1.75C7.32 16.68 7 16.35 7 16c0-2.76 2.24-5 5-5z" fill="black"/>
+                      )}
+                    </Svg>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -712,14 +763,23 @@ const LoginSignUpScreen = ({
 
             {/* Social Buttons as Circles */}
             <View style={styles.socialCircleContainer}>
-              <TouchableOpacity style={[styles.socialCircle, { backgroundColor: '#000' }]}>
-                <Text style={styles.socialCircleText}>G</Text>
+              <TouchableOpacity style={styles.socialCircle}>
+                <Svg viewBox="0 0 24 24" width={20} height={20}>
+                  <Path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="black"/>
+                  <Path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="black"/>
+                  <Path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="black"/>
+                  <Path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="black"/>
+                </Svg>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.socialCircle, { backgroundColor: '#000' }]}>
-                <Text style={styles.socialCircleText}>f</Text>
+              <TouchableOpacity style={styles.socialCircle}>
+                <Svg viewBox="0 0 24 24" width={20} height={20}>
+                  <Path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" fill="black"/>
+                </Svg>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.socialCircle, { backgroundColor: '#000' }]}>
-                <Text style={styles.socialCircleText}>X</Text>
+              <TouchableOpacity style={styles.socialCircle}>
+                <Svg viewBox="0 0 16 16" width={20} height={20}>
+                  <Path d="M13.601 2.326A7.854 7.854 0 0 0 7.994 0C3.627 0 .068 3.558.064 7.926c0 1.399.366 2.76 1.057 3.965L0 16l4.204-1.102a7.933 7.933 0 0 0 3.79.965h.004c4.368 0 7.926-3.558 7.93-7.93A7.898 7.898 0 0 0 13.6 2.326zM7.994 14.521a6.573 6.573 0 0 1-3.356-.92l-.24-.144-2.494.654.666-2.433-.156-.251a6.56 6.56 0 0 1-1.007-3.505c0-3.626 2.957-6.584 6.591-6.584a6.56 6.56 0 0 1 4.66 1.931 6.557 6.557 0 0 1 1.928 4.66c-.004 3.639-2.961 6.592-6.592 6.592zm3.615-4.934c-.197-.099-1.17-.578-1.353-.646-.182-.065-.315-.099-.445.099-.133.197-.513.646-.627.775-.114.133-.232.148-.43.05-.197-.1-.836-.308-1.592-.985-.59-.525-.985-1.175-1.103-1.372-.114-.198-.011-.304.088-.403.087-.088.197-.232.296-.346.1-.114.133-.198.198-.33.065-.134.034-.248-.015-.347-.05-.099-.445-1.076-.612-1.47-.16-.389-.323-.335-.445-.34-.114-.007-.247-.007-.38-.007a.729.729 0 0 0-.529.247c-.182.198-.691.677-.691 1.654 0 .977.71 1.916.81 2.049.098.133 1.394 2.132 3.383 2.992.47.205.84.326 1.129.418.475.152.904.129 1.246.08.38-.058 1.171-.48 1.338-.943.164-.464.164-.86.114-.943-.049-.084-.182-.133-.38-.232z" fill="black"/>
+                </Svg>
               </TouchableOpacity>
             </View>
 
@@ -856,9 +916,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: { flexGrow: 1, justifyContent: 'flex-start', paddingHorizontal: 16, paddingBottom: 40, paddingTop: 60 },
   logoContainer: { alignItems: 'center', marginBottom: 16 },
-  logo: { width: 60, height: 60, backgroundColor: '#000', borderRadius: 8, justifyContent: 'center', alignItems: 'center', transform: [{ rotate: '45deg' }], marginBottom: 16 },
-  logoInner: { width: 30, height: 30, backgroundColor: '#fff', borderRadius: 4, transform: [{ rotate: '45deg' }] },
-  heading: { fontSize: 22, fontWeight: 'bold', color: '#000', textAlign: 'center', marginBottom: 32 },
+  logo: { width: 60, height: 60, marginBottom: 16 },
+  heading: { fontSize: 22, fontWeight: 'bold', color: '#000', textAlign: 'center', marginBottom: 32, fontFamily: 'cursive' },
   toggleContainer: { flexDirection: 'row', backgroundColor: '#F0F0F0', borderRadius: 8, padding: 2, marginBottom: 20 },
   toggleButton: { flex: 1, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, alignItems: 'center' },
   toggleButtonActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
@@ -868,19 +927,17 @@ const styles = StyleSheet.create({
   label: { fontSize: 13, color: '#333', marginBottom: 6, fontWeight: '500' },
   passwordLabelContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   forgotPassword: { fontSize: 11, color: '#333', textDecorationLine: 'underline' },
-  input: { borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 10, fontSize: 13, backgroundColor: '#fff' },
+  input: { borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, paddingVertical: 10, paddingHorizontal: 10, fontSize: 13, backgroundColor: '#fff', color: '#000' },
   passwordInputContainer: { flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 8, backgroundColor: '#fff', paddingHorizontal: 10 },
-  passwordInput: { flex: 1, paddingVertical: 10, fontSize: 13 },
+  passwordInput: { flex: 1, paddingVertical: 10, fontSize: 13, color: '#000' },
   eyeIcon: { padding: 6 },
-  eyeIconText: { fontSize: 18 },
   signInButton: { backgroundColor: '#000', borderRadius: 8, paddingVertical: 12, alignItems: 'center', marginTop: 16, marginBottom: 32 },
   signInButtonText: { color: '#fff', fontSize: 13, fontWeight: '600' },
   separatorContainer: { flexDirection: 'row', alignItems: 'center', marginBottom: 32 },
   separatorLine: { flex: 1, height: 1, backgroundColor: '#E0E0E0' },
   separatorText: { marginHorizontal: 10, fontSize: 11, color: '#999', fontWeight: '500' },
   socialCircleContainer: { flexDirection: 'row', justifyContent: 'center', marginBottom: 16, gap: 32 },
-  socialCircle: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
-  socialCircleText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
+  socialCircle: { width: 50, height: 50, borderRadius: 25, justifyContent: 'center', alignItems: 'center', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2, backgroundColor: '#f5f5f5' },
   termsContainer: { marginTop: 20, alignItems: 'center' },
   termsText: { fontSize: 11, color: '#999', textAlign: 'center' },
   termsLink: { color: '#333', textDecorationLine: 'underline' },

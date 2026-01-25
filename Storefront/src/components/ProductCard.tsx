@@ -12,17 +12,17 @@ export type StorefrontProduct = {
 type ProductCardProps = {
   product: StorefrontProduct;
   onPress?: (productId: number) => void;
-  onAddToCart?: (product: StorefrontProduct) => void;
+  onOrder?: (product: StorefrontProduct) => void;
 };
 
-const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onAddToCart }) => {
+const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onOrder }) => {
   const handleClick = () => {
     onPress?.(product.id);
   };
 
-  const handleAddToCartClick = (e: React.MouseEvent) => {
+  const handleOrderClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    onAddToCart?.(product);
+    onOrder?.(product);
   };
 
   return (
@@ -36,36 +36,23 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onAddToCart
             <span className="placeholder-text">No Image</span>
           </div>
         )}
-        <div className="product-overlay">
-          <button
-            className="add-to-cart-overlay"
-            onClick={handleAddToCartClick}
-            type="button"
-          >
-            Add to Cart
-          </button>
-        </div>
       </div>
       
       <div className="product-info">
-        <h3 className="product-name">{product.name}</h3>
-        {product.description && (
-          <p className="product-description">
-            {product.description.length > 120
-              ? `${product.description.substring(0, 120)}...`
-              : product.description}
-          </p>
-        )}
-        <div className="product-footer">
-          <span className="product-price">{product.price.toFixed(2)} DZD</span>
-          <button
-            className="add-to-cart-button"
-            onClick={handleAddToCartClick}
-            type="button"
-          >
-            🛒
-          </button>
+        <div className="product-header">
+          <div className="product-details">
+            <span className="product-name">{product.name}</span>
+            <p className="product-id">ID: {product.id}</p>
+          </div>
+          <span className="product-price">{typeof product.price === 'number' ? product.price.toFixed(2) : parseFloat(product.price).toFixed(2)} DZD</span>
         </div>
+        <button
+          className="order-button"
+          onClick={handleOrderClick}
+          type="button"
+        >
+          Add to cart
+        </button>
       </div>
     </div>
   );

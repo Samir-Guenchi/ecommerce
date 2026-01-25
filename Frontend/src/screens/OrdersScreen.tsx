@@ -310,7 +310,7 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate }) => {
                   </View>
                   <Text style={styles.customerName}>{customerName}</Text>
                   <View style={styles.orderDetails}>
-                    <Text style={styles.orderTotal}>${order.totalAmount.toFixed(2)}</Text>
+                    <Text style={styles.orderTotal}>${(order.totalAmount != null ? Number(order.totalAmount) : 0).toFixed(2)}</Text>
                     <Text style={styles.orderDate}>{orderDate}</Text>
                   </View>
                 </TouchableOpacity>

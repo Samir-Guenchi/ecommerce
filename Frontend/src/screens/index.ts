@@ -1,5 +1,6 @@
 export { default as AccountTypeSelectorScreen } from './AccountTypeSelectorScreen';
 export { default as LoginSignUpScreen } from './LoginSignUpScreen';
+export { default as EmailVerificationScreen } from './EmailVerificationScreen';
 export { default as WelcomeScreen } from './WelcomeScreen';
 export { default as UserSettingsScreen } from './UserSettingsScreen';
 export { default as SellerRegistrationScreen } from './SellerRegistrationScreen';

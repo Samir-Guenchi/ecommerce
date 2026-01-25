@@ -43,11 +43,17 @@ export class Store {
   @Index()
   status: StoreStatus;
 
-  @Column({ type: 'varchar', length: 255, nullable: true })
-  location: string | null;
+  @Column({ type: 'varchar', length: 255 })
+  location: string;
 
   @Column({ type: 'text', nullable: true })
   description: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  metapixleid: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true })
+  tiktokpixleid: string | null;
 
   @Column({ type: 'integer', nullable: true, name: 'theme_id' })
   themeId: number | null;

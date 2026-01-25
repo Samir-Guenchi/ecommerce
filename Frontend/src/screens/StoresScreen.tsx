@@ -313,6 +313,12 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate }) => {
             <Text style={styles.emptyStateSubtext}>
               Create your first store to get started.
             </Text>
+            <TouchableOpacity
+              style={styles.createStoreButton}
+              onPress={() => navigate?.('addEditStore')}
+            >
+              <Text style={styles.createStoreButtonText}>Create Store</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <View style={styles.listSection}>
@@ -614,6 +620,44 @@ const styles = StyleSheet.create({
   navLabelActive: {
     color: '#000000',
     fontWeight: '700',
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 20,
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: '#666',
+    textAlign: 'center',
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  createStoreButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+    shadowColor: '#007AFF',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  createStoreButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

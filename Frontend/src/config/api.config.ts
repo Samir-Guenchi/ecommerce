@@ -26,7 +26,7 @@ import { Platform } from 'react-native';
 // - 10.232.243.165 (likely your main network - USE THIS ONE)
 //
 // IMPORTANT: Make sure your phone and computer are on the same WiFi network!
-const DEVICE_IP = '172.25.87.165'; // <-- SET YOUR COMPUTER'S IP HERE FOR PHYSICAL DEVICES
+const DEVICE_IP = '10.11.22.165'; // <-- SET YOUR COMPUTER'S IP HERE FOR PHYSICAL DEVICES
 
 // ============================================
 

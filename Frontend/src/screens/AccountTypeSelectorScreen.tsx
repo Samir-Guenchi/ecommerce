@@ -5,8 +5,11 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { profileAPI } from '../services/api.service';
 
 // Buyer Icon SVG Component
 const BuyerIcon = () => (
@@ -41,14 +44,26 @@ interface AccountTypeSelectorScreenProps {
 
 const AccountTypeSelectorScreen = ({ navigate }: AccountTypeSelectorScreenProps) => {
   const [selectedType, setSelectedType] = useState<'buyer' | 'seller'>('buyer');
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleContinue = () => {
-    if (navigate) {
+  const handleContinue = async () => {
+    if (!navigate) return;
+
+    setIsLoading(true);
+    try {
+      // Update account type in backend
+      await profileAPI.updateProfile({ accountType: selectedType });
+
+      // Navigate based on selection
       if (selectedType === 'seller') {
         navigate('sellerRegistration');
       } else {
         navigate('dashboard');
       }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update account type. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -105,8 +120,16 @@ const AccountTypeSelectorScreen = ({ navigate }: AccountTypeSelectorScreenProps)
       </View>
 
       {/* Continue Button */}
-      <TouchableOpacity style={styles.continueButton} onPress={handleContinue}>
-        <Text style={styles.continueButtonText}>Continue</Text>
+      <TouchableOpacity 
+        style={[styles.continueButton, isLoading && styles.continueButtonDisabled]} 
+        onPress={handleContinue}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <ActivityIndicator color="#FFFFFF" />
+        ) : (
+          <Text style={styles.continueButtonText}>Continue</Text>
+        )}
       </TouchableOpacity>
     </ScrollView>
   );
@@ -225,6 +248,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
+  },
+  continueButtonDisabled: {
+    opacity: 0.6,
   },
   continueButtonText: {
     color: '#FFFFFF',

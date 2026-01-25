@@ -2,7 +2,7 @@ import 'reflect-metadata';
 import { initializeDatabase, closeDatabase } from './config/database';
 import app from './app';
 
-const PORT = process.env.PORT || 3000;
+const PORT = parseInt(process.env.PORT || '3000', 10);
 
 async function main() {
   try {

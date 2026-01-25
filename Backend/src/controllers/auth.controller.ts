@@ -8,7 +8,7 @@ export class AuthController {
    * Check if admin exists
    * GET /api/auth/check-admin
    */
-  async checkAdmin(req: Request, res: Response): Promise<void> {
+  async checkAdmin(_req: Request, res: Response): Promise<void> {
     try {
       const userRepository = AppDataSource.getRepository(User);
       const userCount = await userRepository.count();
@@ -105,6 +105,35 @@ export class AuthController {
         ...result,
       });
     } catch (error: any) {
+      // Check if it's a verification needed error
+      if (error.message === 'Account not verified. Please verify your email first.') {
+        const user = await AppDataSource.getRepository(User).findOne({
+          where: { email: req.body.email },
+        });
+        
+        if (user) {
+          // Send new verification code
+          try {
+            await authService.resendVerificationCode(user.email);
+          } catch (resendError) {
+            console.error('Failed to resend verification code:', resendError);
+          }
+          
+          res.status(403).json({ 
+            error: 'Account not verified. Please verify your email first.',
+            needsVerification: true,
+            user: {
+              id: user.id,
+              email: user.email,
+              fullName: user.fullName,
+              accountType: user.accountType,
+              accountStatus: user.accountStatus,
+            }
+          });
+          return;
+        }
+      }
+      
       res.status(401).json({ error: error.message || 'Login failed' });
     }
   }

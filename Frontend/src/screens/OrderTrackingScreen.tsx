@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,6 +7,8 @@ import {
   ScrollView,
 } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
+import { orderAPI } from '../services/api.service';
+import algeriaCities from '../data/algeria_cities.json';
 
 // Back Arrow Icon
 const BackArrowIcon = () => (
@@ -34,64 +36,77 @@ interface OrderTrackingScreenProps {
   navigate?: (screenId: string) => void;
   orderId?: string;
   orderNumber?: string;
-  customerName?: string;
+  customerName: string;
   orderStatus?: string;
   // Mock data - in real app, this would come from API
   trackingHistory?: TrackingEvent[];
-  originWilaya?: string;
-  destinationWilaya?: string;
+  storeLocation: string;
+  destinationWilaya: string;
 }
+
+// Helper function to get wilaya code
+const getWilayaCode = (wilayaName: string): string => {
+  const city = algeriaCities.find((c: any) => c.wilaya_name === wilayaName);
+  return city ? city.wilaya_code : '00';
+};
 
 const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
   navigate,
   orderId = '#1234',
   orderNumber = '#1234',
-  customerName = 'John Doe',
+  customerName: initialCustomerName,
   orderStatus = 'Shipped',
-  trackingHistory,
-  originWilaya = 'Algiers',
-  destinationWilaya = 'Oran',
+  trackingHistory: initialTrackingHistory,
+  storeLocation: initialStoreLocation,
+  destinationWilaya: initialDestinationWilaya,
 }) => {
+  const [customerName, setCustomerName] = useState(initialCustomerName || '');
+  const [storeLocation, setStoreLocation] = useState(initialStoreLocation || '');
+  const [destinationWilaya, setDestinationWilaya] = useState(initialDestinationWilaya || '');
+  const [trackingHistory, setTrackingHistory] = useState<TrackingEvent[]>(initialTrackingHistory || []);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchOrderData = async () => {
+      if (orderNumber && orderNumber !== '#1234' && (!customerName || !storeLocation || !destinationWilaya)) {
+        setLoading(true);
+        try {
+          const { order } = await orderAPI.getOrderByOrderNumber(orderNumber);
+          setCustomerName(order.user.fullName);
+          setStoreLocation(order.store.location || 'Store Location');
+          setDestinationWilaya(order.shippingAddress.stateProvince);
+          if (order.trackingHistory) {
+            setTrackingHistory(order.trackingHistory);
+          }
+        } catch (error) {
+          console.error('Failed to fetch order:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+
+    fetchOrderData();
+  }, [orderNumber, customerName, storeLocation, destinationWilaya]);
   // Mock tracking history if not provided
-  const defaultTrackingHistory: TrackingEvent[] = trackingHistory || [
+  const defaultTrackingHistory: TrackingEvent[] = trackingHistory.length > 0 ? trackingHistory : [
     {
-      wilaya: 'Algiers',
-      wilayaCode: '16',
+      wilaya: storeLocation || 'Store Location',
+      wilayaCode: getWilayaCode(storeLocation || 'Algiers'),
       timestamp: '2024-01-15T08:00:00Z',
       status: 'arrived',
-      description: 'Package picked up from store',
+      description: 'Order placed',
     },
     {
-      wilaya: 'Algiers',
-      wilayaCode: '16',
-      timestamp: '2024-01-15T10:30:00Z',
-      status: 'departed',
-      description: 'Package left Algiers sorting facility',
-    },
-    {
-      wilaya: 'Blida',
-      wilayaCode: '9',
-      timestamp: '2024-01-15T14:20:00Z',
-      status: 'arrived',
-      description: 'Package arrived at Blida distribution center',
-    },
-    {
-      wilaya: 'Blida',
-      wilayaCode: '9',
-      timestamp: '2024-01-15T16:45:00Z',
-      status: 'departed',
-      description: 'Package in transit to Oran',
-    },
-    {
-      wilaya: 'Oran',
-      wilayaCode: '31',
-      timestamp: '2024-01-16T09:15:00Z',
-      status: 'arrived',
-      description: 'Package arrived at Oran delivery hub',
+      wilaya: destinationWilaya || 'Algiers',
+      wilayaCode: getWilayaCode(destinationWilaya || 'Algiers'),
+      timestamp: new Date().toISOString(),
+      status: 'in_transit',
+      description: 'In transit to destination',
     },
   ];
 
-  const [trackingData] = useState<TrackingEvent[]>(defaultTrackingHistory);
+  const trackingData = defaultTrackingHistory;
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);

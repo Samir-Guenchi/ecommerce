@@ -89,9 +89,33 @@ export class OrderController {
   }
 
   /**
-   * Update order status
-   * PATCH /api/orders/:id/status
+   * Get order by order number (public for tracking)
+   * GET /api/orders/track/:orderNumber
    */
+  async getOrderByOrderNumber(req: Request, res: Response): Promise<void> {
+    try {
+      const { orderNumber } = req.params;
+
+      if (!orderNumber) {
+        res.status(400).json({ error: 'Order number is required' });
+        return;
+      }
+
+      const order = await this.orderRepository.findOne({
+        where: { orderNumber },
+        relations: ['store', 'user', 'shippingAddress', 'orderItems'],
+      });
+
+      if (!order) {
+        res.status(404).json({ error: 'Order not found' });
+        return;
+      }
+
+      res.status(200).json({ order });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to get order' });
+    }
+  }
   async updateOrderStatus(req: AuthRequest, res: Response): Promise<void> {
     try {
       if (!req.user) {

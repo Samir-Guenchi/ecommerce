@@ -312,6 +312,7 @@ export const storeAPI = {
     name: string;
     location?: string;
     description?: string;
+    metapixleid?: string;
     themeId?: number;
     domain?: string;
     status?: string;
@@ -332,6 +333,7 @@ export const storeAPI = {
       name?: string;
       location?: string;
       description?: string;
+      metapixleid?: string;
       themeId?: number;
       domain?: string;
       status?: string;
@@ -403,6 +405,82 @@ export const orderAPI = {
     const response = await apiRequest(`/orders/${orderId}/status`, {
       method: 'PATCH',
       body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Get order by order number (public)
+   */
+  getOrderByOrderNumber: async (orderNumber: string): Promise<{ order: any }> => {
+    const response = await fetch(`${API_URL}/orders/track/${orderNumber}`, {
+      method: 'GET',
+      headers: { 'Content-Type': 'application/json' },
+    });
+    return handleResponse<{ order: any }>(response);
+  },
+};
+
+/**
+ * Event API
+ */
+export const eventAPI = {
+  /**
+   * Get events for a store
+   */
+  getEventsForStore: async (
+    storeId: number,
+    filters?: {
+      eventType?: string;
+      status?: string;
+      startDate?: string;
+      endDate?: string;
+      limit?: number;
+    }
+  ): Promise<{ events: Array<{
+    id: number;
+    eventType: string;
+    eventData: any;
+    status: string;
+    createdAt: string;
+  }> }> => {
+    const queryParams = new URLSearchParams();
+    if (filters?.eventType) queryParams.append('eventType', filters.eventType);
+    if (filters?.status) queryParams.append('status', filters.status);
+    if (filters?.startDate) queryParams.append('startDate', filters.startDate);
+    if (filters?.endDate) queryParams.append('endDate', filters.endDate);
+    if (filters?.limit) queryParams.append('limit', filters.limit.toString());
+
+    const response = await apiRequest(`/events/store/${storeId}?${queryParams.toString()}`, {
+      method: 'GET',
+    });
+    return handleResponse(response);
+  },
+
+  /**
+   * Get event statistics for a store
+   */
+  getEventStatsForStore: async (
+    storeId: number,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{ stats: {
+    total: number;
+    byType: Record<string, number>;
+    recent: Array<{
+      id: number;
+      eventType: string;
+      eventData: any;
+      status: string;
+      createdAt: string;
+    }>;
+  } }> => {
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append('startDate', startDate);
+    if (endDate) queryParams.append('endDate', endDate);
+
+    const response = await apiRequest(`/events/store/${storeId}/stats?${queryParams.toString()}`, {
+      method: 'GET',
     });
     return handleResponse(response);
   },
@@ -485,13 +563,5 @@ export const addressAPI = {
   createAddress: async (data: any): Promise<{ address: any; message: string }> => handleResponse(await apiRequest('/addresses', { method: 'POST', body: JSON.stringify(data) })),
   updateAddress: async (addressId: number, data: any): Promise<{ address: any; message: string }> => handleResponse(await apiRequest(`/addresses/${addressId}`, { method: 'PATCH', body: JSON.stringify(data) })),
   deleteAddress: async (addressId: number): Promise<{ message: string }> => handleResponse(await apiRequest(`/addresses/${addressId}`, { method: 'DELETE' })),
-};
-
-/**
- * Subscription API
- */
-export const subscriptionAPI = {
-  getCurrentSubscription: async (): Promise<{ subscription: any; plan: any }> => handleResponse(await apiRequest('/subscriptions/current')),
-  getPlans: async (): Promise<{ plans: any[] }> => handleResponse(await apiRequest('/subscriptions/plans')),
 };
 

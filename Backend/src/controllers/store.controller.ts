@@ -79,10 +79,15 @@ export class StoreController {
         return;
       }
 
-      const { name, location, description, themeId, domain, status } = req.body;
+      const { name, location, description, themeId, domain, status, metapixleid, tiktokpixleid } = req.body;
 
       if (!name) {
         res.status(400).json({ error: 'Store name is required' });
+        return;
+      }
+
+      if (!location) {
+        res.status(400).json({ error: 'Store location is required' });
         return;
       }
 
@@ -110,8 +115,10 @@ export class StoreController {
       const store = this.storeRepository.create({
         userId: req.user.id,
         name,
-        location: location || null,
+        location,
         description: description || null,
+        metapixleid: metapixleid || null,
+        tiktokpixleid: tiktokpixleid || null,
         themeId: themeId || null,
         domain: finalDomain,
         status: status || StoreStatus.DRAFT,
@@ -176,6 +183,8 @@ export class StoreController {
       if (req.body.name !== undefined) store.name = req.body.name;
       if (req.body.location !== undefined) store.location = req.body.location;
       if (req.body.description !== undefined) store.description = req.body.description;
+      if (req.body.metapixleid !== undefined) store.metapixleid = req.body.metapixleid;
+      if (req.body.tiktokpixleid !== undefined) store.tiktokpixleid = req.body.tiktokpixleid;
       if (req.body.themeId !== undefined) store.themeId = req.body.themeId;
       if (req.body.domain !== undefined) store.domain = req.body.domain;
       if (req.body.status !== undefined) store.status = req.body.status;

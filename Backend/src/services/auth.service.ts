@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { AppDataSource } from '../config/database';
-import { User, AccountStatus } from '../entities';
+import { User, AccountStatus, AccountType } from '../entities';
 import { emailService } from './email.service';
 
 export interface SignUpData {
@@ -67,7 +67,42 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new Error('Email already registered');
+      // If user exists but is not verified, resend verification code
+      if (existingUser.accountStatus !== AccountStatus.ACTIVE) {
+        // Generate new verification code
+        const verificationCode = this.generateVerificationCode({
+          email: existingUser.email,
+          fullName: existingUser.fullName || '',
+          createdAt: existingUser.createdAt.toISOString(),
+        });
+
+        // Store verification code (expires in 15 minutes)
+        const expiresAt = Date.now() + 15 * 60 * 1000;
+        verificationCodes.set(existingUser.email, {
+          code: verificationCode,
+          expiresAt,
+          userId: existingUser.id,
+        });
+
+        // Send verification email
+        try {
+          await emailService.sendVerificationCode(
+            existingUser.email,
+            verificationCode,
+            existingUser.fullName || 'User'
+          );
+        } catch (error) {
+          console.error('Failed to send verification email:', error);
+        }
+
+        return {
+          user: existingUser,
+          isAdmin: false,
+          needsVerification: true,
+        };
+      } else {
+        throw new Error('Email already registered');
+      }
     }
 
     // Hash password
@@ -81,7 +116,7 @@ export class AuthService {
       email: data.email,
       passwordHash,
       fullName: data.fullName,
-      accountType: 'buyer', // Default, can be changed later
+      accountType: AccountType.BUYER, // Default, can be changed later
       accountStatus: isAdmin ? AccountStatus.ACTIVE : AccountStatus.PENDING,
       languagePreference: 'en',
     });
@@ -285,9 +320,10 @@ export class AuthService {
       accountStatus: user.accountStatus,
     };
 
-    return jwt.sign(payload, process.env.JWT_SECRET || 'your-secret-key', {
-      expiresIn: process.env.JWT_EXPIRES_IN || '7d',
-    });
+    const secret = process.env.JWT_SECRET || 'your-secret-key';
+    const expiresIn: string = process.env.JWT_EXPIRES_IN || '7d';
+    
+    return jwt.sign(payload, secret, { expiresIn } as any);
   }
 
   /**
