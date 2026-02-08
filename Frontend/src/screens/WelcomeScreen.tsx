@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, StatusBar, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle, Defs, RadialGradient, Stop } from 'react-native-svg';
+import Svg, { Path, Circle, Polygon } from 'react-native-svg';
 import { getColors } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { Logo } from '../components/Logo';
@@ -81,20 +81,41 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
 
           {/* Logo */}
           <Animated.View style={[styles.logoSection, { transform: [{ translateY: floatY }] }]}>
-            <Logo size={110} variant="full" />
+            <Logo size={100} variant="full" />
           </Animated.View>
 
-          {/* Hero Section */}
+          {/* Hero Section - More Human */}
           <View style={styles.heroSection}>
             <Text style={[styles.heroTitle, { color: COLORS.text }]}>
-              Your Gateway to{'\n'}Algeria's Marketplace
+              من وهران إلى قسنطينة{'\n'}
+              <Text style={{ color: COLORS.secondary }}>سوقك الإلكتروني</Text>
             </Text>
             <Text style={[styles.heroSubtitle, { color: COLORS.textSecondary }]}>
-              Build, sell, and grow your business with Algeria's most trusted e-commerce platform
+              From Oran to Constantine, your digital marketplace
+            </Text>
+            <Text style={[styles.heroDescription, { color: COLORS.textMuted }]}>
+              Join thousands of Algerian entrepreneurs building their dreams online
             </Text>
           </View>
 
-          {/* Feature Cards */}
+          {/* Algerian Touch - Community Stats */}
+          <View style={[styles.communityCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+            <View style={styles.communityHeader}>
+              <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+                <Circle cx="9" cy="7" r="4" stroke={COLORS.primary} strokeWidth="2" />
+                <Path d="M3 21V19C3 16.7909 4.79086 15 7 15H11C13.2091 15 15 16.7909 15 19V21" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" />
+                <Path d="M16 11L18 13L22 9" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+              <Text style={[styles.communityTitle, { color: COLORS.text }]}>
+                Growing Together
+              </Text>
+            </View>
+            <Text style={[styles.communityText, { color: COLORS.textSecondary }]}>
+              Real Algerian sellers, from Algiers to Tamanrasset, building successful businesses with Algerie Poste
+            </Text>
+          </View>
+
+          {/* Features - Algerian Context */}
           <View style={styles.featuresSection}>
             <View style={[styles.featureCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
               <View style={[styles.featureIcon, { backgroundColor: COLORS.primary + '15' }]}>
@@ -104,32 +125,54 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                   <Path d="M2 12L12 17L22 12" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </View>
-              <Text style={[styles.featureTitle, { color: COLORS.text }]}>Nationwide Delivery</Text>
-              <Text style={[styles.featureDesc, { color: COLORS.textMuted }]}>Reach customers across all 58 wilayas with reliable shipping</Text>
+              <Text style={[styles.featureTitle, { color: COLORS.text }]}>كل الولايات</Text>
+              <Text style={[styles.featureDesc, { color: COLORS.textMuted }]}>
+                Deliver to all 58 wilayas - from Adrar to Tizi Ouzou
+              </Text>
             </View>
 
             <View style={[styles.featureCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
               <View style={[styles.featureIcon, { backgroundColor: COLORS.secondary + '15' }]}>
                 <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-                  <Path d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M9 12L11 14L15 10" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <Circle cx="12" cy="12" r="10" stroke={COLORS.secondary} strokeWidth="2" />
+                  <Path d="M12 6V12L16 14" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" />
                 </Svg>
               </View>
-              <Text style={[styles.featureTitle, { color: COLORS.text }]}>Secure Payments</Text>
-              <Text style={[styles.featureDesc, { color: COLORS.textMuted }]}>Bank-level encryption and trusted payment methods</Text>
+              <Text style={[styles.featureTitle, { color: COLORS.text }]}>توصيل سريع</Text>
+              <Text style={[styles.featureDesc, { color: COLORS.textMuted }]}>
+                Fast delivery with trusted Algerian couriers
+              </Text>
             </View>
 
             <View style={[styles.featureCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
               <View style={[styles.featureIcon, { backgroundColor: COLORS.success + '15' }]}>
                 <Svg width={28} height={28} viewBox="0 0 24 24" fill="none">
-                  <Path d="M3 3H21C21.5523 3 22 3.44772 22 4V20C22 20.5523 21.5523 21 21 21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3Z" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M2 9H22" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M7 15H7.01" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <Path d="M11 15H13" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M20 21V19C20 16.7909 18.2091 15 16 15H8C5.79086 15 4 16.7909 4 19V21" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <Circle cx="12" cy="7" r="4" stroke={COLORS.success} strokeWidth="2" />
                 </Svg>
               </View>
-              <Text style={[styles.featureTitle, { color: COLORS.text }]}>Easy Setup</Text>
-              <Text style={[styles.featureDesc, { color: COLORS.textMuted }]}>Launch your store in minutes with our intuitive tools</Text>
+              <Text style={[styles.featureTitle, { color: COLORS.text }]}>دعم محلي</Text>
+              <Text style={[styles.featureDesc, { color: COLORS.textMuted }]}>
+                Support in Arabic, French, and English
+              </Text>
+            </View>
+          </View>
+
+          {/* Trust Badge - Algerian Style */}
+          <View style={[styles.trustBadge, { backgroundColor: COLORS.surfaceHighlight, borderColor: COLORS.border }]}>
+            <View style={styles.trustRow}>
+              <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                <Path d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                <Path d="M9 12L11 14L15 10" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </Svg>
+              <View style={{ flex: 1, marginLeft: 12 }}>
+                <Text style={[styles.trustTitle, { color: COLORS.text }]}>
+                  Trusted by Algerian Businesses
+                </Text>
+                <Text style={[styles.trustDesc, { color: COLORS.textMuted }]}>
+                  Official Algerie Poste platform - secure and reliable
+                </Text>
+              </View>
             </View>
           </View>
 
@@ -146,10 +189,8 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 end={{ x: 1, y: 0 }}
                 style={styles.buttonGradient}
               >
-                <Text style={styles.primaryButtonText}>Get Started</Text>
-                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                  <Path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                </Svg>
+                <Text style={styles.primaryButtonText}>ابدأ البيع الآن</Text>
+                <Text style={styles.primaryButtonSubtext}>Start Selling</Text>
               </LinearGradient>
             </TouchableOpacity>
 
@@ -158,11 +199,13 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
               onPress={() => handleNavigation('login')}
               activeOpacity={0.8}
             >
-              <Text style={[styles.secondaryButtonText, { color: COLORS.text }]}>Sign In</Text>
+              <Text style={[styles.secondaryButtonText, { color: COLORS.text }]}>
+                تسجيل الدخول • Sign In
+              </Text>
             </TouchableOpacity>
 
             <Text style={[styles.termsText, { color: COLORS.textMuted }]}>
-              By continuing, you agree to our Terms & Privacy Policy
+              🇩🇿 Made for Algeria, by Algerians
             </Text>
           </View>
 
@@ -177,22 +220,145 @@ const styles = StyleSheet.create({
   splashContainer: { ...StyleSheet.absoluteFillObject, justifyContent: 'center', alignItems: 'center' },
   scrollView: { flex: 1 },
   content: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 48, paddingTop: 60 },
-  logoSection: { alignItems: 'center', marginBottom: 32 },
-  heroSection: { alignItems: 'center', marginBottom: 40 },
-  heroTitle: { fontSize: 34, fontWeight: '800', textAlign: 'center', lineHeight: 42, marginBottom: 16, letterSpacing: -0.5 },
-  heroSubtitle: { fontSize: 16, fontWeight: '500', textAlign: 'center', lineHeight: 24, paddingHorizontal: 8 },
-  featuresSection: { gap: 16, marginBottom: 40 },
-  featureCard: { borderRadius: 20, padding: 24, borderWidth: 1 },
-  featureIcon: { width: 56, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
-  featureTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8 },
-  featureDesc: { fontSize: 14, lineHeight: 21 },
+  logoSection: { alignItems: 'center', marginBottom: 24 },
+  
+  // Hero Section
+  heroSection: { alignItems: 'center', marginBottom: 32 },
+  heroTitle: { 
+    fontSize: 32, 
+    fontWeight: '800', 
+    textAlign: 'center', 
+    lineHeight: 42, 
+    marginBottom: 12, 
+    letterSpacing: -0.5 
+  },
+  heroSubtitle: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    textAlign: 'center', 
+    lineHeight: 24, 
+    marginBottom: 8 
+  },
+  heroDescription: { 
+    fontSize: 14, 
+    fontWeight: '500', 
+    textAlign: 'center', 
+    lineHeight: 21, 
+    paddingHorizontal: 16 
+  },
+  
+  // Community Card
+  communityCard: { 
+    borderRadius: 20, 
+    padding: 20, 
+    marginBottom: 24, 
+    borderWidth: 1 
+  },
+  communityHeader: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    marginBottom: 12, 
+    gap: 12 
+  },
+  communityTitle: { 
+    fontSize: 18, 
+    fontWeight: '700' 
+  },
+  communityText: { 
+    fontSize: 14, 
+    lineHeight: 22 
+  },
+  
+  // Features
+  featuresSection: { gap: 16, marginBottom: 24 },
+  featureCard: { 
+    borderRadius: 20, 
+    padding: 20, 
+    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16
+  },
+  featureIcon: { 
+    width: 56, 
+    height: 56, 
+    borderRadius: 16, 
+    justifyContent: 'center', 
+    alignItems: 'center' 
+  },
+  featureTitle: { 
+    fontSize: 16, 
+    fontWeight: '700', 
+    marginBottom: 4,
+    flex: 1
+  },
+  featureDesc: { 
+    fontSize: 13, 
+    lineHeight: 19,
+    flex: 1
+  },
+  
+  // Trust Badge
+  trustBadge: { 
+    borderRadius: 16, 
+    padding: 18, 
+    marginBottom: 32, 
+    borderWidth: 1 
+  },
+  trustRow: { 
+    flexDirection: 'row', 
+    alignItems: 'center' 
+  },
+  trustTitle: { 
+    fontSize: 15, 
+    fontWeight: '700', 
+    marginBottom: 4 
+  },
+  trustDesc: { 
+    fontSize: 13, 
+    lineHeight: 19 
+  },
+  
+  // CTA
   ctaSection: { gap: 14 },
-  primaryButton: { borderRadius: 16, overflow: 'hidden' },
-  buttonGradient: { flexDirection: 'row', paddingVertical: 18, alignItems: 'center', justifyContent: 'center', gap: 8 },
-  primaryButtonText: { fontSize: 17, fontWeight: '700', color: '#FFFFFF', letterSpacing: 0.3 },
-  secondaryButton: { borderRadius: 16, paddingVertical: 18, alignItems: 'center', borderWidth: 2 },
-  secondaryButtonText: { fontSize: 17, fontWeight: '600' },
-  termsText: { fontSize: 12, textAlign: 'center', marginTop: 8, lineHeight: 18 },
+  primaryButton: { 
+    borderRadius: 16, 
+    overflow: 'hidden' 
+  },
+  buttonGradient: { 
+    paddingVertical: 20, 
+    alignItems: 'center', 
+    justifyContent: 'center' 
+  },
+  primaryButtonText: { 
+    fontSize: 20, 
+    fontWeight: '800', 
+    color: '#FFFFFF', 
+    letterSpacing: 0.3,
+    marginBottom: 2
+  },
+  primaryButtonSubtext: { 
+    fontSize: 13, 
+    fontWeight: '600', 
+    color: 'rgba(255,255,255,0.9)' 
+  },
+  secondaryButton: { 
+    borderRadius: 16, 
+    paddingVertical: 18, 
+    alignItems: 'center', 
+    borderWidth: 2 
+  },
+  secondaryButtonText: { 
+    fontSize: 16, 
+    fontWeight: '700' 
+  },
+  termsText: { 
+    fontSize: 13, 
+    textAlign: 'center', 
+    marginTop: 8, 
+    lineHeight: 20,
+    fontWeight: '600'
+  },
 });
 
 export default WelcomeScreen;
