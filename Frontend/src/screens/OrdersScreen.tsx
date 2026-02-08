@@ -54,6 +54,45 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
   const [refreshing, setRefreshing] = useState(false);
   const { message, showSuccess, showError, showInfo, clear } = useStatusMessage();
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: COLORS.background },
+    content: { padding: SPACING.md, paddingTop: 48, paddingBottom: 110 },
+    loadingContainer: { justifyContent: 'center', alignItems: 'center' },
+    loadingText: { marginTop: 12, fontSize: 14, color: COLORS.textSecondary },
+    rowReverse: { flexDirection: 'row-reverse' as any },
+    textRight: { textAlign: 'right' as any },
+
+    /* Header */
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg },
+    title: { fontSize: 26, fontWeight: '800', color: COLORS.text },
+    subtitle: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+    exportBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, gap: 6, ...SHADOWS.medium },
+    exportBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+
+    /* Summary */
+    summaryRow: { flexDirection: 'row', backgroundColor: COLORS.surface, borderRadius: 16, marginBottom: SPACING.md, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border },
+    summaryItem: { flex: 1, alignItems: 'center', paddingVertical: 16 },
+    summaryBorder: { borderLeftWidth: 1, borderLeftColor: COLORS.border },
+    summaryValue: { fontSize: 22, fontWeight: '800', color: COLORS.text },
+    summaryLabel: { fontSize: 11, color: COLORS.textMuted, marginTop: 4, fontWeight: '600' },
+
+    /* Empty */
+    emptyState: { padding: 40, alignItems: 'center' },
+    emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 8 },
+    emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22 },
+
+    /* Order card */
+    orderCard: { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
+    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+    orderNumber: { fontSize: 15, fontWeight: '800', color: COLORS.text },
+    badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+    badgeText: { fontSize: 11, fontWeight: '700' },
+    customerName: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 12, fontWeight: '600' },
+    cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    orderTotal: { fontSize: 18, fontWeight: '800', color: COLORS.primary },
+    orderDate: { fontSize: 12, color: COLORS.textMuted, fontWeight: '600' },
+  });
+
   const fetchOrders = async () => {
     try {
       setLoading(true);
