@@ -78,9 +78,9 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
   const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -12] });
 
   const testimonials = [
-    { name: 'Ahmed B.', city: 'Oran', text: 'بفضل هذا التطبيق، زادت مبيعاتي 300٪ في 3 أشهر', sales: '+300%' },
-    { name: 'Fatima K.', city: 'Algiers', text: 'Simple, rapide et efficace. Mes clients adorent!', sales: '500+ orders' },
-    { name: 'Karim M.', city: 'Constantine', text: 'Best decision for my business. Professional support!', sales: '50K DA/month' },
+    { name: 'Ahmed B.', city: 'Oran', text: 'Sales tripled in 3 months. Simple and effective.', sales: '+300%' },
+    { name: 'Fatima K.', city: 'Algiers', text: 'My customers love the fast delivery. Highly recommend.', sales: '500+ orders' },
+    { name: 'Karim M.', city: 'Constantine', text: 'Best platform for Algerian sellers. Great support team.', sales: '50K DA/mo' },
   ];
 
   return (
@@ -128,25 +128,22 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
             <Logo size={90} variant="full" />
           </Animated.View>
 
-          {/* Hero Section - Expert Level */}
+          {/* Hero Section */}
           <View style={styles.heroSection}>
             <View style={[styles.badge, { borderColor: COLORS.secondary, backgroundColor: COLORS.secondaryMuted }]}>
-              <Text style={[styles.badgeText, { color: COLORS.secondary }]}>🇩🇿 Official Algerie Poste Platform</Text>
+              <Text style={[styles.badgeText, { color: COLORS.secondary }]}>🇩🇿 Algerie Poste Official</Text>
             </View>
             
             <Text style={[styles.heroTitle, { color: COLORS.text }]}>
-              من <Text style={{ color: COLORS.primary }}>وهران</Text> إلى{' '}
-              <Text style={{ color: COLORS.secondary }}>قسنطينة</Text>
+              Your Business,{'\n'}
+              <Text style={{ color: COLORS.primary }}>All Algeria</Text>
             </Text>
-            <Text style={[styles.heroSubtitle, { color: COLORS.text }]}>
-              Your Store, All 58 Wilayas
-            </Text>
-            <Text style={[styles.heroDescription, { color: COLORS.textSecondary }]}>
-              Join 10,000+ Algerian entrepreneurs who chose to grow with us
+            <Text style={[styles.heroSubtitle, { color: COLORS.textSecondary }]}>
+              Sell across 58 wilayas with Algeria's trusted postal service
             </Text>
           </View>
 
-          {/* Social Proof - Testimonial Carousel */}
+          {/* Testimonials */}
           <View style={[styles.testimonialCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
             <View style={styles.testimonialHeader}>
               <View style={styles.starsContainer}>
@@ -155,21 +152,16 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 ))}
               </View>
               <Text style={[styles.testimonialMeta, { color: COLORS.textMuted }]}>
-                Real seller from {testimonials[currentTestimonial].city}
+                {testimonials[currentTestimonial].city}
               </Text>
             </View>
             <Text style={[styles.testimonialText, { color: COLORS.text }]}>
-              "{testimonials[currentTestimonial].text}"
+              {testimonials[currentTestimonial].text}
             </Text>
             <View style={styles.testimonialFooter}>
-              <View>
-                <Text style={[styles.testimonialName, { color: COLORS.text }]}>
-                  {testimonials[currentTestimonial].name}
-                </Text>
-                <Text style={[styles.testimonialCity, { color: COLORS.textMuted }]}>
-                  {testimonials[currentTestimonial].city}
-                </Text>
-              </View>
+              <Text style={[styles.testimonialName, { color: COLORS.text }]}>
+                {testimonials[currentTestimonial].name}
+              </Text>
               <View style={[styles.salesBadge, { backgroundColor: COLORS.success + '20' }]}>
                 <Text style={[styles.salesText, { color: COLORS.success }]}>
                   {testimonials[currentTestimonial].sales}
@@ -205,7 +197,7 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 </View>
                 <Text style={[styles.valueTitle, { color: COLORS.text }]}>58 Wilayas</Text>
                 <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
-                  Adrar → Tlemcen{'\n'}Complete coverage
+                  Complete coverage
                 </Text>
               </LinearGradient>
             </View>
@@ -221,9 +213,9 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                     <Path d="M12 6V12L16 14" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
                   </Svg>
                 </View>
-                <Text style={[styles.valueTitle, { color: COLORS.text }]}>24-72h</Text>
+                <Text style={[styles.valueTitle, { color: COLORS.text }]}>Fast Delivery</Text>
                 <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
-                  Fast delivery{'\n'}Trusted couriers
+                  24-72 hours
                 </Text>
               </LinearGradient>
             </View>
@@ -239,9 +231,9 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                     <Path d="M9 12L11 14L15 10" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </Svg>
                 </View>
-                <Text style={[styles.valueTitle, { color: COLORS.text }]}>100% Secure</Text>
+                <Text style={[styles.valueTitle, { color: COLORS.text }]}>Secure</Text>
                 <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
-                  Bank-level{'\n'}encryption
+                  Bank-level security
                 </Text>
               </LinearGradient>
             </View>
@@ -257,15 +249,15 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                     <Path d="M2 12H22M12 2C14.5 4.74 16 8.29 16 12C16 15.71 14.5 19.26 12 22C9.5 19.26 8 15.71 8 12C8 8.29 9.5 4.74 12 2Z" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                   </Svg>
                 </View>
-                <Text style={[styles.valueTitle, { color: COLORS.text }]}>AR/FR/EN</Text>
+                <Text style={[styles.valueTitle, { color: COLORS.text }]}>3 Languages</Text>
                 <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
-                  Local support{'\n'}3 languages
+                  AR • FR • EN
                 </Text>
               </LinearGradient>
             </View>
           </View>
 
-          {/* Trust Signals */}
+          {/* Trust */}
           <View style={[styles.trustSection, { backgroundColor: COLORS.surfaceHighlight, borderColor: COLORS.border }]}>
             <View style={styles.trustRow}>
               <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
@@ -273,7 +265,7 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 <Path d="M22 4L12 14.01L9 11.01" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
               <Text style={[styles.trustText, { color: COLORS.textSecondary }]}>
-                10,000+ active sellers
+                10,000+ sellers
               </Text>
             </View>
             <View style={styles.trustRow}>
@@ -282,7 +274,7 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 <Path d="M22 4L12 14.01L9 11.01" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
               <Text style={[styles.trustText, { color: COLORS.textSecondary }]}>
-                Official Algerie Poste partner
+                Official partner
               </Text>
             </View>
             <View style={styles.trustRow}>
@@ -291,12 +283,12 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 <Path d="M22 4L12 14.01L9 11.01" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
               <Text style={[styles.trustText, { color: COLORS.textSecondary }]}>
-                Free setup & training
+                Free setup
               </Text>
             </View>
           </View>
 
-          {/* CTA Conversion Design */}
+          {/* CTA */}
           <View style={styles.ctaSection}>
             <Animated.View style={{ transform: [{ scale: pulse }] }}>
               <TouchableOpacity
@@ -311,12 +303,9 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                   style={styles.buttonGradient}
                 >
                   <View style={styles.buttonContent}>
-                    <View>
-                      <Text style={styles.primaryButtonText}>ابدأ البيع الآن</Text>
-                      <Text style={styles.primaryButtonSubtext}>Start Selling Today • Free</Text>
-                    </View>
-                    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                      <Path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#FFFFFF" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                    <Text style={styles.primaryButtonText}>Start Selling</Text>
+                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                      <Path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     </Svg>
                   </View>
                 </LinearGradient>
@@ -329,15 +318,12 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
               activeOpacity={0.8}
             >
               <Text style={[styles.secondaryButtonText, { color: COLORS.text }]}>
-                تسجيل الدخول • Sign In
+                Sign In
               </Text>
             </TouchableOpacity>
 
             <Text style={[styles.footerText, { color: COLORS.textMuted }]}>
-              🇩🇿 Made in Algeria, for Algerians
-            </Text>
-            <Text style={[styles.termsText, { color: COLORS.textMuted }]}>
-              By continuing, you agree to our Terms & Privacy Policy
+              Made in Algeria 🇩🇿
             </Text>
           </View>
 
@@ -390,24 +376,19 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5 
   },
   heroTitle: { 
-    fontSize: 36, 
+    fontSize: 32, 
     fontWeight: '900', 
     textAlign: 'center', 
-    lineHeight: 44, 
-    marginBottom: 8, 
+    lineHeight: 40, 
+    marginBottom: 12, 
     letterSpacing: -0.5 
   },
   heroSubtitle: { 
-    fontSize: 20, 
-    fontWeight: '700', 
+    fontSize: 16, 
+    fontWeight: '600', 
     textAlign: 'center', 
-    marginBottom: 12 
-  },
-  heroDescription: { 
-    fontSize: 15, 
-    fontWeight: '500', 
-    textAlign: 'center', 
-    lineHeight: 22 
+    lineHeight: 24,
+    marginBottom: 8
   },
   
   // Testimonial
@@ -445,11 +426,7 @@ const styles = StyleSheet.create({
   testimonialName: { 
     fontSize: 15, 
     fontWeight: '700', 
-    marginBottom: 2 
-  },
-  testimonialCity: { 
-    fontSize: 13, 
-    fontWeight: '600' 
+    marginBottom: 0
   },
   salesBadge: { 
     paddingHorizontal: 12, 
@@ -540,21 +517,15 @@ const styles = StyleSheet.create({
   buttonContent: { 
     flexDirection: 'row', 
     alignItems: 'center', 
-    justifyContent: 'space-between',
+    justifyContent: 'center',
+    gap: 8,
     paddingVertical: 16,
     paddingHorizontal: 20
   },
   primaryButtonText: { 
-    fontSize: 22, 
-    fontWeight: '900', 
-    color: '#FFFFFF', 
-    letterSpacing: 0.3,
-    marginBottom: 2
-  },
-  primaryButtonSubtext: { 
-    fontSize: 13, 
-    fontWeight: '600', 
-    color: 'rgba(255,255,255,0.95)' 
+    fontSize: 18, 
+    fontWeight: '800', 
+    color: '#FFFFFF'
   },
   secondaryButton: { 
     borderRadius: 18, 
@@ -567,16 +538,10 @@ const styles = StyleSheet.create({
     fontWeight: '700' 
   },
   footerText: { 
-    fontSize: 14, 
+    fontSize: 13, 
     textAlign: 'center', 
-    marginTop: 12,
-    fontWeight: '700'
-  },
-  termsText: { 
-    fontSize: 12, 
-    textAlign: 'center', 
-    marginTop: 4,
-    fontWeight: '500'
+    marginTop: 16,
+    fontWeight: '600'
   },
 });
 

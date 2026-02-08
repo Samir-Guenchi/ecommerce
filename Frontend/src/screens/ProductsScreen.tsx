@@ -13,7 +13,8 @@ import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 import { confirmAction } from '../components/confirmAction';
 import { productAPI, storeAPI } from '../services/api.service';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { getColors, SPACING, SHADOWS } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import BottomNav, { BottomTabId } from './BottomNav';
 import BackHeader from '../components/BackHeader';
@@ -50,6 +51,8 @@ interface ProductsScreenProps {
 }
 
 const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBack }) => {
+  const { mode } = useTheme();
+  const COLORS = getColors(mode);
   const { t, isRTL } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -137,6 +140,53 @@ const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBa
     );
   }
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: COLORS.background },
+    content: { padding: SPACING.md, paddingTop: 48, paddingBottom: 110 },
+    loadingContainer: { justifyContent: 'center', alignItems: 'center' },
+    loadingText: { marginTop: 12, fontSize: 14, color: COLORS.textSecondary },
+    rowReverse: { flexDirection: 'row-reverse' as any },
+    textRight: { textAlign: 'right' as any },
+
+    /* Header */
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg },
+    title: { fontSize: 26, fontWeight: '800', color: COLORS.text },
+    subtitle: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+    addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, gap: 6, ...SHADOWS.medium },
+    addBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
+
+    /* Summary */
+    summaryRow: { flexDirection: 'row', backgroundColor: COLORS.surface, borderRadius: 16, marginBottom: SPACING.md, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border },
+    summaryItem: { flex: 1, alignItems: 'center', paddingVertical: 16 },
+    summaryItemBorder: { borderLeftWidth: 1, borderLeftColor: COLORS.border },
+    summaryValue: { fontSize: 22, fontWeight: '800', color: COLORS.text },
+    summaryLabel: { fontSize: 11, color: COLORS.textMuted, marginTop: 4, fontWeight: '600' },
+
+    /* Empty */
+    emptyState: { padding: 40, alignItems: 'center' },
+    emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 8 },
+    emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22 },
+
+    /* Product card */
+    productCard: { backgroundColor: COLORS.surface, borderRadius: 16, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border },
+    cardBody: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+    productImg: { width: 48, height: 48, borderRadius: 12, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+    productImgText: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
+    productInfo: { flex: 1, marginRight: 12 },
+    productName: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
+    productPrice: { fontSize: 15, color: COLORS.primary, fontWeight: '800' },
+    productMeta: { alignItems: 'flex-end', gap: 6 },
+    badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+    badgeText: { fontSize: 11, fontWeight: '700' },
+    stockText: { fontSize: 12, color: COLORS.textMuted, fontWeight: '600' },
+
+    /* Card actions */
+    cardActions: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: COLORS.border },
+    editBtn: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRightWidth: 1, borderRightColor: COLORS.border },
+    editBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+    deleteBtn: { paddingHorizontal: 24, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  });
+
   return (
     <View style={styles.container}>
       <ScrollView
@@ -152,7 +202,7 @@ const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBa
             <Text style={[styles.title, isRTL && styles.textRight]}>{t('nav_products')}</Text>
             <Text style={[styles.subtitle, isRTL && styles.textRight]}>{t('products_subtitle')}</Text>
           </View>
-          <TouchableOpacity style={styles.addBtn} onPress={handleAddProduct}>
+          <TouchableOpacity style={styles.addBtn} onPress={handleAddProduct} activeOpacity={0.8}>
             <PlusIcon />
             <Text style={styles.addBtnText}>{t('products_addProduct')}</Text>
           </TouchableOpacity>
@@ -236,51 +286,51 @@ const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBa
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: SPACING.md, paddingTop: 48, paddingBottom: 110 },
-  loadingContainer: { justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, fontSize: 14, color: COLORS.textSecondary },
-  rowReverse: { flexDirection: 'row-reverse' as any },
-  textRight: { textAlign: 'right' as any },
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: COLORS.background },
+    content: { padding: SPACING.md, paddingTop: 48, paddingBottom: 110 },
+    loadingContainer: { justifyContent: 'center', alignItems: 'center' },
+    loadingText: { marginTop: 12, fontSize: 14, color: COLORS.textSecondary },
+    rowReverse: { flexDirection: 'row-reverse' as any },
+    textRight: { textAlign: 'right' as any },
 
-  /* Header */
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg },
-  title: { fontSize: 26, fontWeight: '600', color: COLORS.text },
-  subtitle: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, gap: 6 },
-  addBtnText: { color: '#FFFFFF', fontWeight: '600', fontSize: 13 },
+    /* Header */
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg },
+    title: { fontSize: 26, fontWeight: '800', color: COLORS.text },
+    subtitle: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+    addBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, gap: 6, ...SHADOWS.medium },
+    addBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
 
-  /* Summary */
-  summaryRow: { flexDirection: 'row', backgroundColor: COLORS.surfaceHighlight, borderRadius: 12, marginBottom: SPACING.md, overflow: 'hidden' },
-  summaryItem: { flex: 1, alignItems: 'center', paddingVertical: 14 },
-  summaryItemBorder: { borderLeftWidth: 1, borderLeftColor: COLORS.borderLight },
-  summaryValue: { fontSize: 20, fontWeight: '600', color: COLORS.text },
-  summaryLabel: { fontSize: 11, color: COLORS.textSecondary, marginTop: 2 },
+    /* Summary */
+    summaryRow: { flexDirection: 'row', backgroundColor: COLORS.surface, borderRadius: 16, marginBottom: SPACING.md, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border },
+    summaryItem: { flex: 1, alignItems: 'center', paddingVertical: 16 },
+    summaryItemBorder: { borderLeftWidth: 1, borderLeftColor: COLORS.border },
+    summaryValue: { fontSize: 22, fontWeight: '800', color: COLORS.text },
+    summaryLabel: { fontSize: 11, color: COLORS.textMuted, marginTop: 4, fontWeight: '600' },
 
-  /* Empty */
-  emptyState: { padding: 40, alignItems: 'center' },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
-  emptySubtitle: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+    /* Empty */
+    emptyState: { padding: 40, alignItems: 'center' },
+    emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 8 },
+    emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22 },
 
-  /* Product card */
-  productCard: { backgroundColor: COLORS.surface, borderRadius: 12, marginBottom: 10, overflow: 'hidden' },
-  cardBody: { flexDirection: 'row', alignItems: 'center', padding: 14 },
-  productImg: { width: 44, height: 44, borderRadius: 10, backgroundColor: COLORS.primary + '20', justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  productImgText: { fontSize: 18, fontWeight: '700', color: COLORS.primary },
-  productInfo: { flex: 1, marginRight: 10 },
-  productName: { fontSize: 15, fontWeight: '600', color: COLORS.text, marginBottom: 2 },
-  productPrice: { fontSize: 14, color: COLORS.primary, fontWeight: '700' },
-  productMeta: { alignItems: 'flex-end', gap: 4 },
-  badge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10 },
-  badgeText: { fontSize: 11, fontWeight: '600' },
-  stockText: { fontSize: 11, color: COLORS.textSecondary },
+    /* Product card */
+    productCard: { backgroundColor: COLORS.surface, borderRadius: 16, marginBottom: 12, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border },
+    cardBody: { flexDirection: 'row', alignItems: 'center', padding: 16 },
+    productImg: { width: 48, height: 48, borderRadius: 12, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center', marginRight: 14 },
+    productImgText: { fontSize: 20, fontWeight: '800', color: COLORS.primary },
+    productInfo: { flex: 1, marginRight: 12 },
+    productName: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginBottom: 4 },
+    productPrice: { fontSize: 15, color: COLORS.primary, fontWeight: '800' },
+    productMeta: { alignItems: 'flex-end', gap: 6 },
+    badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+    badgeText: { fontSize: 11, fontWeight: '700' },
+    stockText: { fontSize: 12, color: COLORS.textMuted, fontWeight: '600' },
 
-  /* Card actions */
-  cardActions: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: COLORS.borderLight },
-  editBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRightWidth: 1, borderRightColor: COLORS.borderLight },
-  editBtnText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
-  deleteBtn: { paddingHorizontal: 20, paddingVertical: 10, alignItems: 'center', justifyContent: 'center' },
-});
+    /* Card actions */
+    cardActions: { flexDirection: 'row', borderTopWidth: 1, borderTopColor: COLORS.border },
+    editBtn: { flex: 1, paddingVertical: 12, alignItems: 'center', borderRightWidth: 1, borderRightColor: COLORS.border },
+    editBtnText: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
+    deleteBtn: { paddingHorizontal: 24, paddingVertical: 12, alignItems: 'center', justifyContent: 'center' },
+  });
 
 export default ProductsScreen;

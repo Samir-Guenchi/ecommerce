@@ -13,7 +13,8 @@ import { Svg, Path } from 'react-native-svg';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 import * as API from '../services/api.service';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { getColors, SPACING, SHADOWS } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import BottomNav, { BottomTabId } from './BottomNav';
 
@@ -45,6 +46,8 @@ interface OrdersScreenProps {
 }
 
 const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }) => {
+  const { mode } = useTheme();
+  const COLORS = getColors(mode);
   const { t, isRTL } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -207,43 +210,43 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  content: { padding: SPACING.md, paddingTop: 48, paddingBottom: 110 },
-  loadingContainer: { justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, fontSize: 14, color: COLORS.textSecondary },
-  rowReverse: { flexDirection: 'row-reverse' as any },
-  textRight: { textAlign: 'right' as any },
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: COLORS.background },
+    content: { padding: SPACING.md, paddingTop: 48, paddingBottom: 110 },
+    loadingContainer: { justifyContent: 'center', alignItems: 'center' },
+    loadingText: { marginTop: 12, fontSize: 14, color: COLORS.textSecondary },
+    rowReverse: { flexDirection: 'row-reverse' as any },
+    textRight: { textAlign: 'right' as any },
 
-  /* Header */
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg },
-  title: { fontSize: 26, fontWeight: '600', color: COLORS.text },
-  subtitle: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
-  exportBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, gap: 6 },
-  exportBtnText: { color: '#FFFFFF', fontWeight: '600', fontSize: 13 },
+    /* Header */
+    header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg },
+    title: { fontSize: 26, fontWeight: '800', color: COLORS.text },
+    subtitle: { fontSize: 13, color: COLORS.textSecondary, marginTop: 2 },
+    exportBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: COLORS.primary, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, gap: 6, ...SHADOWS.medium },
+    exportBtnText: { color: '#FFFFFF', fontWeight: '700', fontSize: 13 },
 
-  /* Summary */
-  summaryRow: { flexDirection: 'row', backgroundColor: COLORS.surface, borderRadius: 12, marginBottom: SPACING.md, overflow: 'hidden' },
-  summaryItem: { flex: 1, alignItems: 'center', paddingVertical: 14 },
-  summaryBorder: { borderLeftWidth: 1, borderLeftColor: COLORS.borderLight },
-  summaryValue: { fontSize: 20, fontWeight: '600', color: COLORS.text },
-  summaryLabel: { fontSize: 11, color: COLORS.textSecondary, marginTop: 2 },
+    /* Summary */
+    summaryRow: { flexDirection: 'row', backgroundColor: COLORS.surface, borderRadius: 16, marginBottom: SPACING.md, overflow: 'hidden', borderWidth: 1, borderColor: COLORS.border },
+    summaryItem: { flex: 1, alignItems: 'center', paddingVertical: 16 },
+    summaryBorder: { borderLeftWidth: 1, borderLeftColor: COLORS.border },
+    summaryValue: { fontSize: 22, fontWeight: '800', color: COLORS.text },
+    summaryLabel: { fontSize: 11, color: COLORS.textMuted, marginTop: 4, fontWeight: '600' },
 
-  /* Empty */
-  emptyState: { padding: 40, alignItems: 'center' },
-  emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
-  emptySubtitle: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+    /* Empty */
+    emptyState: { padding: 40, alignItems: 'center' },
+    emptyTitle: { fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 8 },
+    emptySubtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 22 },
 
-  /* Order card */
-  orderCard: { backgroundColor: COLORS.surface, borderRadius: 12, padding: 14, marginBottom: 10 },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  orderNumber: { fontSize: 14, fontWeight: '700', color: COLORS.text },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  badgeText: { fontSize: 11, fontWeight: '600' },
-  customerName: { fontSize: 13, color: COLORS.textSecondary, marginBottom: 10 },
-  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  orderTotal: { fontSize: 16, fontWeight: '800', color: COLORS.primary },
-  orderDate: { fontSize: 12, color: COLORS.textMuted },
-});
+    /* Order card */
+    orderCard: { backgroundColor: COLORS.surface, borderRadius: 16, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
+    cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+    orderNumber: { fontSize: 15, fontWeight: '800', color: COLORS.text },
+    badge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
+    badgeText: { fontSize: 11, fontWeight: '700' },
+    customerName: { fontSize: 14, color: COLORS.textSecondary, marginBottom: 12, fontWeight: '600' },
+    cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+    orderTotal: { fontSize: 18, fontWeight: '800', color: COLORS.primary },
+    orderDate: { fontSize: 12, color: COLORS.textMuted, fontWeight: '600' },
+  });
 
 export default OrdersScreen;
