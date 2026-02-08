@@ -1,74 +1,82 @@
-export const COLORS = {
+// Theme generator function
+export const getColors = (mode: 'light' | 'dark' = 'dark') => {
+  const isDark = mode === 'dark';
+  
+  return {
     // Official Algerie Poste Brand Colors
     // Based on the official logo: Blue (#1E3A8A) and Yellow (#FDB913)
     
-    // Backgrounds — Professional dark with blue undertones
-    background: '#0A0F1E',     // Deep navy background
-    surface: '#131B2E',        // Card surface
-    surfaceHighlight: '#1A2438', // Hover state
-    surfaceRaised: '#1F2A42',  // Elevated elements
+    // Backgrounds
+    background: isDark ? '#0A0F1E' : '#F8FAFC',
+    surface: isDark ? '#131B2E' : '#FFFFFF',
+    surfaceHighlight: isDark ? '#1A2438' : '#F1F5F9',
+    surfaceRaised: isDark ? '#1F2A42' : '#E2E8F0',
 
     // Primary — Algerie Poste Blue (from logo)
-    primary: '#1E3A8A',        // Official AP Blue
-    primaryLight: '#2563EB',   // Lighter blue for highlights
-    primaryDark: '#1E40AF',    // Darker blue for depth
-    primaryMuted: '#1E3A8A20', // 12% opacity
+    primary: '#1E3A8A',
+    primaryLight: '#2563EB',
+    primaryDark: '#1E40AF',
+    primaryMuted: isDark ? '#1E3A8A20' : '#1E3A8A15',
 
     // Secondary — Algerie Poste Yellow (from logo)
-    secondary: '#FDB913',      // Official AP Yellow/Gold
-    secondaryLight: '#FCD34D', // Lighter yellow
-    secondaryDark: '#F59E0B',  // Darker gold
-    secondaryMuted: '#FDB91320',
+    secondary: '#FDB913',
+    secondaryLight: '#FCD34D',
+    secondaryDark: '#F59E0B',
+    secondaryMuted: isDark ? '#FDB91320' : '#FDB91315',
 
-    // Accent — Complementary colors
-    accent: '#FDB913',         // Use AP Yellow as accent
-    accentLight: '#FCD34D',    // Light yellow
-    accentDark: '#F59E0B',     // Deep gold
+    // Accent
+    accent: '#FDB913',
+    accentLight: '#FCD34D',
+    accentDark: '#F59E0B',
 
-    // Tertiary — Supporting blue
-    tertiary: '#3B82F6',       // Bright blue for highlights
+    // Tertiary
+    tertiary: '#3B82F6',
     tertiaryLight: '#60A5FA',
 
-    // Gradients - Official AP colors
-    gradientStart: '#1E3A8A',  // AP Blue
-    gradientMid: '#2563EB',    // Mid Blue
-    gradientEnd: '#FDB913',    // AP Yellow
+    // Gradients
+    gradientStart: '#1E3A8A',
+    gradientMid: '#2563EB',
+    gradientEnd: '#FDB913',
 
-    // Text — High contrast for readability
-    text: '#FFFFFF',           // Pure white for primary text
-    textSecondary: '#CBD5E1',  // Light grey-blue
-    textMuted: '#64748B',      // Muted grey-blue
-    textDisabled: '#475569',   // Disabled state
+    // Text
+    text: isDark ? '#FFFFFF' : '#0F172A',
+    textSecondary: isDark ? '#CBD5E1' : '#475569',
+    textMuted: isDark ? '#64748B' : '#94A3B8',
+    textDisabled: isDark ? '#475569' : '#CBD5E1',
 
-    // Status — Clear & Professional
-    success: '#10B981',        // Green for success
-    error: '#EF4444',          // Red for errors
-    warning: '#FDB913',        // AP Yellow for warnings
-    info: '#3B82F6',           // Blue for info
+    // Status
+    success: '#10B981',
+    error: '#EF4444',
+    warning: '#FDB913',
+    info: '#3B82F6',
 
-    // Borders — Subtle with blue tint
-    border: '#1A2438',         // Subtle
-    borderLight: '#2A3B54',    // More visible
-    borderFocus: '#1E3A8A',    // Focus state (AP Blue)
+    // Borders
+    border: isDark ? '#1A2438' : '#E2E8F0',
+    borderLight: isDark ? '#2A3B54' : '#CBD5E1',
+    borderFocus: '#1E3A8A',
 
-    // Glass effects - Professional transparency
-    glass: 'rgba(19, 27, 46, 0.7)',
-    glassBorder: 'rgba(255, 255, 255, 0.08)',
-    glassHighlight: 'rgba(30, 58, 138, 0.15)',
+    // Glass effects
+    glass: isDark ? 'rgba(19, 27, 46, 0.7)' : 'rgba(255, 255, 255, 0.7)',
+    glassBorder: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+    glassHighlight: isDark ? 'rgba(30, 58, 138, 0.15)' : 'rgba(30, 58, 138, 0.08)',
 
     // Extra utility
-    overlay: 'rgba(10, 15, 30, 0.9)',
-    shimmer: '#2A3B54',
+    overlay: isDark ? 'rgba(10, 15, 30, 0.9)' : 'rgba(0, 0, 0, 0.5)',
+    shimmer: isDark ? '#2A3B54' : '#E2E8F0',
     
-    // Semantic colors for e-commerce
-    price: '#10B981',          // Green for prices
-    discount: '#EF4444',       // Red for discounts
-    badge: '#FDB913',          // AP Yellow for badges/premium
+    // Semantic colors
+    price: '#10B981',
+    discount: '#EF4444',
+    badge: '#FDB913',
     
-    // Official Algerie Poste brand colors (for reference)
-    apBlue: '#1E3A8A',         // Official blue from logo
-    apYellow: '#FDB913',       // Official yellow from logo
+    // Official brand colors
+    apBlue: '#1E3A8A',
+    apYellow: '#FDB913',
+  };
 };
+
+// Default dark theme (for backward compatibility)
+export const COLORS = getColors('dark');
 
 export const SPACING = {
     xs: 4,

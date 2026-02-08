@@ -20,6 +20,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from './src/theme';
 import { I18nProvider } from './src/i18n';
+import { ThemeProvider } from './src/theme/ThemeContext';
 
 import {
   AccountTypeSelectorScreen,
@@ -293,10 +294,14 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { has
 function App() {
   return (
     <SafeAreaProvider style={{ flex: 1 }}>
-      <ErrorBoundary>
-        <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
-        <RootNavigator />
-      </ErrorBoundary>
+      <ThemeProvider>
+        <I18nProvider>
+          <ErrorBoundary>
+            <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+            <RootNavigator />
+          </ErrorBoundary>
+        </I18nProvider>
+      </ThemeProvider>
     </SafeAreaProvider>
   );
 }
@@ -394,28 +399,24 @@ function RootNavigator() {
 
   if (!authChecked) {
     return (
-      <I18nProvider>
-        <SafeAreaView style={styles.safeArea}>
-          <View style={styles.viewerContainer}>
-            <View style={[styles.viewerScreen, { justifyContent: 'center', alignItems: 'center' }]}>
-              <Text>Loading...</Text>
-            </View>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.viewerContainer}>
+          <View style={[styles.viewerScreen, { justifyContent: 'center', alignItems: 'center' }]}>
+            <Text>Loading...</Text>
           </View>
-        </SafeAreaView>
-      </I18nProvider>
+        </View>
+      </SafeAreaView>
     );
   }
 
   return (
-    <I18nProvider>
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.viewerContainer}>
-          <View style={styles.viewerScreen}>
-            <ScreenComponent {...navigationProps} />
-          </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.viewerContainer}>
+        <View style={styles.viewerScreen}>
+          <ScreenComponent {...navigationProps} />
         </View>
-      </SafeAreaView>
-    </I18nProvider>
+      </View>
+    </SafeAreaView>
   );
 }
 

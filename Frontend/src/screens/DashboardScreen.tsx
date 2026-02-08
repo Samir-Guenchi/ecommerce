@@ -10,22 +10,29 @@ import {
   RefreshControl,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { dashboardAPI } from '../services/api.service';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { getColors, SPACING, SHADOWS } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import BottomNav, { BottomTabId } from './BottomNav';
 
-/*  Icons  */
-const BellIcon = () => (
+/* Icons */
+const SunIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path d="M18 8A6 6 0 006 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke={COLORS.textSecondary} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M13.73 21C13.55 21.3 13.3 21.55 13 21.73C12.69 21.9 12.35 22 12 22C11.65 22 11.31 21.9 11 21.73C10.7 21.55 10.45 21.3 10.27 21" stroke={COLORS.textSecondary} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <Circle cx="12" cy="12" r="5" stroke="#FDB913" strokeWidth="2" />
+    <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+const MoonIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
 const TrendIcon = ({ up, color }: { up: boolean; color: string }) => (
-  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
     {up ? (
       <>
         <Path d="M23 6L13.5 15.5L8.5 10.5L1 18" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -40,95 +47,93 @@ const TrendIcon = ({ up, color }: { up: boolean; color: string }) => (
   </Svg>
 );
 
-const ArrowRightIcon = () => (
-  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-    <Path d="M5 12H19M19 12L12 5M19 12L12 19" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </Svg>
-);
-
-/*  Bar Chart  */
-const BarChart = ({ data, dayLabels, trendPct }: { data: number[]; dayLabels: string[]; trendPct: number }) => {
-  const maxValue = Math.max(...data, 1);
-  const maxBarHeight = 100;
-
+/* Metric Card Component */
+const MetricCard = ({ title, value, change, icon, colors, COLORS }: any) => {
+  const isPositive = change >= 0;
   return (
-    <View>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: maxBarHeight + 28, marginTop: 12 }}>
-        {data.map((value, i) => {
-          const h = (value / maxValue) * maxBarHeight;
-          const best = value === Math.max(...data) && value > 0;
-          return (
-            <View key={i} style={{ alignItems: 'center', flex: 1, marginHorizontal: 3 }}>
-              {value > 0 && (
-                <Text style={{ fontSize: 9, color: best ? COLORS.primary : COLORS.textMuted, fontWeight: '600', marginBottom: 4 }}>
-                  {value}
-                </Text>
-              )}
-              <LinearGradient
-                colors={best ? [COLORS.primary, COLORS.primary + '40'] : [COLORS.borderLight, COLORS.border]}
-                style={{ width: 10, height: Math.max(h, 4), borderRadius: 5 }}
-              />
-              <Text style={{ marginTop: 6, fontSize: 9, color: best ? COLORS.text : COLORS.textMuted, fontWeight: best ? '600' : '400' }}>
-                {dayLabels[i] || ''}
-              </Text>
-            </View>
-          );
-        })}
+    <View style={[styles.metricCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+      <View style={styles.metricHeader}>
+        <View style={[styles.metricIconContainer, { backgroundColor: colors[0] + '15' }]}>
+          {icon}
+        </View>
+        <View style={[styles.changeBadge, { backgroundColor: isPositive ? COLORS.success + '15' : COLORS.error + '15' }]}>
+          <TrendIcon up={isPositive} color={isPositive ? COLORS.success : COLORS.error} />
+          <Text style={[styles.changeText, { color: isPositive ? COLORS.success : COLORS.error }]}>
+            {isPositive ? '+' : ''}{change.toFixed(1)}%
+          </Text>
+        </View>
       </View>
+      <Text style={[styles.metricValue, { color: COLORS.text }]}>{value}</Text>
+      <Text style={[styles.metricTitle, { color: COLORS.textMuted }]}>{title}</Text>
     </View>
   );
 };
 
-/*  Donut Legend  */
-const DonutStat = ({ label, count, color }: { label: string; count: number; color: string }) => (
-  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, marginRight: 8 }} />
-    <Text style={{ fontSize: 13, color: COLORS.textSecondary, flex: 1 }}>{label}</Text>
-    <Text style={{ fontSize: 13, color: COLORS.text, fontWeight: '600' }}>{count}</Text>
-  </View>
-);
-
-/*  Recent Order Row  */
-const OrderRow = ({ order, isRTL }: { order: any; isRTL: boolean }) => {
-  const sc = (s: string) => {
-    switch (s) {
-      case 'delivered': return { bg: COLORS.success + '15', text: COLORS.success };
-      case 'shipped': return { bg: COLORS.secondary + '15', text: COLORS.secondary };
-      case 'processing': return { bg: COLORS.warning + '15', text: COLORS.warning };
-      case 'cancelled': return { bg: COLORS.error + '15', text: COLORS.error };
-      default: return { bg: COLORS.border, text: COLORS.textSecondary };
-    }
-  };
-  const c = sc(order.status);
+/* Chart Component */
+const MiniChart = ({ data, color, COLORS }: any) => {
+  const maxValue = Math.max(...data, 1);
+  const barWidth = 8;
+  const gap = 6;
+  
   return (
-    <View style={[{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12 }, isRTL && { flexDirection: 'row-reverse' }]}>
-      <View style={{ width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.surfaceHighlight, justifyContent: 'center', alignItems: 'center', marginRight: isRTL ? 0 : 12, marginLeft: isRTL ? 12 : 0 }}>
-        <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.primary }}>
+    <View style={styles.chartContainer}>
+      {data.map((value: number, i: number) => {
+        const height = (value / maxValue) * 60;
+        return (
+          <View key={i} style={{ alignItems: 'center', marginRight: gap }}>
+            <View style={[styles.chartBar, { height: Math.max(height, 4), width: barWidth, backgroundColor: color }]} />
+          </View>
+        );
+      })}
+    </View>
+  );
+};
+
+/* Order Row */
+const OrderRow = ({ order, COLORS }: any) => {
+  const statusColors = {
+    delivered: { bg: COLORS.success + '15', text: COLORS.success },
+    shipped: { bg: COLORS.secondary + '15', text: COLORS.secondary },
+    processing: { bg: COLORS.info + '15', text: COLORS.info },
+    cancelled: { bg: COLORS.error + '15', text: COLORS.error },
+  };
+  const sc = statusColors[order.status as keyof typeof statusColors] || { bg: COLORS.border, text: COLORS.textMuted };
+  
+  return (
+    <View style={styles.orderRow}>
+      <View style={[styles.orderIcon, { backgroundColor: COLORS.surfaceHighlight }]}>
+        <Text style={[styles.orderIconText, { color: COLORS.primary }]}>
           {order.orderNumber?.slice(-2) || '#'}
         </Text>
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={[{ fontSize: 13, fontWeight: '600', color: COLORS.text }, isRTL && { textAlign: 'right' }]}>#{order.orderNumber}</Text>
-        <Text style={[{ fontSize: 11, color: COLORS.textMuted, marginTop: 2 }, isRTL && { textAlign: 'right' }]}>{new Date(order.orderDate).toLocaleDateString()}</Text>
+      <View style={styles.orderInfo}>
+        <Text style={[styles.orderNumber, { color: COLORS.text }]}>#{order.orderNumber}</Text>
+        <Text style={[styles.orderDate, { color: COLORS.textMuted }]}>
+          {new Date(order.orderDate).toLocaleDateString()}
+        </Text>
       </View>
-      <View style={{ alignItems: isRTL ? 'flex-start' : 'flex-end' }}>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: COLORS.text }}>${parseFloat(order.totalAmount || 0).toLocaleString()}</Text>
-        <View style={{ backgroundColor: c.bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 6, marginTop: 4 }}>
-          <Text style={{ fontSize: 10, fontWeight: '600', color: c.text, textTransform: 'capitalize' }}>{order.status}</Text>
+      <View style={styles.orderRight}>
+        <Text style={[styles.orderAmount, { color: COLORS.text }]}>
+          ${parseFloat(order.totalAmount || 0).toLocaleString()}
+        </Text>
+        <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
+          <Text style={[styles.statusText, { color: sc.text }]}>{order.status}</Text>
         </View>
       </View>
     </View>
   );
 };
 
-/*  Main  */
+/* Main Dashboard */
 interface DashboardScreenProps {
   navigate?: (screenId: string) => void;
   resetTo?: (screenId: string) => void;
 }
 
 const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
-  const { t, isRTL } = useTranslation();
+  const { mode, toggleTheme } = useTheme();
+  const COLORS = getColors(mode);
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -159,192 +164,181 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
 
   if (loading || !stats) {
     return (
-      <View style={[styles.outer, styles.center]}>
+      <View style={[styles.outer, styles.center, { backgroundColor: COLORS.background }]}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>{t('dashboard_loading')}</Text>
+        <Text style={[styles.loadingText, { color: COLORS.textMuted }]}>{t('dashboard_loading')}</Text>
       </View>
     );
   }
 
-  const trendUp = stats.revenueTrend >= 0;
-  const trendColor = trendUp ? COLORS.success : COLORS.error;
-
-  // Hero revenue card with professional gradient
-  const heroCardWrapper: ViewStyle = { 
-    marginBottom: SPACING.md, 
-    borderRadius: 20, 
-    overflow: 'hidden', 
-    ...SHADOWS.large,
-    borderWidth: 1,
-    borderColor: COLORS.borderLight,
-  };
-  
   return (
-    <View style={styles.outer}>
+    <View style={[styles.outer, { backgroundColor: COLORS.background }]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.primary} />}
       >
         <Animated.View style={{ opacity: fadeAnim }}>
+          
           {/* Header */}
-          <View style={[styles.header, isRTL && styles.rowReverse]}>
+          <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.greeting, isRTL && styles.textRight]}>{t('dashboard_welcome')}</Text>
-              <Text style={[styles.title, isRTL && styles.textRight]}>{t('dashboard_overview')}</Text>
+              <Text style={[styles.greeting, { color: COLORS.textMuted }]}>Welcome back</Text>
+              <Text style={[styles.title, { color: COLORS.text }]}>Dashboard</Text>
             </View>
-            <TouchableOpacity style={styles.bellBtn} onPress={() => navigate?.('notifications')} activeOpacity={0.6}>
-              <LinearGradient
-                colors={[COLORS.glass, COLORS.surfaceHighlight]}
-                style={styles.bellBtnGradient}
-              >
-                <BellIcon />
-                <View style={styles.bellDot} />
-              </LinearGradient>
+            <TouchableOpacity
+              style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+              onPress={toggleTheme}
+              activeOpacity={0.7}
+            >
+              {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
             </TouchableOpacity>
           </View>
 
-          {/* Revenue hero card with professional gradient */}
-          <View style={heroCardWrapper}>
+          {/* Revenue Hero Card */}
+          <View style={[styles.heroCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
             <LinearGradient
               colors={[COLORS.primary, COLORS.primaryLight, COLORS.secondary]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
-              style={styles.heroCard}
+              style={styles.heroGradient}
             >
-              <View style={[{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }, isRTL && styles.rowReverse]}>
-                <View>
-                  <Text style={[styles.heroLabel, isRTL && styles.textRight]}>{t('dashboard_revenue')}</Text>
-                  <Text style={[styles.heroValue, isRTL && styles.textRight]}>${stats.totalRevenue.toLocaleString()}</Text>
+              <View style={styles.heroContent}>
+                <Text style={styles.heroLabel}>Total Revenue</Text>
+                <Text style={styles.heroValue}>${stats.totalRevenue.toLocaleString()}</Text>
+                <View style={styles.heroMeta}>
+                  <View style={styles.heroMetaItem}>
+                    <Text style={styles.heroMetaLabel}>Orders</Text>
+                    <Text style={styles.heroMetaValue}>{stats.totalOrders}</Text>
+                  </View>
+                  <View style={styles.heroDivider} />
+                  <View style={styles.heroMetaItem}>
+                    <Text style={styles.heroMetaLabel}>Stores</Text>
+                    <Text style={styles.heroMetaValue}>{stats.totalStores}</Text>
+                  </View>
                 </View>
-                <View style={[styles.trendBadge, { backgroundColor: 'rgba(255,255,255,0.25)' }]}>
-                  <TrendIcon up={trendUp} color="#FFFFFF" />
-                  <Text style={{ color: '#FFFFFF', fontSize: 13, fontWeight: '800', marginLeft: 4 }}>
-                    {trendUp ? '+' : ''}{stats.revenueTrend.toFixed(1)}%
-                  </Text>
-                </View>
-              </View>
-              <View style={[styles.heroMeta, isRTL && styles.rowReverse]}>
-                <Text style={styles.heroMetaText}>{stats.totalOrders} {t('dashboard_orders').toLowerCase()}</Text>
-                <View style={styles.heroDivider} />
-                <Text style={styles.heroMetaText}>{stats.totalStores} {t('nav_stores').toLowerCase()}</Text>
               </View>
             </LinearGradient>
           </View>
 
-          {/* Quick metrics with professional cards */}
-          <View style={[styles.metricsRow, isRTL && styles.rowReverse]}>
-            {[
-              { value: stats.totalProducts, label: t('nav_products'), color: COLORS.primary },
-              { value: stats.activeProducts, label: t('dashboard_active'), color: COLORS.success },
-              { value: stats.lowStock || 0, label: t('dashboard_lowStock'), color: COLORS.warning },
-              { value: stats.outOfStock, label: t('dashboard_outOfStock'), color: COLORS.error },
-            ].map((m, i) => (
-              <View key={i} style={styles.metricChipWrapper}>
-                <LinearGradient
-                  colors={[COLORS.glass, COLORS.surfaceHighlight]}
-                  style={styles.metricChip}
-                >
-                  <Text style={[styles.metricValue, { color: m.color }]}>{m.value}</Text>
-                  <Text style={styles.metricLabel}>{m.label}</Text>
-                </LinearGradient>
-              </View>
-            ))}
+          {/* Metrics Grid */}
+          <View style={styles.metricsGrid}>
+            <MetricCard
+              title="Products"
+              value={stats.totalProducts}
+              change={stats.revenueTrend}
+              colors={[COLORS.primary]}
+              COLORS={COLORS}
+              icon={
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Rect x="3" y="3" width="7" height="7" rx="1" stroke={COLORS.primary} strokeWidth="2" />
+                  <Rect x="14" y="3" width="7" height="7" rx="1" stroke={COLORS.primary} strokeWidth="2" />
+                  <Rect x="14" y="14" width="7" height="7" rx="1" stroke={COLORS.primary} strokeWidth="2" />
+                  <Rect x="3" y="14" width="7" height="7" rx="1" stroke={COLORS.primary} strokeWidth="2" />
+                </Svg>
+              }
+            />
+            <MetricCard
+              title="Active"
+              value={stats.activeProducts}
+              change={5.2}
+              colors={[COLORS.success]}
+              COLORS={COLORS}
+              icon={
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Path d="M22 11.08V12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2C12.96 2 13.88 2.14 14.75 2.4" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" />
+                  <Path d="M22 4L12 14.01L9 11.01" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              }
+            />
+            <MetricCard
+              title="Low Stock"
+              value={stats.lowStock || 0}
+              change={-2.1}
+              colors={[COLORS.warning]}
+              COLORS={COLORS}
+              icon={
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Path d="M10.29 3.86L1.82 18C1.64 18.3 1.54 18.64 1.53 18.99C1.52 19.34 1.6 19.68 1.76 20C1.92 20.32 2.16 20.59 2.46 20.79C2.76 20.99 3.11 21.1 3.47 21.1H20.53C20.89 21.1 21.24 20.99 21.54 20.79C21.84 20.59 22.08 20.32 22.24 20C22.4 19.68 22.48 19.34 22.47 18.99C22.46 18.64 22.36 18.3 22.18 18L13.71 3.86C13.53 3.56 13.28 3.31 12.98 3.13C12.68 2.95 12.34 2.85 12 2.85C11.66 2.85 11.32 2.95 11.02 3.13C10.72 3.31 10.47 3.56 10.29 3.86Z" stroke={COLORS.warning} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M12 9V13" stroke={COLORS.warning} strokeWidth="2" strokeLinecap="round" />
+                  <Circle cx="12" cy="17" r="1" fill={COLORS.warning} />
+                </Svg>
+              }
+            />
+            <MetricCard
+              title="Out of Stock"
+              value={stats.outOfStock}
+              change={-8.3}
+              colors={[COLORS.error]}
+              COLORS={COLORS}
+              icon={
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Circle cx="12" cy="12" r="10" stroke={COLORS.error} strokeWidth="2" />
+                  <Path d="M15 9L9 15M9 9L15 15" stroke={COLORS.error} strokeWidth="2" strokeLinecap="round" />
+                </Svg>
+              }
+            />
           </View>
 
-          {/* Order Activity Chart */}
-          <LinearGradient
-            colors={[COLORS.glass, COLORS.surfaceHighlight]}
-            style={styles.section}
-          >
-            <View style={[styles.sectionHead, isRTL && styles.rowReverse]}>
-              <Text style={[styles.sectionTitle, isRTL && styles.textRight]}>{t('dashboard_orderActivity')}</Text>
-              <Text style={styles.sectionMeta}>{t('dashboard_weeklyTrend')}</Text>
+          {/* Weekly Activity */}
+          <View style={[styles.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+            <View style={styles.sectionHeader}>
+              <Text style={[styles.sectionTitle, { color: COLORS.text }]}>Weekly Activity</Text>
+              <Text style={[styles.sectionMeta, { color: COLORS.textMuted }]}>Last 7 days</Text>
             </View>
-            <BarChart
-              data={stats.weeklyTrend}
-              dayLabels={stats.dayLabels.map((d: string, i: number) => {
-                const dayKeys = ['dashboard_mon','dashboard_tue','dashboard_wed','dashboard_thu','dashboard_fri','dashboard_sat','dashboard_sun'];
-                return t(dayKeys[i] as any) || d;
-              })}
-              trendPct={stats.revenueTrend}
-            />
-          </LinearGradient>
-
-          {/* Inventory Status */}
-          <LinearGradient
-            colors={[COLORS.glass, COLORS.surfaceHighlight]}
-            style={styles.section}
-          >
-            <View style={[styles.sectionHead, isRTL && styles.rowReverse]}>
-              <Text style={[styles.sectionTitle, isRTL && styles.textRight]}>{t('dashboard_inventoryStatus')}</Text>
-            </View>
-            <View style={{ marginTop: 8 }}>
-              <DonutStat label={t('dashboard_active')} count={stats.activeProducts} color={COLORS.success} />
-              <DonutStat label={t('dashboard_lowStock')} count={stats.lowStock || 0} color={COLORS.warning} />
-              <DonutStat label={t('dashboard_outOfStock')} count={stats.outOfStock} color={COLORS.error} />
-            </View>
-            {/* Progress bar */}
-            <View style={styles.progressBar}>
-              {stats.totalProducts > 0 && (
-                <>
-                  <View style={[styles.progressSegment, { flex: stats.activeProducts, backgroundColor: COLORS.success, borderTopLeftRadius: 4, borderBottomLeftRadius: 4 }]} />
-                  <View style={[styles.progressSegment, { flex: Math.max(stats.lowStock || 0, 0.1), backgroundColor: COLORS.warning }]} />
-                  <View style={[styles.progressSegment, { flex: Math.max(stats.outOfStock, 0.1), backgroundColor: COLORS.error, borderTopRightRadius: 4, borderBottomRightRadius: 4 }]} />
-                </>
-              )}
-            </View>
-            <TouchableOpacity style={styles.linkBtn} onPress={() => navigate?.('products')} activeOpacity={0.6}>
-              <LinearGradient
-                colors={[COLORS.primary, COLORS.secondary]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.linkBtnGradient}
-              >
-                <Text style={styles.linkBtnText}>{t('dashboard_manageInventory')}</Text>
-                <ArrowRightIcon />
-              </LinearGradient>
-            </TouchableOpacity>
-          </LinearGradient>
+            <MiniChart data={stats.weeklyTrend} color={COLORS.primary} COLORS={COLORS} />
+          </View>
 
           {/* Recent Orders */}
           {stats.recentOrders?.length > 0 && (
-            <LinearGradient
-              colors={[COLORS.glass, COLORS.surfaceHighlight]}
-              style={styles.section}
-            >
-              <View style={[styles.sectionHead, isRTL && styles.rowReverse]}>
-                <Text style={[styles.sectionTitle, isRTL && styles.textRight]}>{t('dashboard_orders')}</Text>
-                <TouchableOpacity onPress={() => navigate?.('orders')} activeOpacity={0.6}>
-                  <Text style={styles.viewAllLink}>{t('common_viewAll') || 'View All'}</Text>
+            <View style={[styles.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+              <View style={styles.sectionHeader}>
+                <Text style={[styles.sectionTitle, { color: COLORS.text }]}>Recent Orders</Text>
+                <TouchableOpacity onPress={() => navigate?.('orders')} activeOpacity={0.7}>
+                  <Text style={[styles.viewAllLink, { color: COLORS.primary }]}>View All</Text>
                 </TouchableOpacity>
               </View>
-              {stats.recentOrders.map((order: any, i: number) => (
+              {stats.recentOrders.slice(0, 5).map((order: any, i: number) => (
                 <React.Fragment key={order.id}>
-                  <OrderRow order={order} isRTL={isRTL} />
-                  {i < stats.recentOrders.length - 1 && <View style={styles.divider} />}
+                  <OrderRow order={order} COLORS={COLORS} />
+                  {i < Math.min(stats.recentOrders.length, 5) - 1 && (
+                    <View style={[styles.divider, { backgroundColor: COLORS.border }]} />
+                  )}
                 </React.Fragment>
               ))}
-            </LinearGradient>
+            </View>
           )}
 
-          {/* Live Activity */}
-          <LinearGradient
-            colors={[COLORS.glass, COLORS.surfaceHighlight]}
-            style={styles.section}
-          >
-            <Text style={[styles.sectionTitle, isRTL && styles.textRight]}>{t('dashboard_liveActivity')}</Text>
-            <View style={{ marginTop: 12 }}>
-              <View style={[styles.actRow, isRTL && styles.rowReverse]}>
-                <View style={[styles.dot, { backgroundColor: COLORS.success }]} />
-                <Text style={[styles.actText, isRTL && styles.textRight]}>{t('dashboard_usersActive', { count: stats.totalStores })}</Text>
+          {/* Quick Actions */}
+          <View style={styles.actionsGrid}>
+            <TouchableOpacity
+              style={[styles.actionCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+              onPress={() => navigate?.('products')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: COLORS.primary + '15' }]}>
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Path d="M12 5V19M5 12H19" stroke={COLORS.primary} strokeWidth="2.5" strokeLinecap="round" />
+                </Svg>
               </View>
-              <View style={[styles.actRow, isRTL && styles.rowReverse]}>
-                <View style={[styles.dot, { backgroundColor: COLORS.primary }]} />
-                <Text style={[styles.actText, isRTL && styles.textRight]}>{t('dashboard_eventsLogged', { count: stats.eventsCount })}</Text>
+              <Text style={[styles.actionText, { color: COLORS.text }]}>Add Product</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.actionCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+              onPress={() => navigate?.('orders')}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.actionIcon, { backgroundColor: COLORS.secondary + '15' }]}>
+                <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                  <Path d="M9 11L12 14L22 4" stroke={COLORS.secondary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                  <Path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
               </View>
-            </View>
-          </LinearGradient>
+              <Text style={[styles.actionText, { color: COLORS.text }]}>View Orders</Text>
+            </TouchableOpacity>
+          </View>
+
         </Animated.View>
       </ScrollView>
       <BottomNav activeTab="dashboard" onTabPress={handleTab} />
@@ -353,60 +347,68 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
 };
 
 const styles = StyleSheet.create({
-  outer: { flex: 1, backgroundColor: COLORS.background },
+  outer: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, color: COLORS.textMuted, fontSize: 13 },
-  content: { padding: SPACING.md, paddingTop: 52, paddingBottom: 110 },
-  rowReverse: { flexDirection: 'row-reverse' as any },
-  textRight: { textAlign: 'right' as any },
-
+  loadingText: { marginTop: 12, fontSize: 14 },
+  content: { padding: 20, paddingTop: 60, paddingBottom: 110 },
+  
   // Header
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg },
-  greeting: { fontSize: 13, color: COLORS.textMuted, fontWeight: '600', marginBottom: 4, letterSpacing: 0.5 },
-  title: { fontSize: 28, fontWeight: '800', color: COLORS.text, letterSpacing: -0.5 },
-  bellBtn: { width: 48, height: 48, borderRadius: 14, overflow: 'hidden', ...SHADOWS.small },
-  bellBtnGradient: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: COLORS.glassBorder },
-  bellDot: { position: 'absolute', top: 12, right: 13, width: 8, height: 8, borderRadius: 4, backgroundColor: COLORS.error },
-
-  // Hero revenue card
-  heroCard: { borderRadius: 20, padding: 24 },
-  heroLabel: { fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: '700', textTransform: 'uppercase' as any, letterSpacing: 1.5, marginBottom: 8 },
-  heroValue: { fontSize: 38, fontWeight: '900', color: '#FFFFFF', letterSpacing: -1 },
-  trendBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 12 },
-  heroMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 20, paddingTop: 18, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.25)' },
-  heroMetaText: { fontSize: 14, color: 'rgba(255,255,255,0.95)', fontWeight: '700' },
-  heroDivider: { width: 4, height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.6)', marginHorizontal: 12 },
-
-  // Metrics
-  metricsRow: { flexDirection: 'row', gap: 10, marginBottom: SPACING.md },
-  metricChipWrapper: { flex: 1, borderRadius: 16, overflow: 'hidden' },
-  metricChip: { paddingVertical: 18, alignItems: 'center', borderWidth: 1, borderColor: COLORS.glassBorder, borderRadius: 16 },
-  metricValue: { fontSize: 22, fontWeight: '800', color: COLORS.text, marginBottom: 4 },
-  metricLabel: { fontSize: 9, color: COLORS.textMuted, fontWeight: '700', textTransform: 'uppercase' as any, letterSpacing: 0.5 },
-
-  // Sections
-  section: { borderRadius: 20, padding: SPACING.md + 2, marginBottom: SPACING.sm, borderWidth: 1, borderColor: COLORS.glassBorder },
-  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
-  sectionTitle: { fontSize: 17, fontWeight: '800', color: COLORS.text },
-  sectionMeta: { fontSize: 11, color: COLORS.textMuted, fontWeight: '600' },
-
-  // Progress bar
-  progressBar: { flexDirection: 'row', height: 8, borderRadius: 4, backgroundColor: COLORS.border, marginTop: 16, overflow: 'hidden' },
-  progressSegment: { height: 8 },
-
-  // Link button
-  linkBtn: { marginTop: 16, borderRadius: 12, overflow: 'hidden' },
-  linkBtnGradient: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12 },
-  linkBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 14, marginRight: 6 },
-  viewAllLink: { fontSize: 13, color: COLORS.primary, fontWeight: '800' },
-
-  // Divider
-  divider: { height: 1, backgroundColor: COLORS.border, marginHorizontal: 0 },
-
-  // Activity
-  actRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  dot: { width: 10, height: 10, borderRadius: 5, marginRight: 12 },
-  actText: { fontSize: 14, color: COLORS.textSecondary, fontWeight: '600' },
+  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  greeting: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
+  title: { fontSize: 32, fontWeight: '800', letterSpacing: -0.5 },
+  themeToggle: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
+  
+  // Hero Card
+  heroCard: { borderRadius: 24, overflow: 'hidden', marginBottom: 20, borderWidth: 1 },
+  heroGradient: { padding: 24 },
+  heroContent: {},
+  heroLabel: { fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 },
+  heroValue: { fontSize: 42, fontWeight: '900', color: '#FFFFFF', letterSpacing: -1, marginBottom: 20 },
+  heroMeta: { flexDirection: 'row', alignItems: 'center', paddingTop: 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.25)' },
+  heroMetaItem: { flex: 1 },
+  heroMetaLabel: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '600', marginBottom: 4 },
+  heroMetaValue: { fontSize: 20, color: '#FFFFFF', fontWeight: '800' },
+  heroDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.3)', marginHorizontal: 16 },
+  
+  // Metrics Grid
+  metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
+  metricCard: { width: '48%', borderRadius: 20, padding: 18, borderWidth: 1 },
+  metricHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
+  metricIconContainer: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  changeBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, gap: 4 },
+  changeText: { fontSize: 11, fontWeight: '800' },
+  metricValue: { fontSize: 28, fontWeight: '800', marginBottom: 4 },
+  metricTitle: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
+  
+  // Section
+  section: { borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '800' },
+  sectionMeta: { fontSize: 12, fontWeight: '600' },
+  viewAllLink: { fontSize: 14, fontWeight: '800' },
+  
+  // Chart
+  chartContainer: { flexDirection: 'row', alignItems: 'flex-end', height: 80, paddingTop: 20 },
+  chartBar: { borderRadius: 4 },
+  
+  // Orders
+  orderRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12 },
+  orderIcon: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
+  orderIconText: { fontSize: 13, fontWeight: '800' },
+  orderInfo: { flex: 1 },
+  orderNumber: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
+  orderDate: { fontSize: 12 },
+  orderRight: { alignItems: 'flex-end' },
+  orderAmount: { fontSize: 16, fontWeight: '800', marginBottom: 6 },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  statusText: { fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  divider: { height: 1, marginVertical: 4 },
+  
+  // Actions
+  actionsGrid: { flexDirection: 'row', gap: 12 },
+  actionCard: { flex: 1, borderRadius: 16, padding: 20, alignItems: 'center', borderWidth: 1 },
+  actionIcon: { width: 56, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  actionText: { fontSize: 14, fontWeight: '700' },
 });
 
 export default DashboardScreen;

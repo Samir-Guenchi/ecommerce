@@ -4,15 +4,13 @@ import { I18nManager } from 'react-native';
 import en, { TranslationKeys } from './en';
 import ar from './ar';
 import fr from './fr';
-import es from './es';
 
-export type SupportedLanguage = 'en' | 'ar' | 'fr' | 'es';
+export type SupportedLanguage = 'en' | 'ar' | 'fr';
 
 const translations: Record<SupportedLanguage, Record<TranslationKeys, string>> = {
   en,
   ar,
   fr,
-  es,
 };
 
 /* RTL languages */
