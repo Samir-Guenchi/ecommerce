@@ -6,30 +6,33 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import StatusBanner from '../components/StatusBanner';
+import { useStatusMessage } from '../components/useStatusMessage';
+import { confirmAction } from '../components/confirmAction';
 
 // Upload Icon Component
 const UploadIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M17 8L12 3L7 8"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M12 3V15"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -42,35 +45,35 @@ const DocumentIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M14 2V8H20"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M16 13H8"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M16 17H8"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M10 9H9H8"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -83,7 +86,7 @@ const CheckIcon = () => (
   <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
     <Path
       d="M20 6L9 17L4 12"
-      stroke="#000"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -96,21 +99,21 @@ const SellerIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M2 17L12 22L22 17"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M2 12L12 17L22 12"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -162,54 +165,38 @@ const SellerRegistrationScreen = ({ navigate }: SellerRegistrationScreenProps) =
   const [document1, setDocument1] = useState<string | undefined>(undefined);
   const [document2, setDocument2] = useState<string | undefined>(undefined);
   const [document3, setDocument3] = useState<string | undefined>(undefined);
+  const { message, showSuccess, showError, clear } = useStatusMessage();
 
-  const handleDocumentUpload = (
+  const handleDocumentUpload = async (
     setter: (value: string) => void,
     documentNumber: number,
   ) => {
     // In a real app, this would open a document picker
-    // For now, we'll simulate it with an alert
-    Alert.alert(
+    const confirmed = await confirmAction(
       'Upload Document',
-      `This would open a document picker for document ${documentNumber}. In production, integrate with react-native-document-picker or similar.`,
-      [
-        {
-          text: 'Simulate Upload',
-          onPress: () => {
-            setter(`document_${documentNumber}.pdf`);
-          },
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ],
+      `This would open a document picker for document ${documentNumber}. In production, integrate with react-native-document-picker or similar. Simulate upload?`,
     );
+    if (confirmed) {
+      setter(`document_${documentNumber}.pdf`);
+    }
   };
 
   const handleSubmit = () => {
     if (!fullName || !ssid || !businessId) {
-      Alert.alert('Error', 'Please fill in all required fields');
+      showError('Please fill in all required fields');
       return;
     }
 
     if (!document1 || !document2 || !document3) {
-      Alert.alert('Error', 'Please upload all required documents');
+      showError('Please upload all required documents');
       return;
     }
 
     // Handle form submission
-    Alert.alert(
-      'Success',
-      'Your seller registration information has been submitted for review.',
-      [
-        {
-          text: 'OK',
-          onPress: () => {
-            if (navigate) {
-              navigate('dashboard');
-            }
-          },
-        },
-      ],
-    );
+    showSuccess('Your seller registration information has been submitted for review.');
+    setTimeout(() => {
+      if (navigate) navigate('dashboard');
+    }, 2000);
   };
 
   return (
@@ -232,6 +219,8 @@ const SellerRegistrationScreen = ({ navigate }: SellerRegistrationScreenProps) =
         seller account setup.
       </Text>
 
+      <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
+
       {/* Form Fields */}
       <View style={styles.formSection}>
 
@@ -243,7 +232,7 @@ const SellerRegistrationScreen = ({ navigate }: SellerRegistrationScreenProps) =
           <TextInput
             style={styles.input}
             placeholder="Enter your full name"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.textMuted}
             value={fullName}
             onChangeText={setFullName}
           />
@@ -257,7 +246,7 @@ const SellerRegistrationScreen = ({ navigate }: SellerRegistrationScreenProps) =
           <TextInput
             style={styles.input}
             placeholder="Enter your SSID"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.textMuted}
             value={ssid}
             onChangeText={setSsid}
             keyboardType="numeric"
@@ -272,7 +261,7 @@ const SellerRegistrationScreen = ({ navigate }: SellerRegistrationScreenProps) =
           <TextInput
             style={styles.input}
             placeholder="Enter your business ID"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.textMuted}
             value={businessId}
             onChangeText={setBusinessId}
           />
@@ -320,7 +309,7 @@ const SellerRegistrationScreen = ({ navigate }: SellerRegistrationScreenProps) =
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
   },
   content: {
     flexGrow: 1,
@@ -336,20 +325,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   subheading: {
     fontSize: 13,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 18,
@@ -360,12 +349,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 8,
   },
   sectionDescription: {
     fontSize: 11,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 16,
     lineHeight: 14,
   },
@@ -375,21 +364,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
+    color: COLORS.text,
     marginBottom: 6,
   },
   required: {
     color: '#FF0000',
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 10,
     fontSize: 13,
-    color: '#000000',
+    color: COLORS.text,
   },
   documentsRow: {
     flexDirection: 'row',
@@ -399,9 +388,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'column',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: COLORS.surface,
     borderRadius: 8,
     padding: 12,
     minHeight: 100,
@@ -414,7 +401,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 8,
@@ -426,25 +413,25 @@ const styles = StyleSheet.create({
   documentLabel: {
     fontSize: 12,
     fontWeight: '500',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 4,
     textAlign: 'center',
   },
   documentFileName: {
     fontSize: 10,
-    color: '#000000',
+    color: COLORS.text,
     textAlign: 'center',
   },
   documentPlaceholder: {
     fontSize: 10,
-    color: '#999',
+    color: COLORS.textSecondary,
     textAlign: 'center',
   },
   uploadIconContainer: {
     marginTop: 8,
   },
   submitButton: {
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -452,13 +439,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 13,
     fontWeight: '600',
   },
   infoText: {
     fontSize: 11,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
   },

@@ -1,76 +1,114 @@
-import express, { Express, Request, Response } from 'express';
+import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import * as dotenv from 'dotenv';
+
+// Import routes
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import productRoutes from './routes/product.routes';
 import storeRoutes from './routes/store.routes';
 import orderRoutes from './routes/order.routes';
-import profileRoutes from './routes/profile.routes';
 import paymentRoutes from './routes/payment.routes';
+import addressRoutes from './routes/address.routes';
+import profileRoutes from './routes/profile.routes';
+import sellerRoutes from './routes/seller.routes';
+import subscriptionRoutes from './routes/subscription.routes';
 import deliveryRoutes from './routes/delivery.routes';
 import taxRoutes from './routes/tax.routes';
-import addressRoutes from './routes/address.routes';
-import subscriptionRoutes from './routes/subscription.routes';
-import storefrontRoutes from './routes/storefront.routes';
 import eventRoutes from './routes/event.routes';
-import sellerRoutes from './routes/seller.routes';
+import storefrontRoutes from './routes/storefront.routes';
+import trackingRoutes from './routes/tracking.routes';
+import marketplaceRoutes from './routes/marketplace.routes';
+import orderTrackingRoutes from './routes/order-tracking.routes';
+import cartRoutes from './routes/cart.routes';
+import dashboardRoutes from './routes/dashboard.routes';
+
+dotenv.config();
 
 const app: Express = express();
 
 // Middleware
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+  origin: process.env.CORS_ORIGINS?.split(',') || [
+    'http://localhost:5173',
+    'http://localhost:8081',
+    'http://localhost:8082',
+    'http://localhost:19006',
+    'http://localhost:19000',
+    'http://10.0.2.2:8081',
+  ],
+  credentials: true,
+}));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Serve static files (for uploaded documents)
-app.use('/uploads', express.static('uploads'));
-
-// Root route - API information
-app.get('/', (_req: Request, res: Response) => {
-  res.json({
-    message: 'Algerie Post API',
-    version: '1.0.0',
-    status: 'running',
-    endpoints: {
-      health: '/health',
-      auth: {
-        checkAdmin: 'GET /api/auth/check-admin',
-        signup: 'POST /api/auth/signup',
-        login: 'POST /api/auth/login',
-        verify: 'POST /api/auth/verify',
-        resendVerification: 'POST /api/auth/resend-verification',
-        me: 'GET /api/auth/me (requires auth)',
-      },
-      users: {
-        list: 'GET /api/users (admin only)',
-        getById: 'GET /api/users/:id (admin only)',
-        updateStatus: 'PATCH /api/users/:id/status (admin only)',
-        delete: 'DELETE /api/users/:id (admin only)',
-      },
-    },
-  });
+// Request logging
+app.use((req: Request, _res: Response, next: NextFunction) => {
+  const timestamp = new Date().toISOString();
+  console.log(`[${timestamp}] ${req.method} ${req.path}`);
+  next();
 });
 
 // Health check
 app.get('/health', (_req: Request, res: Response) => {
-  res.json({ status: 'ok', message: 'Algerie Post API is running' });
+  res.json({ status: 'ok', timestamp: new Date().toISOString(), uptime: process.uptime() });
 });
 
-// API Routes
+// === API Routes ===
+// Authentication (public + protected)
 app.use('/api/auth', authRoutes);
+
+// User management (admin)
 app.use('/api/users', userRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/stores', storeRoutes);
-app.use('/api/orders', orderRoutes);
+
+// Profile (authenticated user)
 app.use('/api/profile', profileRoutes);
+
+// Products (authenticated)
+app.use('/api/products', productRoutes);
+
+// Stores (authenticated)
+app.use('/api/stores', storeRoutes);
+
+// Orders (authenticated + public tracking)
+app.use('/api/orders', orderRoutes);
+
+// Payments (authenticated)
 app.use('/api/payments', paymentRoutes);
-app.use('/api/delivery', deliveryRoutes);
-app.use('/api/taxes', taxRoutes);
+
+// Addresses (authenticated)
 app.use('/api/addresses', addressRoutes);
-app.use('/api/subscriptions', subscriptionRoutes);
-app.use('/api/storefront', storefrontRoutes);
-app.use('/api/events', eventRoutes);
+
+// Seller registrations (admin)
 app.use('/api/seller-registrations', sellerRoutes);
+
+// Subscriptions & plans (authenticated)
+app.use('/api/subscriptions', subscriptionRoutes);
+
+// Delivery settings (authenticated)
+app.use('/api/delivery', deliveryRoutes);
+
+// Tax settings (authenticated)
+app.use('/api/taxes', taxRoutes);
+
+// Events / analytics (public)
+app.use('/api/events', eventRoutes);
+
+// Storefront (public)
+app.use('/api/storefront', storefrontRoutes);
+
+// GPS tracking (authenticated)
+app.use('/api/tracking', trackingRoutes);
+
+// Marketplace search & cart
+app.use('/api/marketplace', marketplaceRoutes);
+app.use('/api/marketplace', cartRoutes);
+
+// Order tracking by wilaya
+app.use('/api/order-tracking', orderTrackingRoutes);
+
+// Dashboard stats (authenticated)
+app.use('/api/dashboard', dashboardRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
@@ -78,12 +116,9 @@ app.use((_req: Request, res: Response) => {
 });
 
 // Error handler
-app.use((err: any, _req: Request, res: Response, _next: any) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-  });
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 export default app;
-

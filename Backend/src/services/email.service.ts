@@ -3,17 +3,50 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
+const isDev = process.env.NODE_ENV !== 'production';
+
 // Email transporter configuration
-const createTransporter = () => {
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: parseInt(process.env.SMTP_PORT || '587', 10),
-    secure: process.env.SMTP_SECURE === 'true',
-    auth: {
-      user: process.env.SMTP_USER,
-      pass: process.env.SMTP_PASSWORD,
-    },
-  });
+let transporter: nodemailer.Transporter | null = null;
+
+/**
+ * In development without SMTP credentials, use Ethereal (free test inbox).
+ * In production, use the configured SMTP server.
+ */
+const getTransporter = async (): Promise<nodemailer.Transporter> => {
+  if (transporter) return transporter;
+
+  const hasSmtpCreds = process.env.SMTP_USER && process.env.SMTP_PASSWORD;
+
+  if (!hasSmtpCreds && isDev) {
+    // Create an Ethereal test account on-the-fly
+    const testAccount = await nodemailer.createTestAccount();
+    console.log('📧 Ethereal test email account created:');
+    console.log(`   User: ${testAccount.user}`);
+    console.log(`   Pass: ${testAccount.pass}`);
+    console.log(`   Web:  https://ethereal.email/login`);
+
+    transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+  } else {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      port: parseInt(process.env.SMTP_PORT || '587', 10),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+  }
+
+  return transporter;
 };
 
 export interface EmailOptions {
@@ -24,8 +57,6 @@ export interface EmailOptions {
 }
 
 export class EmailService {
-  private transporter = createTransporter();
-
   async sendVerificationCode(email: string, code: string, userName: string): Promise<void> {
     const html = `
       <!DOCTYPE html>
@@ -76,16 +107,25 @@ export class EmailService {
 
   private async sendEmail(options: EmailOptions): Promise<void> {
     try {
+      const transport = await getTransporter();
+      const fromAddr = process.env.SMTP_USER || 'noreply@algeriepost.dz';
+
       const mailOptions = {
-        from: `"Algerie Post" <${process.env.SMTP_USER}>`,
+        from: `"Algerie Post" <${fromAddr}>`,
         to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text || options.html.replace(/<[^>]*>/g, ''),
       };
 
-      const info = await this.transporter.sendMail(mailOptions);
+      const info = await transport.sendMail(mailOptions);
       console.log('✅ Email sent:', info.messageId);
+
+      // In dev, show the Ethereal preview URL so you can read the email
+      const previewUrl = nodemailer.getTestMessageUrl(info);
+      if (previewUrl) {
+        console.log('📬 Preview email at:', previewUrl);
+      }
     } catch (error) {
       console.error('❌ Error sending email:', error);
       throw new Error('Failed to send email');

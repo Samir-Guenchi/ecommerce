@@ -1,29 +1,56 @@
+/**
+ * PRODUCT CARD - HUMAN TOUCH DESIGN
+ * Algérie Poste E-Commerce
+ * 
+ * Features:
+ * - Organic geometry (12-16px border-radius)
+ * - Soft shadows and gentle hover effects
+ * - Full accessibility (44px touch targets, focus rings)
+ * - Professional appearance (no emojis)
+ */
+
+
 .product-card {
-  width: 15rem;
-  height: 20rem;
-  background-color: #f9fafb;
-  padding: 0.75rem;
+  width: 100%;
+  max-width: 15rem;
+  min-width: 12rem;
+  height: auto;
+  min-height: 20rem;
+  background-color: var(--color-surface-raised);
+  padding: var(--space-3);
   display: flex;
   flex-direction: column;
-  gap: 0.25rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+  gap: var(--space-3);
+  border-radius: var(--radius-softer);
+  /* 16px - organic, not square! */
+  box-shadow: var(--shadow-sm);
+  transition: all var(--transition-base);
   cursor: pointer;
+  position: relative;
 }
 
 .product-card:hover {
-  transform: translateY(-0.25rem);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+}
+
+.product-card:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.product-card:active {
+  transform: translateY(-2px);
 }
 
 .product-image-container {
   height: 12rem;
-  background: linear-gradient(to bottom left, #000000, #ff4500, #4b0082);
-  border-radius: 0.5rem;
+  background: linear-gradient(135deg, #f5f5f5 0%, #e0e0e0 100%);
+  border-radius: var(--radius-soft);
+  /* 12px - soft corners */
   overflow: hidden;
-  transition: filter 0.5s ease;
-  filter: contrast(0.5);
+  transition: filter var(--transition-slow);
+  filter: contrast(0.9);
 }
 
 .product-card:hover .product-image-container {
@@ -34,79 +61,152 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform var(--transition-base);
 }
 
 .product-card:hover .product-image {
-  transform: scale(1.1);
+  transform: scale(1.05);
 }
 
 .product-placeholder {
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+  background: linear-gradient(135deg, #fafafa 0%, #f0f0f0 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-}
-
-.placeholder-icon {
-  font-size: 3rem;
-  margin-bottom: 0.5rem;
-  opacity: 0.6;
+  gap: var(--space-2);
 }
 
 .placeholder-text {
-  font-size: 1rem;
-  font-weight: 500;
-  color: #666;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-tertiary);
 }
 
 .product-info {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-3);
+  flex: 1;
 }
 
 .product-header {
   display: flex;
   flex-direction: row;
   justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-2);
 }
 
 .product-details {
   display: flex;
   flex-direction: column;
+  gap: var(--space-1);
+  flex: 1;
+  min-width: 0;
+  /* Allow text truncation */
 }
 
 .product-name {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #111;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+  color: var(--color-text-primary);
+  line-height: var(--line-height-tight);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-id {
-  font-size: 0.75rem;
-  color: #374151;
+  font-size: var(--font-size-xs);
+  color: var(--color-text-secondary);
+  margin: 0;
 }
 
 .product-price {
-  font-weight: bold;
-  color: #dc2626;
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-bold);
+  color: var(--color-error);
+  white-space: nowrap;
 }
 
 .order-button {
-  background-color: #1e40af;
-  color: #f9fafb;
-  padding: 0.5rem;
+  /* Accessibility: 44x44px minimum touch target */
+  min-height: var(--min-tap-target);
+  width: 100%;
+  padding: var(--space-3) var(--space-6);
+
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+  font-weight: var(--font-weight-semibold);
+
+  color: var(--color-text-primary);
+  background-color: var(--color-primary);
+
   border: none;
-  border-radius: 0.25rem;
+  border-radius: var(--radius-soft);
+  /* 12px - organic */
+
   cursor: pointer;
-  transition: background-color 0.2s ease;
+  transition: all var(--transition-base);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .order-button:hover {
-  background-color: #1d4ed8;
+  background-color: var(--color-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
 }
 
+.order-button:focus-visible {
+  outline: var(--focus-ring-width) solid var(--ap-grey-deep);
+  outline-offset: var(--focus-ring-offset);
+}
+
+.order-button:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.order-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .product-card {
+    max-width: 100%;
+  }
+
+  .product-name {
+    font-size: var(--font-size-base);
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .product-card {
+    border: 2px solid var(--ap-grey-deep);
+  }
+
+  .order-button {
+    border: 2px solid var(--ap-grey-deep);
+  }
+}
+
+/* RTL Support */
+[dir="rtl"] .product-header {
+  flex-direction: row-reverse;
+}
+
+[dir="rtl"] .product-details {
+  text-align: right;
+}

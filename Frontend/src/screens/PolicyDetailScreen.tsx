@@ -7,20 +7,21 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
 
 // Policy Icon
 const PolicyIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M12 6V12L16 14"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -310,7 +311,7 @@ For questions about our use of cookies, please contact us at privacy@algeriepost
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
   },
   scroll: {
     flex: 1,
@@ -329,33 +330,31 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   lastUpdated: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 24,
   },
   contentSection: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: COLORS.surface,
     borderRadius: 8,
     padding: 16,
   },
   contentText: {
     fontSize: 13,
-    color: '#333',
+    color: COLORS.text,
     lineHeight: 22,
   },
   backButton: {
@@ -363,13 +362,13 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 16,
     right: 16,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
   },
   backButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 13,
     fontWeight: '600',
   },

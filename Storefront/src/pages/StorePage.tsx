@@ -4,6 +4,7 @@ import { storefrontAPI } from '../services/api.service';
 import ProductCard, { StorefrontProduct } from '../components/ProductCard';
 import { StorefrontStore } from '../components/StoreHeader';
 import OrderModal from '../components/OrderModal';
+import Navigation from '../components/Navigation';
 import './StorePage.css';
 
 const getDomainFromHostname = (): string => {
@@ -135,29 +136,12 @@ const StorePage: React.FC = () => {
 
   return (
     <div className="store-page">
-      <nav className="navbar">
-        <div className="nav-wrapper">
-          <div className="nav-left">
-            <div className="logo">{store.name.charAt(0)}</div>
-          </div>
-          <div className="nav-center">
-            <div className="nav-menu">
-              <a href="#" className="nav-link active">Home</a>
-              <a href="#" onClick={() => navigate(`/contact?domain=${domain}`)} className="nav-link">Contact</a>
-              <a href="#" onClick={() => navigate(`/policies?domain=${domain}`)} className="nav-link">Policies</a>
-            </div>
-          </div>
-          <div className="nav-right">
-            <button className="nav-icon-button" title="Search">⌕</button>
-            <button className="nav-icon-button" title="Favorites">♡</button>
-            <button className="cart-button" title="Cart">⊞</button>
-          </div>
-        </div>
-        <div className="nav-banner">
-          <p>{store.description || 'Free Shipping on Orders $50+'}</p>
-        </div>
-      </nav>
-      
+      <Navigation
+        storeName={store.name}
+        domain={domain}
+        onNavigate={(path) => navigate(path)}
+      />
+
       <header className="hero-section">
         <div className="hero-banner">
           <div className="hero-overlay"></div>

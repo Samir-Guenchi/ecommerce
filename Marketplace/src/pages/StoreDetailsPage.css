@@ -1,0 +1,21 @@
+/* StoreDetailsPage.css */
+.store-details-page {
+    min-height: 100vh;
+}
+
+.store-header {
+    background: linear-gradient(135deg, var(--color-primary) 0%, #f4a300 100%);
+    padding: var(--spacing-2xl);
+    color: var(--color-secondary);
+    margin-bottom: var(--spacing-xl);
+}
+
+.store-location {
+    font-size: var(--font-size-lg);
+    margin: var(--spacing-md) 0;
+}
+
+.store-description {
+    max-width: 600px;
+    line-height: 1.6;
+}

@@ -565,3 +565,34 @@ export const addressAPI = {
   deleteAddress: async (addressId: number): Promise<{ message: string }> => handleResponse(await apiRequest(`/addresses/${addressId}`, { method: 'DELETE' })),
 };
 
+/**
+ * Subscription API
+ */
+export const subscriptionAPI = {
+  getCurrentSubscription: async (): Promise<{ subscription: any; plan: any }> => handleResponse(await apiRequest('/subscriptions/current')),
+  getPlans: async (): Promise<{ plans: any[] }> => handleResponse(await apiRequest('/subscriptions/plans')),
+};
+
+/**
+ * Dashboard API
+ */
+export const dashboardAPI = {
+  getStats: async (): Promise<{ stats: {
+    totalRevenue: number;
+    totalOrders: number;
+    totalProducts: number;
+    totalStores: number;
+    activeProducts: number;
+    lowStock: number;
+    outOfStock: number;
+    weeklyTrend: number[];
+    dayLabels: string[];
+    revenueTrend: number;
+    previousWeekOrders: number;
+    thisWeekOrders: number;
+    recentOrders: any[];
+    statusCounts: Record<string, number>;
+    eventsCount: number;
+  } }> => handleResponse(await apiRequest('/dashboard/stats')),
+};
+

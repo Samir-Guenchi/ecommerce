@@ -7,32 +7,39 @@ import {
   StyleSheet,
   ScrollView,
   Switch,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { taxAPI } from '../services/api.service';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import BackHeader from '../components/BackHeader';
+import StatusBanner from '../components/StatusBanner';
+import { useStatusMessage } from '../components/useStatusMessage';
+
+interface TaxesDutiesScreenProps {
+  goBack?: () => void;
+}
 
 // Tax Icon
 const TaxIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M2 17L12 22L22 17"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M2 12L12 17L22 12"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -40,7 +47,8 @@ const TaxIcon = () => (
   </Svg>
 );
 
-const TaxesDutiesScreen = () => {
+const TaxesDutiesScreen = ({ goBack }: TaxesDutiesScreenProps) => {
+  const { message, showSuccess, showError, clear } = useStatusMessage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [taxEnabled, setTaxEnabled] = useState(true);
@@ -70,11 +78,11 @@ const TaxesDutiesScreen = () => {
 
   const handleSave = async () => {
     if (taxEnabled && !taxRate) {
-      Alert.alert('Error', 'Please enter tax rate');
+      showError('Please enter tax rate');
       return;
     }
     if (dutiesEnabled && !dutiesRate) {
-      Alert.alert('Error', 'Please enter duties rate');
+      showError('Please enter duties rate');
       return;
     }
     
@@ -84,9 +92,9 @@ const TaxesDutiesScreen = () => {
         taxRate: taxEnabled ? (parseFloat(taxRate) || 0) : 0,
         dutyRate: dutiesEnabled ? (parseFloat(dutiesRate) || 0) : 0,
       });
-      Alert.alert('Success', 'Your tax and duties settings have been saved.');
+      showSuccess('Your tax and duties settings have been saved.');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to save tax settings.');
+      showError(error.message || 'Failed to save tax settings.');
     } finally {
       setSaving(false);
     }
@@ -95,8 +103,8 @@ const TaxesDutiesScreen = () => {
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#000000" />
-        <Text style={{ marginTop: 12, fontSize: 14, color: '#666' }}>Loading tax settings...</Text>
+        <ActivityIndicator size="large" color={COLORS.text} />
+        <Text style={{ marginTop: 12, fontSize: 14, color: COLORS.textSecondary }}>Loading tax settings...</Text>
       </View>
     );
   }
@@ -112,10 +120,12 @@ const TaxesDutiesScreen = () => {
           <TaxIcon />
         </View>
       </View>
-      <Text style={styles.heading}>Taxes & Duties</Text>
+      <BackHeader title="Taxes & Duties" onBack={goBack} />
       <Text style={styles.subheading}>
         Manage tax settings and duty configurations.
       </Text>
+
+      <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
 
       <View style={styles.formSection}>
         <View style={styles.settingRow}>
@@ -128,8 +138,8 @@ const TaxesDutiesScreen = () => {
           <Switch
             value={taxEnabled}
             onValueChange={setTaxEnabled}
-            trackColor={{ false: '#E0E0E0', true: '#000000' }}
-            thumbColor={taxEnabled ? '#FFFFFF' : '#F4F3F4'}
+            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+            thumbColor={taxEnabled ? COLORS.primary : COLORS.border}
           />
         </View>
 
@@ -139,7 +149,7 @@ const TaxesDutiesScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter tax rate percentage"
-              placeholderTextColor="#999"
+              placeholderTextColor={COLORS.textMuted}
               value={taxRate}
               onChangeText={setTaxRate}
               keyboardType="decimal-pad"
@@ -157,8 +167,8 @@ const TaxesDutiesScreen = () => {
           <Switch
             value={dutiesEnabled}
             onValueChange={setDutiesEnabled}
-            trackColor={{ false: '#E0E0E0', true: '#000000' }}
-            thumbColor={dutiesEnabled ? '#FFFFFF' : '#F4F3F4'}
+            trackColor={{ false: COLORS.border, true: COLORS.primary }}
+            thumbColor={dutiesEnabled ? COLORS.primary : COLORS.border}
           />
         </View>
 
@@ -168,7 +178,7 @@ const TaxesDutiesScreen = () => {
             <TextInput
               style={styles.input}
               placeholder="Enter duties rate percentage"
-              placeholderTextColor="#999"
+              placeholderTextColor={COLORS.textMuted}
               value={dutiesRate}
               onChangeText={setDutiesRate}
               keyboardType="decimal-pad"
@@ -183,7 +193,7 @@ const TaxesDutiesScreen = () => {
         disabled={saving}
       >
         {saving ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={COLORS.background} />
         ) : (
           <Text style={styles.submitButtonText}>Save Settings</Text>
         )}
@@ -199,7 +209,7 @@ const TaxesDutiesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
   },
   content: {
     flexGrow: 1,
@@ -207,16 +217,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingTop: 35,
   },
-  heading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
   subheading: {
     fontSize: 13,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 18,
@@ -229,7 +232,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -237,9 +240,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   settingRow: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -254,12 +257,12 @@ const styles = StyleSheet.create({
   settingLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 4,
   },
   settingDescription: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     lineHeight: 16,
   },
   inputContainer: {
@@ -268,21 +271,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
+    color: COLORS.text,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 10,
     fontSize: 13,
-    color: '#000000',
+    color: COLORS.text,
   },
   submitButton: {
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -290,7 +293,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -299,7 +302,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 11,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
   },

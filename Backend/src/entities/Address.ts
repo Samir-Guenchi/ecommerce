@@ -50,6 +50,12 @@ export class Address {
   @UpdateDateColumn({ name: 'updated_at' })
   updatedAt: Date;
 
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  latitude: string | null;
+
+  @Column({ type: 'varchar', length: 20, nullable: true })
+  longitude: string | null;
+
   // Relations
   @ManyToOne(() => User, (user) => user.addresses)
   @JoinColumn({ name: 'user_id' })

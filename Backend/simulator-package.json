@@ -1,0 +1,18 @@
+{
+    "name": "algerie-post-simulator",
+    "version": "1.0.0",
+    "description": "GPS Delivery Tracking Simulator",
+    "main": "dist/utils/gps-simulator.js",
+    "scripts": {
+        "simulate": "ts-node src/utils/gps-simulator.ts",
+        "simulate:fast": "ts-node src/utils/gps-simulator.ts --speed=60 --interval=1000"
+    },
+    "keywords": [
+        "gps",
+        "simulator",
+        "delivery",
+        "tracking"
+    ],
+    "author": "",
+    "license": "ISC"
+}

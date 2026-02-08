@@ -1,0 +1,211 @@
+/**
+ * NAVIGATION - HUMAN TOUCH DESIGN
+ * Algérie Poste E-Commerce
+ * 
+ * Features:
+ * - Professional SVG icons (no emojis)
+ * - 44px minimum touch targets
+ * - Focus rings for accessibility
+ * - Semantic HTML with ARIA labels
+ */
+
+.navigation {
+    width: 100%;
+    background-color: var(--color-surface);
+    border-bottom: 1px solid var(--ap-grey-lighter);
+    position: sticky;
+    top: 0;
+    z-index: var(--z-header);
+}
+
+.nav-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-4) var(--space-6);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-6);
+}
+
+.nav-left {
+    flex-shrink: 0;
+}
+
+.logo {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--color-primary) 0%, #f0b90b 100%);
+    color: var(--color-text-primary);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-bold);
+    border-radius: var(--radius-soft);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform var(--transition-base);
+}
+
+.logo:hover {
+    transform: scale(1.05);
+}
+
+.logo:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+}
+
+.nav-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+}
+
+.nav-menu {
+    display: flex;
+    gap: var(--space-6);
+    align-items: center;
+}
+
+.nav-link {
+    color: var(--color-text-secondary);
+    text-decoration: none;
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-medium);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-soft);
+    transition: all var(--transition-base);
+    position: relative;
+}
+
+.nav-link:hover {
+    color: var(--color-text-primary);
+    background-color: var(--ap-grey-lighter);
+}
+
+.nav-link.active {
+    color: var(--color-text-primary);
+    font-weight: var(--font-weight-semibold);
+}
+
+.nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 24px;
+    height: 3px;
+    background-color: var(--color-primary);
+    border-radius: var(--radius-pill);
+}
+
+.nav-link:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+}
+
+.nav-right {
+    display: flex;
+    gap: var(--space-2);
+    flex-shrink: 0;
+}
+
+.nav-icon-button {
+    /* Accessibility: 44x44px minimum */
+    min-width: var(--min-tap-target);
+    min-height: var(--min-tap-target);
+    padding: var(--space-3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-soft);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all var(--transition-base);
+}
+
+.nav-icon-button:hover {
+    background-color: var(--ap-grey-lighter);
+    color: var(--color-text-primary);
+}
+
+.nav-icon-button:focus-visible {
+    outline: var(--focus-ring-width) solid var(--focus-ring-color);
+    outline-offset: var(--focus-ring-offset);
+}
+
+.nav-icon-button:active {
+    transform: scale(0.95);
+}
+
+.cart-button {
+    background-color: var(--color-primary);
+    color: var(--color-text-primary);
+}
+
+.cart-button:hover {
+    background-color: var(--color-primary-hover);
+    color: var(--color-text-primary);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .nav-container {
+        padding: var(--space-3) var(--space-4);
+    }
+
+    .nav-menu {
+        gap: var(--space-3);
+    }
+
+    .nav-link {
+        font-size: var(--font-size-sm);
+        padding: var(--space-2);
+    }
+
+    .nav-right {
+        gap: var(--space-1);
+    }
+
+    .logo {
+        width: 40px;
+        height: 40px;
+        font-size: var(--font-size-lg);
+    }
+}
+
+@media (max-width: 480px) {
+    .nav-menu {
+        display: none;
+        /* Mobile menu would go here */
+    }
+}
+
+/* RTL Support */
+[dir="rtl"] .nav-container {
+    flex-direction: row-reverse;
+}
+
+[dir="rtl"] .nav-link.active::after {
+    right: auto;
+    left: 50%;
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .nav-link.active::after {
+        height: 4px;
+    }
+
+    .nav-icon-button {
+        border: 2px solid transparent;
+    }
+
+    .nav-icon-button:hover {
+        border-color: var(--ap-grey-medium);
+    }
+}

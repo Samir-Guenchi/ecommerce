@@ -26,7 +26,8 @@ import { Platform } from 'react-native';
 // - 10.232.243.165 (likely your main network - USE THIS ONE)
 //
 // IMPORTANT: Make sure your phone and computer are on the same WiFi network!
-const DEVICE_IP = '10.11.22.165'; // <-- SET YOUR COMPUTER'S IP HERE FOR PHYSICAL DEVICES
+// const DEVICE_IP = '10.11.22.165'; // <-- COMMENTED OUT TO USE EMULATOR DEFAULTS
+const DEVICE_IP = '';
 
 // ============================================
 
@@ -35,14 +36,21 @@ const getApiUrl = (): string => {
     // Development mode
     const platform = Platform.OS;
     console.log(`[API Config] Platform detected: ${platform}`);
-    
+
+    // For Web, always use localhost
+    if (platform === 'web') {
+      const url = 'http://localhost:3000/api';
+      console.log(`[API Config] Web platform detected: ${url}`);
+      return url;
+    }
+
     // If DEVICE_IP is set, use it for physical devices
     if (DEVICE_IP) {
       const url = `http://${DEVICE_IP}:3000/api`;
       console.log(`[API Config] Using physical device IP: ${url}`);
       return url;
     }
-    
+
     // Default to emulator/simulator settings
     if (platform === 'android') {
       // Android emulator uses 10.0.2.2 to access host machine

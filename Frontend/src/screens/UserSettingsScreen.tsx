@@ -1,517 +1,512 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle as SvgCircle } from 'react-native-svg';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { profileAPI } from '../services/api.service';
+import { useTranslation } from '../i18n';
+import BottomNav, { BottomTabId } from './BottomNav';
 
-// Chevron Right Icon
-const ChevronRightIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M9 18L15 12L9 6"
-      stroke="#999"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+/* ─── Icon helpers ─── */
+const ChevronRight = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M9 18L15 12L9 6" stroke={COLORS.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-// Settings Icon Components
-const ProfileIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const ProfileIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M20 21V19C20 17.94 19.58 16.92 18.83 16.17C18.08 15.42 17.06 15 16 15H8C6.94 15 5.92 15.42 5.17 16.17C4.42 16.92 4 17.94 4 19V21" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <SvgCircle cx="12" cy="7" r="4" stroke={color} strokeWidth="2" />
   </Svg>
 );
 
-const AccountTypeIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 17L12 22L22 17"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 12L12 17L22 12"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const AccountTypeIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 2L2 7L12 12L22 7L12 2Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M2 17L12 22L22 17" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M2 12L12 17L22 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-const StatusIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM10 17L5 12L6.41 10.59L10 14.17L17.59 6.58L19 8L10 17Z"
-      fill="#000"
-    />
+const StatusIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M22 11.08V12C21.99 14.52 21.14 16.96 19.59 18.94C18.03 20.92 15.87 22.27 13.44 22.78C11.01 23.29 8.49 22.93 6.29 21.78C4.1 20.62 2.37 18.73 1.42 16.42C0.47 14.1 0.34 11.51 1.06 9.1C1.78 6.69 3.3 4.63 5.37 3.25C7.44 1.87 9.93 1.25 12.41 1.49C14.89 1.73 17.18 2.82 18.93 4.56" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M22 4L12 14.01L9 11.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-const TrackingIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const TrackingIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <SvgCircle cx="12" cy="12" r="3" stroke={color} strokeWidth="2" />
   </Svg>
 );
 
-const StoreIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M3 21H21"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M5 21V7L13 2V7"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M19 21V11L13 7"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M9 9V13.5"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M9 19V13.5"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const BillingIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 4H3C1.9 4 1 4.9 1 6V18C1 19.1 1.9 20 3 20H21C22.1 20 23 19.1 23 18V6C23 4.9 22.1 4 21 4Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M1 10H23" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-const BillingIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M14 2V8H20"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M16 13H8"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M16 17H8"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M10 9H9H8"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const PaymentIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 2V22" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M17 5H9.5C8.57 5 7.68 5.37 7.02 6.02C6.37 6.68 6 7.57 6 8.5C6 9.43 6.37 10.32 7.02 10.98C7.68 11.63 8.57 12 9.5 12H14.5C15.43 12 16.32 12.37 16.98 13.02C17.63 13.68 18 14.57 18 15.5C18 16.43 17.63 17.32 16.98 17.98C16.32 18.63 15.43 19 14.5 19H6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-const PaymentIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M21 4H3C1.89543 4 1 4.89543 1 6V18C1 19.1046 1.89543 20 3 20H21C22.1046 20 23 19.1046 23 18V6C23 4.89543 22.1046 4 21 4Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M1 10H23"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const DeliveryIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M16 3H1V16H16V3Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M16 8H20L23 11V16H16V8Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <SvgCircle cx="5.5" cy="18.5" r="2.5" stroke={color} strokeWidth="2" />
+    <SvgCircle cx="18.5" cy="18.5" r="2.5" stroke={color} strokeWidth="2" />
   </Svg>
 );
 
-const DeliveryIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M1 3H5L7.68 14.39C7.77144 14.8504 8.02191 15.264 8.38755 15.5583C8.75318 15.8526 9.2107 16.009 9.68 16H19.4C19.8693 16.009 20.3268 15.8526 20.6925 15.5583C21.0581 15.264 21.3086 14.8504 21.4 14.39L23 6H6"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M9 21C10.1046 21 11 20.1046 11 19C11 17.8954 10.1046 17 9 17C7.89543 17 7 17.8954 7 19C7 20.1046 7.89543 21 9 21Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M20 21C21.1046 21 22 20.1046 22 19C22 17.8954 21.1046 17 20 17C18.8954 17 18 17.8954 18 19C18 20.1046 18.8954 21 20 21Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const TaxIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M4 7V4H20V7" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M9 20H15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M12 4V20" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-const TaxIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 17L12 22L22 17"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 12L12 17L22 12"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const LocationIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61 3.95 5.32 5.64 3.64C7.32 1.95 9.61 1 12 1C14.39 1 16.68 1.95 18.36 3.64C20.05 5.32 21 7.61 21 10Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <SvgCircle cx="12" cy="10" r="3" stroke={color} strokeWidth="2" />
   </Svg>
 );
 
-const LocationIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const NotificationIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M18 8A6 6 0 006 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M13.73 21C13.55 21.3 13.3 21.55 13 21.73C12.69 21.9 12.35 22 12 22C11.65 22 11.31 21.9 11 21.73C10.7 21.55 10.45 21.3 10.27 21" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-
-const NotificationIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M18 8A6 6 0 0 0 6 8C6 11.0909 4.5 13.5 3 15.5L21 15.5C19.5 13.5 18 11.0909 18 8Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const LanguageIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <SvgCircle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Path d="M2 12H22" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M12 2C14.5 4.74 15.92 8.29 16 12C15.92 15.71 14.5 19.26 12 22C9.5 19.26 8.08 15.71 8 12C8.08 8.29 9.5 4.74 12 2Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-const LanguageIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 12H22"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M12 2C14.5013 4.73835 15.9228 8.29203 16 12C15.9228 15.708 14.5013 19.2616 12 22C9.49872 19.2616 8.07725 15.708 8 12C8.07725 8.29203 9.49872 4.73835 12 2Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const PolicyIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M12 16V12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M12 8H12.01" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-const PolicyIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M12 6V12L16 14"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const UsersIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M17 21V19C17 17.94 16.58 16.92 15.83 16.17C15.08 15.42 14.06 15 13 15H5C3.94 15 2.92 15.42 2.17 16.17C1.42 16.92 1 17.94 1 19V21" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <SvgCircle cx="9" cy="7" r="4" stroke={color} strokeWidth="2" />
+    <Path d="M23 21V19C23 18.11 22.7 17.25 22.16 16.55C21.62 15.85 20.86 15.35 20 15.13" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M16 3.13C16.86 3.35 17.62 3.85 18.17 4.55C18.71 5.26 19.01 6.12 19.01 7C19.01 7.89 18.71 8.76 18.17 9.46C17.62 10.16 16.86 10.66 16 10.88" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-const UsersIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88"
-      stroke="#000"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const LogOutIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M9 21H5C4.47 21 3.96 20.79 3.59 20.41C3.21 20.04 3 19.53 3 19V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H9" stroke={COLORS.error} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M16 17L21 12L16 7" stroke={COLORS.error} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M21 12H9" stroke={COLORS.error} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
+/* ─── Section color map ─── */
+const SECTION_COLORS = {
+  account: '#6C5CE7',
+  store: '#00CEC9',
+  preferences: '#A29BFE',
+  support: '#FD79A8',
+};
+
+/* ─── SettingItem component ─── */
 interface SettingItemProps {
   icon: React.ReactNode;
   title: string;
+  subtitle?: string;
   onPress?: () => void;
+  isLast?: boolean;
 }
 
-const SettingItem: React.FC<SettingItemProps> = ({ icon, title, onPress }) => (
-  <TouchableOpacity style={styles.settingItem} onPress={onPress}>
-    <View style={styles.settingIconContainer}>{icon}</View>
-    <Text style={styles.settingTitle}>{title}</Text>
-    <View style={styles.chevronContainer}>
-      <ChevronRightIcon />
+const SettingItem: React.FC<SettingItemProps> = ({ icon, title, subtitle, onPress, isLast }) => (
+  <TouchableOpacity
+    style={[styles.settingItem, !isLast && styles.settingItemBorder]}
+    onPress={onPress}
+    activeOpacity={0.6}
+  >
+    <View style={styles.settingLeft}>
+      {icon}
+      <View style={styles.settingTextWrap}>
+        <Text style={styles.settingTitle}>{title}</Text>
+        {subtitle ? <Text style={styles.settingSubtitle}>{subtitle}</Text> : null}
+      </View>
     </View>
+    <ChevronRight />
   </TouchableOpacity>
 );
 
+/* ─── Section label ─── */
+const SectionHeader = ({ label }: { label: string }) => (
+  <Text style={styles.sectionLabel}>{label}</Text>
+);
+
+/* ─── Icon badge ─── */
+const IconBadge = ({ color, children }: { color: string; children: React.ReactNode }) => (
+  <View style={[styles.iconBadge, { backgroundColor: color + '18' }]}>
+    {children}
+  </View>
+);
+
+/* ─── Main screen ─── */
 interface UserSettingsScreenProps {
   navigate?: (screenId: string) => void;
+  resetTo?: (screenId: string) => void;
+  onLogout?: () => void;
 }
 
-const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate }) => {
-  const handleSettingPress = (screenId: string) => {
-    if (navigate) {
-      navigate(screenId);
-    } else {
-      console.log(`Pressed: ${screenId}`);
-    }
+const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, resetTo, onLogout }) => {
+  const { t, isRTL } = useTranslation();
+  const [profileName, setProfileName] = useState('');
+  const [profileEmail, setProfileEmail] = useState('');
+  const [profileLoading, setProfileLoading] = useState(true);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const { user } = await profileAPI.getProfile();
+        setProfileName(user.fullName || 'Store Owner');
+        setProfileEmail(user.email || '');
+      } catch {
+        setProfileName('Store Owner');
+      } finally {
+        setProfileLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const go = (id: string) => navigate?.(id) ?? console.log(`Pressed: ${id}`);
+
+  const handleTabPress = (tab: BottomTabId) => {
+    if (tab === 'userSettings') return;
+    resetTo ? resetTo(tab) : navigate?.(tab);
   };
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Main Heading */}
-      <Text style={styles.heading}>User Settings</Text>
+  const initials = profileName
+    .split(' ')
+    .map(w => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || 'SO';
 
-      {/* Settings List */}
-      <SettingItem
-        icon={<ProfileIcon />}
-        title="Profile Settings"
-        onPress={() => handleSettingPress('profileSettings')}
-      />
-      <SettingItem
-        icon={<AccountTypeIcon />}
-        title="Account Type"
-        onPress={() => handleSettingPress('userAccountType')}
-      />
-      <SettingItem
-        icon={<StatusIcon />}
-        title="Account Status"
-        onPress={() => handleSettingPress('accountStatus')}
-      />
-      <SettingItem
-        icon={<TrackingIcon />}
-        title="Tracking System"
-        onPress={() => handleSettingPress('trackingSystem')}
-      />
-      <SettingItem
-        icon={<BillingIcon />}
-        title="Plan & Billing"
-        onPress={() => handleSettingPress('planBilling')}
-      />
-      <SettingItem
-        icon={<PaymentIcon />}
-        title="Payments"
-        onPress={() => handleSettingPress('payments')}
-      />
-      <SettingItem
-        icon={<DeliveryIcon />}
-        title="Delivery"
-        onPress={() => handleSettingPress('delivery')}
-      />
-      <SettingItem
-        icon={<TaxIcon />}
-        title="Taxes & Duties"
-        onPress={() => handleSettingPress('taxesDuties')}
-      />
-      <SettingItem
-        icon={<LocationIcon />}
-        title="Locations"
-        onPress={() => handleSettingPress('locations')}
-      />
-      <SettingItem
-        icon={<NotificationIcon />}
-        title="Notifications"
-        onPress={() => handleSettingPress('notifications')}
-      />
-      <SettingItem
-        icon={<LanguageIcon />}
-        title="Languages"
-        onPress={() => handleSettingPress('languages')}
-      />
-      <SettingItem
-        icon={<PolicyIcon />}
-        title="Policies"
-        onPress={() => handleSettingPress('policies')}
-      />
-      <SettingItem
-        icon={<UsersIcon />}
-        title="Users & Permissions"
-        onPress={() => handleSettingPress('usersPermissions')}
-      />
-    </ScrollView>
+  return (
+    <View style={styles.outer}>
+      <ScrollView style={styles.scroller} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        {/* ── Profile header ── */}
+        <View style={styles.profileCard}>
+          <View style={styles.avatar}>
+            {profileLoading ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <Text style={styles.avatarText}>{initials}</Text>
+            )}
+          </View>
+          <View style={styles.profileInfo}>
+            <Text style={styles.profileName} numberOfLines={1}>
+              {profileLoading ? 'Loading…' : profileName}
+            </Text>
+            {profileEmail ? (
+              <Text style={styles.profileEmail} numberOfLines={1}>{profileEmail}</Text>
+            ) : null}
+          </View>
+          <TouchableOpacity
+            style={styles.profileEditBtn}
+            onPress={() => go('profileSettings')}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.profileEditText}>{t('common_edit')}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* ── Account ── */}
+        <SectionHeader label={t('settings_account')} />
+        <View style={styles.sectionCard}>
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.account}><ProfileIcon color={SECTION_COLORS.account} /></IconBadge>}
+            title={t('settings_profileSettings')}
+            subtitle={t('settings_profileSettingsDesc')}
+            onPress={() => go('profileSettings')}
+          />
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.account}><AccountTypeIcon color={SECTION_COLORS.account} /></IconBadge>}
+            title={t('settings_accountType')}
+            subtitle={t('settings_accountTypeDesc')}
+            onPress={() => go('userAccountType')}
+          />
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.account}><StatusIcon color={SECTION_COLORS.account} /></IconBadge>}
+            title={t('settings_accountStatus')}
+            subtitle={t('settings_accountStatusDesc')}
+            onPress={() => go('accountStatus')}
+            isLast
+          />
+        </View>
+
+        {/* ── Store Management ── */}
+        <SectionHeader label={t('settings_storeManagement')} />
+        <View style={styles.sectionCard}>
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.store}><TrackingIcon color={SECTION_COLORS.store} /></IconBadge>}
+            title={t('settings_tracking')}
+            subtitle={t('settings_trackingDesc')}
+            onPress={() => go('trackingSystem')}
+          />
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.store}><BillingIcon color={SECTION_COLORS.store} /></IconBadge>}
+            title={t('settings_planBilling')}
+            subtitle={t('settings_planBillingDesc')}
+            onPress={() => go('planBilling')}
+          />
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.store}><PaymentIcon color={SECTION_COLORS.store} /></IconBadge>}
+            title={t('settings_payments')}
+            subtitle={t('settings_paymentsDesc')}
+            onPress={() => go('payments')}
+          />
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.store}><DeliveryIcon color={SECTION_COLORS.store} /></IconBadge>}
+            title={t('settings_delivery')}
+            subtitle={t('settings_deliveryDesc')}
+            onPress={() => go('delivery')}
+          />
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.store}><TaxIcon color={SECTION_COLORS.store} /></IconBadge>}
+            title={t('settings_taxes')}
+            subtitle={t('settings_taxesDesc')}
+            onPress={() => go('taxesDuties')}
+          />
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.store}><LocationIcon color={SECTION_COLORS.store} /></IconBadge>}
+            title={t('settings_locations')}
+            subtitle={t('settings_locationsDesc')}
+            onPress={() => go('locations')}
+            isLast
+          />
+        </View>
+
+        {/* ── Preferences ── */}
+        <SectionHeader label={t('settings_preferences')} />
+        <View style={styles.sectionCard}>
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.preferences}><NotificationIcon color={SECTION_COLORS.preferences} /></IconBadge>}
+            title={t('settings_notifications')}
+            subtitle={t('settings_notificationsDesc')}
+            onPress={() => go('notifications')}
+          />
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.preferences}><LanguageIcon color={SECTION_COLORS.preferences} /></IconBadge>}
+            title={t('settings_languages')}
+            subtitle={t('settings_languagesDesc')}
+            onPress={() => go('languages')}
+            isLast
+          />
+        </View>
+
+        {/* ── Support & Legal ── */}
+        <SectionHeader label={t('settings_supportLegal')} />
+        <View style={styles.sectionCard}>
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.support}><PolicyIcon color={SECTION_COLORS.support} /></IconBadge>}
+            title={t('settings_policies')}
+            subtitle={t('settings_policiesDesc')}
+            onPress={() => go('policies')}
+          />
+          <SettingItem
+            icon={<IconBadge color={SECTION_COLORS.support}><UsersIcon color={SECTION_COLORS.support} /></IconBadge>}
+            title={t('settings_usersPermissions')}
+            subtitle={t('settings_usersPermissionsDesc')}
+            onPress={() => go('usersPermissions')}
+            isLast
+          />
+        </View>
+
+        {/* ── Logout ── */}
+        {onLogout && (
+          <TouchableOpacity style={styles.logoutRow} onPress={onLogout} activeOpacity={0.6}>
+            <LogOutIcon />
+            <Text style={styles.logoutText}>{t('settings_logout')}</Text>
+          </TouchableOpacity>
+        )}
+
+        <Text style={styles.versionText}>Version 1.0.0</Text>
+      </ScrollView>
+      <BottomNav activeTab="userSettings" onTabPress={handleTabPress} />
+    </View>
   );
 };
 
+/* ─── Styles ─── */
 const styles = StyleSheet.create({
-  container: {
+  outer: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
+  },
+  scroller: {
+    flex: 1,
   },
   content: {
-    flexGrow: 1,
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-    paddingTop: 35,
+    paddingHorizontal: SPACING.md,
+    paddingTop: 52,
+    paddingBottom: 110,
   },
-  heading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 35,
+
+  /* Profile card */
+  profileCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: 18,
+    marginBottom: SPACING.lg,
   },
+  avatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: COLORS.primary + '18',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  avatarText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: COLORS.primary,
+  },
+  profileInfo: {
+    flex: 1,
+    marginLeft: 14,
+  },
+  profileName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: COLORS.text,
+  },
+  profileEmail: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    marginTop: 2,
+  },
+  profileEditBtn: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 8,
+    backgroundColor: COLORS.surfaceHighlight,
+  },
+  profileEditText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.primary,
+  },
+
+  /* Sections */
+  sectionLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: COLORS.textMuted,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: 8,
+    marginLeft: 2,
+  },
+  sectionCard: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 14,
+    marginBottom: SPACING.lg,
+    overflow: 'hidden',
+  },
+
+  /* Setting item */
   settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 0,
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    justifyContent: 'space-between',
+    paddingVertical: 13,
+    paddingHorizontal: SPACING.md,
   },
-  settingIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
+  settingItemBorder: {
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  settingLeft: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginRight: 10,
+    flex: 1,
+  },
+  settingTextWrap: {
+    flex: 1,
+    marginLeft: 12,
   },
   settingTitle: {
-    flex: 1,
-    fontSize: 12,
-    color: '#000000',
+    fontSize: 14,
     fontWeight: '500',
+    color: COLORS.text,
   },
-  chevronContainer: {
-    marginLeft: 8,
+  settingSubtitle: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    marginTop: 2,
+  },
+
+  /* Icon badge */
+  iconBadge: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  /* Logout */
+  logoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.error + '10',
+    borderRadius: 12,
+    paddingVertical: 14,
+    marginTop: 8,
+    marginBottom: 16,
+  },
+  logoutText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.error,
+    marginLeft: 10,
+  },
+
+  /* Footer */
+  versionText: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 8,
   },
 });
 

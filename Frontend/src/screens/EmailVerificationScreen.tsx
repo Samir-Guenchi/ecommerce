@@ -5,13 +5,14 @@ import {
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Alert,
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Svg, { Path } from 'react-native-svg';
 import { API_URL } from '../config/api.config';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
 
 interface EmailVerificationScreenProps {
   email: string;
@@ -39,6 +40,8 @@ export default function EmailVerificationScreen({
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const [resendTimer, setResendTimer] = useState(0);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     // Start countdown timer for resend button
@@ -49,12 +52,16 @@ export default function EmailVerificationScreen({
   }, [resendTimer]);
 
   const verifyEmail = async () => {
-    if (!verificationCode.trim()) {
-      Alert.alert('Error', 'Please enter the verification code');
+    const code = verificationCode.trim();
+    if (!code) {
+      setErrorMessage('Please enter the verification code');
       return;
     }
 
     setIsLoading(true);
+    setErrorMessage('');
+    setStatusMessage('');
+
     try {
       const response = await fetch(`${API_URL}/auth/verify`, {
         method: 'POST',
@@ -63,7 +70,7 @@ export default function EmailVerificationScreen({
         },
         body: JSON.stringify({
           email,
-          code: verificationCode.trim(),
+          code,
         }),
       });
 
@@ -74,24 +81,17 @@ export default function EmailVerificationScreen({
         await AsyncStorage.setItem('authToken', data.token);
         await AsyncStorage.setItem('userData', JSON.stringify(data.user));
 
-        Alert.alert(
-          'Success',
-          'Email verified successfully!',
-          [
-            {
-              text: 'Continue',
-              onPress: () => {
-                // Navigate to main app
-                onAuthenticated?.();
-              },
-            },
-          ]
-        );
+        setStatusMessage('Email verified successfully!');
+
+        // Navigate to main app after a brief moment
+        setTimeout(() => {
+          onAuthenticated?.();
+        }, 600);
       } else {
-        Alert.alert('Error', data.error || 'Verification failed');
+        setErrorMessage(data.error || 'Verification failed. Please check the code and try again.');
       }
     } catch (error) {
-      Alert.alert('Error', 'Network error. Please try again.');
+      setErrorMessage('Network error. Please check your connection and try again.');
     } finally {
       setIsLoading(false);
     }
@@ -101,6 +101,9 @@ export default function EmailVerificationScreen({
     if (resendTimer > 0) return;
 
     setIsResending(true);
+    setErrorMessage('');
+    setStatusMessage('');
+
     try {
       const response = await fetch(`${API_URL}/auth/resend-verification`, {
         method: 'POST',
@@ -115,20 +118,20 @@ export default function EmailVerificationScreen({
       const data = await response.json();
 
       if (response.ok) {
-        Alert.alert('Success', 'Verification code sent to your email');
+        setStatusMessage('New verification code sent to your email!');
         setResendTimer(60); // 60 seconds cooldown
       } else {
-        Alert.alert('Error', data.error || 'Failed to resend code');
+        setErrorMessage(data.error || 'Failed to resend code');
       }
     } catch (error) {
-      Alert.alert('Error', 'Network error. Please try again.');
+      setErrorMessage('Network error. Please check your connection.');
     } finally {
       setIsResending(false);
     }
   };
 
   const handleBackToLogin = () => {
-    navigation.goBack();
+    resetTo?.('loginSignup', { initialMode: 'login' });
   };
 
   return (
@@ -138,33 +141,56 @@ export default function EmailVerificationScreen({
     >
       <View style={styles.content}>
         <View style={styles.header}>
+          {/* Shield Icon */}
+          <View style={styles.iconCircle}>
+            <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+              <Path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill={COLORS.primary} />
+            </Svg>
+          </View>
           <Text style={styles.title}>Verify Your Email</Text>
           <Text style={styles.subtitle}>
-            We've sent a verification code to{'\n'}
+            We've sent a verification code to{' '}
             <Text style={styles.emailText}>{email}</Text>
           </Text>
         </View>
 
         <View style={styles.form}>
-          <Text style={styles.label}>Enter Verification Code</Text>
+          {/* Status/Error Messages */}
+          {statusMessage ? (
+            <View style={styles.successBanner}>
+              <Text style={styles.successText}>{statusMessage}</Text>
+            </View>
+          ) : null}
+          {errorMessage ? (
+            <View style={styles.errorBanner}>
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
+          ) : null}
+
+          <Text style={styles.label} nativeID="code-label">Verification Code</Text>
           <TextInput
             style={styles.input}
             value={verificationCode}
             onChangeText={setVerificationCode}
             placeholder="Enter 6-digit code"
-            keyboardType="numeric"
+            placeholderTextColor={COLORS.textMuted}
+            keyboardType="default"
             maxLength={6}
             autoCapitalize="characters"
             autoCorrect={false}
+            accessibilityLabelledBy="code-label"
+            accessibilityLabel="Enter verification code"
           />
 
           <TouchableOpacity
             style={[styles.button, isLoading && styles.buttonDisabled]}
             onPress={verifyEmail}
             disabled={isLoading}
+            accessibilityRole="button"
+            accessibilityLabel="Verify your email address"
           >
             {isLoading ? (
-              <ActivityIndicator color="#fff" />
+              <ActivityIndicator color={COLORS.background} />
             ) : (
               <Text style={styles.buttonText}>Verify Email</Text>
             )}
@@ -175,6 +201,8 @@ export default function EmailVerificationScreen({
             <TouchableOpacity
               onPress={resendCode}
               disabled={resendTimer > 0 || isResending}
+              accessibilityRole="button"
+              accessibilityLabel={resendTimer > 0 ? `Resend code available in ${resendTimer} seconds` : 'Resend verification code'}
             >
               <Text
                 style={[
@@ -192,7 +220,12 @@ export default function EmailVerificationScreen({
           </View>
         </View>
 
-        <TouchableOpacity style={styles.backButton} onPress={handleBackToLogin}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={handleBackToLogin}
+          accessibilityRole="button"
+          accessibilityLabel="Go back to login screen"
+        >
           <Text style={styles.backButtonText}>Back to Login</Text>
         </TouchableOpacity>
       </View>
@@ -203,95 +236,141 @@ export default function EmailVerificationScreen({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: COLORS.background,
   },
   content: {
     flex: 1,
     justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+    paddingHorizontal: SPACING.l,
+    paddingVertical: SPACING.xxl,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: SPACING.xxl,
+  },
+  iconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.l,
+    ...SHADOWS.glow,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    color: '#2d3748',
-    marginBottom: 12,
+    ...TYPOGRAPHY.h1,
+    fontSize: 26,
+    color: COLORS.text,
+    marginBottom: SPACING.s,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
-    color: '#718096',
+    fontSize: 14,
+    color: COLORS.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 22,
   },
   emailText: {
-    fontWeight: '600',
-    color: '#2d3748',
+    fontWeight: '700',
+    color: COLORS.primary,
   },
   form: {
-    marginBottom: 32,
+    marginBottom: SPACING.xl,
+  },
+  successBanner: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderWidth: 1,
+    borderColor: COLORS.success,
+    borderRadius: 10,
+    padding: SPACING.m,
+    marginBottom: SPACING.m,
+  },
+  successText: {
+    color: COLORS.success,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  errorBanner: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    borderRadius: 10,
+    padding: SPACING.m,
+    marginBottom: SPACING.m,
+  },
+  errorText: {
+    color: COLORS.error,
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
   label: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#2d3748',
-    marginBottom: 8,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.s,
+    letterSpacing: 0.3,
   },
   input: {
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: COLORS.border,
     borderRadius: 12,
-    paddingHorizontal: 16,
+    paddingHorizontal: SPACING.m,
     paddingVertical: 14,
-    fontSize: 18,
-    backgroundColor: '#fff',
-    marginBottom: 24,
+    fontSize: 22,
+    color: COLORS.text,
+    marginBottom: SPACING.l,
     textAlign: 'center',
-    letterSpacing: 4,
-    fontWeight: '600',
+    letterSpacing: 6,
+    fontWeight: '700',
+    minHeight: 56,
   },
   button: {
-    backgroundColor: '#3182ce',
+    backgroundColor: COLORS.primary,
     borderRadius: 12,
-    paddingVertical: 16,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: SPACING.l,
+    minHeight: 48,
+    ...SHADOWS.glow,
   },
   buttonDisabled: {
-    backgroundColor: '#a0aec0',
+    opacity: 0.6,
   },
   buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    ...TYPOGRAPHY.button,
+    color: COLORS.background,
   },
   resendContainer: {
     alignItems: 'center',
   },
   resendText: {
     fontSize: 14,
-    color: '#718096',
-    marginBottom: 8,
+    color: COLORS.textSecondary,
+    marginBottom: SPACING.s,
   },
   resendButton: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '600',
-    color: '#3182ce',
+    color: COLORS.primary,
+    minHeight: 44,
+    lineHeight: 44,
   },
   resendButtonDisabled: {
-    color: '#a0aec0',
+    color: COLORS.textMuted,
   },
   backButton: {
     alignItems: 'center',
-    paddingVertical: 16,
+    paddingVertical: SPACING.m,
+    minHeight: 48,
+    justifyContent: 'center',
   },
   backButtonText: {
-    fontSize: 16,
-    color: '#718096',
+    fontSize: 15,
+    color: COLORS.textSecondary,
     fontWeight: '500',
   },
 });

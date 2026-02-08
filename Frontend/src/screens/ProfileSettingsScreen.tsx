@@ -6,14 +6,16 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { profileAPI } from '../services/api.service';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import BackHeader from '../components/BackHeader';
 
 interface ProfileSettingsScreenProps {
   onLogout?: () => void;
+  goBack?: () => void;
 }
 
 // Profile Icon
@@ -21,14 +23,14 @@ const ProfileIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
-      stroke="#666"
+      stroke={COLORS.primary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
-      stroke="#666"
+      stroke={COLORS.primary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -36,13 +38,15 @@ const ProfileIcon = () => (
   </Svg>
 );
 
-const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
+const ProfileSettingsScreen = ({ onLogout, goBack }: ProfileSettingsScreenProps) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [bio, setBio] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const loadProfile = async () => {
@@ -56,7 +60,7 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
         setBio(user.bio || '');
       } catch (error: any) {
         console.error('Error loading profile:', error);
-        Alert.alert('Error', error.message || 'Failed to load profile.');
+        setErrorMessage(error.message || 'Failed to load profile.');
       } finally {
         setLoading(false);
       }
@@ -67,9 +71,11 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
 
   const handleSave = async () => {
     if (!fullName) {
-      Alert.alert('Error', 'Please fill in your full name');
+      setErrorMessage('Please fill in your full name');
       return;
     }
+    setStatusMessage('');
+    setErrorMessage('');
 
     try {
       setSaving(true);
@@ -78,9 +84,9 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
         phone: phone || undefined,
         bio: bio || undefined,
       });
-      Alert.alert('Success', 'Your profile has been updated successfully.');
+      setStatusMessage('Profile updated successfully!');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update profile.');
+      setErrorMessage(error.message || 'Failed to update profile.');
     } finally {
       setSaving(false);
     }
@@ -89,7 +95,7 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
   if (loading) {
     return (
       <View style={[styles.container, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color="#000000" />
+        <ActivityIndicator size="large" color={COLORS.text} />
         <Text style={styles.loadingText}>Loading profile...</Text>
       </View>
     );
@@ -101,15 +107,28 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
       contentContainerStyle={styles.content}
       showsVerticalScrollIndicator={false}
     >
+      <BackHeader title="Profile Settings" onBack={goBack} />
+      
       <View style={styles.iconContainer}>
         <View style={styles.iconWrapper}>
           <ProfileIcon />
         </View>
       </View>
-      <Text style={styles.heading}>Profile Settings</Text>
       <Text style={styles.subheading}>
         Manage your personal information and profile details.
       </Text>
+
+      {/* Status / Error banners */}
+      {statusMessage ? (
+        <View style={styles.successBanner}>
+          <Text style={styles.successBannerText}>{statusMessage}</Text>
+        </View>
+      ) : null}
+      {errorMessage ? (
+        <View style={styles.errorBanner}>
+          <Text style={styles.errorBannerText}>{errorMessage}</Text>
+        </View>
+      ) : null}
 
       <View style={styles.formSection}>
         <View style={styles.inputContainer}>
@@ -117,7 +136,7 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
           <TextInput
             style={styles.input}
             placeholder="Enter your full name"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.textMuted}
             value={fullName}
             onChangeText={setFullName}
           />
@@ -128,7 +147,7 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
           <TextInput
             style={[styles.input, styles.inputDisabled]}
             placeholder="Enter your email"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.textMuted}
             value={email}
             editable={false}
             keyboardType="email-address"
@@ -142,7 +161,7 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
           <TextInput
             style={styles.input}
             placeholder="Enter your phone number"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.textMuted}
             value={phone}
             onChangeText={setPhone}
             keyboardType="phone-pad"
@@ -154,7 +173,7 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
           <TextInput
             style={[styles.input, styles.textArea]}
             placeholder="Tell us about yourself"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.textMuted}
             value={bio}
             onChangeText={setBio}
             multiline
@@ -170,7 +189,7 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
         disabled={saving}
       >
         {saving ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={COLORS.background} />
         ) : (
           <Text style={styles.submitButtonText}>Save Changes</Text>
         )}
@@ -194,7 +213,7 @@ const ProfileSettingsScreen = ({ onLogout }: ProfileSettingsScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
   },
   content: {
     flexGrow: 1,
@@ -205,13 +224,13 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   subheading: {
     fontSize: 13,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 18,
@@ -224,7 +243,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -237,25 +256,25 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
+    color: COLORS.text,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 10,
     fontSize: 13,
-    color: '#000000',
+    color: COLORS.text,
   },
   textArea: {
     minHeight: 80,
     paddingTop: 10,
   },
   submitButton: {
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -263,12 +282,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 13,
     fontWeight: '600',
   },
   logoutButton: {
-    backgroundColor: '#E53935',
+    backgroundColor: COLORS.error,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -276,13 +295,13 @@ const styles = StyleSheet.create({
     opacity: 1,
   },
   logoutButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 13,
     fontWeight: '700',
   },
   infoText: {
     fontSize: 11,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
   },
@@ -294,19 +313,47 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
   },
   inputDisabled: {
-    backgroundColor: '#F5F5F5',
-    color: '#666',
+    backgroundColor: COLORS.background,
+    color: COLORS.textSecondary,
   },
   inputHint: {
     fontSize: 10,
-    color: '#999',
+    color: COLORS.textSecondary,
     marginTop: 4,
   },
   submitButtonDisabled: {
     opacity: 0.6,
+  },
+  successBanner: {
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderWidth: 1,
+    borderColor: COLORS.success,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  successBannerText: {
+    color: COLORS.success,
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+  },
+  errorBanner: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1,
+    borderColor: COLORS.error,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+  },
+  errorBannerText: {
+    color: COLORS.error,
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });
 

@@ -1,6 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, StatusBar, Dimensions } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path, Circle, Rect, G } from 'react-native-svg';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { Logo } from '../components/Logo';
+
+const { width, height } = Dimensions.get('window');
 
 interface WelcomeScreenProps {
   navigate?: (screenId: string, params?: Record<string, any>) => void;
@@ -13,56 +18,58 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
   const splashOpacity = useRef(new Animated.Value(1)).current;
   const contentFade = useRef(new Animated.Value(0)).current;
   const screenFade = useRef(new Animated.Value(1)).current;
+  
+  // Professional subtle animations
+  const float = useRef(new Animated.Value(0)).current;
+  const statsCount = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    // Subtle floating animation
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(float, { toValue: 1, duration: 4000, useNativeDriver: true }),
+        Animated.timing(float, { toValue: 0, duration: 4000, useNativeDriver: true }),
+      ])
+    ).start();
+
     // Logo animation sequence
     Animated.sequence([
-      // Logo scales up and fades in
       Animated.parallel([
         Animated.spring(logoScale, {
           toValue: 1,
-          tension: 50,
-          friction: 7,
+          tension: 40,
+          friction: 8,
           useNativeDriver: true,
         }),
         Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 400,
+          duration: 600,
           useNativeDriver: true,
         }),
       ]),
-      // Hold for a moment
-      Animated.delay(800),
-      // Pulse effect
-      Animated.sequence([
-        Animated.timing(logoScale, {
-          toValue: 1.1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(logoScale, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]),
-      // Fade out splash and fade in content
+      Animated.delay(1200),
       Animated.parallel([
         Animated.timing(splashOpacity, {
           toValue: 0,
-          duration: 500,
+          duration: 400,
           useNativeDriver: true,
         }),
         Animated.timing(contentFade, {
           toValue: 1,
-          duration: 500,
+          duration: 600,
           useNativeDriver: true,
         }),
       ]),
     ]).start(() => {
       setShowContent(true);
+      // Animate stats counter
+      Animated.timing(statsCount, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: false,
+      }).start();
     });
-  }, [logoScale, logoOpacity, splashOpacity, contentFade]);
+  }, []);
 
   const logoAnimatedStyle = {
     opacity: logoOpacity,
@@ -71,18 +78,19 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
 
   const splashAnimatedStyle = {
     opacity: splashOpacity,
+    zIndex: splashOpacity.interpolate({
+      inputRange: [0, 0.1, 1],
+      outputRange: [-1, 100, 100],
+    }),
   };
 
   const contentAnimatedStyle = {
     opacity: contentFade,
   };
 
-  const screenAnimatedStyle = {
-    opacity: screenFade,
-  };
+  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -10] });
 
   const handleNavigation = (mode: 'login' | 'signup') => {
-    // Smooth fade out animation before navigation
     Animated.timing(screenFade, {
       toValue: 0,
       duration: 300,
@@ -92,93 +100,166 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
     });
   };
 
-  return (
-    <Animated.View style={[styles.container, screenAnimatedStyle]}>
-      {/* Loading/Splash Screen */}
-      {!showContent && (
-        <Animated.View style={[styles.splashContainer, splashAnimatedStyle]}>
-          <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
-            <View style={styles.splashLogoContainer}>
-              <Svg
-                width={60}
-                height={60}
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <Path
-                  d="M20 11.6211V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V11.6211M7.5 9.75C7.5 10.9926 6.49264 12 5.25 12C4.09397 12 3.14157 11.1282 3.01442 10.0062C2.99524 9.83688 3.02176 9.66657 3.06477 9.50173L4.10996 5.49516C4.3397 4.6145 5.13506 4 6.04519 4H17.9548C18.8649 4 19.6603 4.6145 19.89 5.49516L20.9352 9.50173C20.9782 9.66657 21.0048 9.83688 20.9856 10.0062C20.8584 11.1282 19.906 12 18.75 12C17.5074 12 16.5 10.9926 16.5 9.75M7.5 9.75C7.5 10.9926 8.50736 12 9.75 12C10.9926 12 12 10.9926 12 9.75M7.5 9.75L8 4M12 9.75C12 10.9926 13.0074 12 14.25 12C15.4926 12 16.5 10.9926 16.5 9.75M12 9.75V4M16.5 9.75L16 4"
-                  stroke="#FFFFFF"
-                  strokeWidth={2}
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </Svg>
-            </View>
-          </Animated.View>
-        </Animated.View>
-      )}
+  // Animated user count
+  const userCount = statsCount.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, 10],
+  });
 
-      {/* Main Content */}
+  return (
+    <Animated.View style={[styles.container, { opacity: screenFade }]}>
+      <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+
+      {/* Professional gradient background */}
+      <LinearGradient
+        colors={[COLORS.background, '#0D1420', COLORS.background]}
+        style={StyleSheet.absoluteFill}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+      />
+
+      {/* Subtle grid pattern overlay */}
+      <View style={styles.gridOverlay} />
+
+      {/* Splash Screen */}
+      <Animated.View style={[styles.splashContainer, splashAnimatedStyle]}>
+        <Animated.View style={logoAnimatedStyle}>
+          <Logo size={140} variant="full" />
+        </Animated.View>
+      </Animated.View>
+
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content}>
         <Animated.View style={contentAnimatedStyle}>
-        {/* Storefront Icon */}
-        <View style={styles.iconContainer}>
-          <View style={styles.storefrontIconContainer}>
-            <Svg
-              width={30}
-              height={30}
-              viewBox="0 0 24 24"
-              fill="none"
-            >
-              <Path
-                d="M20 11.6211V18C20 19.1046 19.1046 20 18 20H6C4.89543 20 4 19.1046 4 18V11.6211M7.5 9.75C7.5 10.9926 6.49264 12 5.25 12C4.09397 12 3.14157 11.1282 3.01442 10.0062C2.99524 9.83688 3.02176 9.66657 3.06477 9.50173L4.10996 5.49516C4.3397 4.6145 5.13506 4 6.04519 4H17.9548C18.8649 4 19.6603 4.6145 19.89 5.49516L20.9352 9.50173C20.9782 9.66657 21.0048 9.83688 20.9856 10.0062C20.8584 11.1282 19.906 12 18.75 12C17.5074 12 16.5 10.9926 16.5 9.75M7.5 9.75C7.5 10.9926 8.50736 12 9.75 12C10.9926 12 12 10.9926 12 9.75M7.5 9.75L8 4M12 9.75C12 10.9926 13.0074 12 14.25 12C15.4926 12 16.5 10.9926 16.5 9.75M12 9.75V4M16.5 9.75L16 4"
-                stroke="#FFFFFF"
-                strokeWidth={2}
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </Svg>
+
+          {/* Logo */}
+          <View style={styles.logoSection}>
+            <Logo size={100} variant="full" showTagline />
           </View>
-        </View>
 
-        {/* Abstract Image Placeholder */}
-        <View style={styles.imageContainer}>
-          <View style={styles.abstractImage}>
-            <View style={styles.circle1} />
-            <View style={styles.circle2} />
-            <View style={styles.circle3} />
-          </View>
-        </View>
-
-        {/* Headline */}
-        <Text style={styles.headline}>The best stores, all in one place.</Text>
-
-        {/* Body Text */}
-        <Text style={styles.bodyText}>
-          Shop from a curated collection of independent brands and unique products.
-        </Text>
-
-        {/* Get Started Button */}
-        <TouchableOpacity 
-          style={styles.getStartedButton}
-          onPress={() => handleNavigation('signup')}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.getStartedButtonText}>Get Started</Text>
-        </TouchableOpacity>
-
-        {/* Sign In Link */}
-        <View style={styles.signInContainer}>
-          <Text style={styles.signInText}>
-            Already have an account?{' '}
-            <Text 
-              style={styles.signInLink}
-              onPress={() => handleNavigation('login')}
-            >
-              Sign In
+          {/* Hero Section */}
+          <View style={styles.heroSection}>
+            <Text style={styles.heroTitle}>
+              Algeria's Leading{'\n'}E-Commerce Platform
             </Text>
-          </Text>
-        </View>
+            <Text style={styles.heroSubtitle}>
+              Secure, Fast, and Trusted by Millions
+            </Text>
+          </View>
+
+          {/* Trust Indicators */}
+          <View style={styles.trustSection}>
+            <View style={styles.trustCard}>
+              <LinearGradient
+                colors={[COLORS.glass, COLORS.surfaceHighlight]}
+                style={styles.trustCardGradient}
+              >
+                <View style={styles.trustIconContainer}>
+                  <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+                    <Path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z" stroke={COLORS.success} strokeWidth="2" />
+                    <Path d="M8 12L11 15L16 9" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </View>
+                <Text style={styles.trustTitle}>Verified Sellers</Text>
+                <Text style={styles.trustDesc}>100% authenticated merchants</Text>
+              </LinearGradient>
+            </View>
+
+            <View style={styles.trustCard}>
+              <LinearGradient
+                colors={[COLORS.glass, COLORS.surfaceHighlight]}
+                style={styles.trustCardGradient}
+              >
+                <View style={styles.trustIconContainer}>
+                  <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+                    <Path d="M12 2L2 7L12 12L22 7L12 2Z" stroke={COLORS.secondary} strokeWidth="2" />
+                    <Path d="M2 17L12 22L22 17" stroke={COLORS.secondary} strokeWidth="2" />
+                    <Path d="M2 12L12 17L22 12" stroke={COLORS.secondary} strokeWidth="2" />
+                  </Svg>
+                </View>
+                <Text style={styles.trustTitle}>Fast Delivery</Text>
+                <Text style={styles.trustDesc}>All 58 wilayas covered</Text>
+              </LinearGradient>
+            </View>
+
+            <View style={styles.trustCard}>
+              <LinearGradient
+                colors={[COLORS.glass, COLORS.surfaceHighlight]}
+                style={styles.trustCardGradient}
+              >
+                <View style={styles.trustIconContainer}>
+                  <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+                    <Path d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z" stroke={COLORS.primary} strokeWidth="2" />
+                    <Path d="M9 12L11 14L15 10" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </Svg>
+                </View>
+                <Text style={styles.trustTitle}>Secure Payment</Text>
+                <Text style={styles.trustDesc}>Bank-level encryption</Text>
+              </LinearGradient>
+            </View>
+          </View>
+
+          {/* Stats Section */}
+          <View style={styles.statsSection}>
+            <LinearGradient
+              colors={[COLORS.primary, COLORS.primaryLight, COLORS.secondary]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.statsGradient}
+            >
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>10M+</Text>
+                <Text style={styles.statLabel}>Active Users</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>50K+</Text>
+                <Text style={styles.statLabel}>Verified Sellers</Text>
+              </View>
+              <View style={styles.statDivider} />
+              <View style={styles.statItem}>
+                <Text style={styles.statNumber}>58</Text>
+                <Text style={styles.statLabel}>Wilayas</Text>
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* CTA Buttons */}
+          <View style={styles.ctaSection}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => handleNavigation('signup')}
+              activeOpacity={0.9}
+              accessibilityRole="button"
+              accessibilityLabel="Create new account"
+            >
+              <LinearGradient
+                colors={[COLORS.primary, COLORS.primaryLight]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.primaryButtonText}>Start Selling Now</Text>
+                <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+                  <Path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                </Svg>
+              </LinearGradient>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={() => handleNavigation('login')}
+              activeOpacity={0.8}
+              accessibilityRole="button"
+              accessibilityLabel="Sign in to existing account"
+            >
+              <Text style={styles.secondaryButtonText}>Sign In</Text>
+            </TouchableOpacity>
+
+            <Text style={styles.termsText}>
+              By continuing, you agree to our Terms of Service and Privacy Policy
+            </Text>
+          </View>
+
         </Animated.View>
       </ScrollView>
     </Animated.View>
@@ -188,20 +269,16 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
+  },
+  gridOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    opacity: 0.03,
+    backgroundColor: 'transparent',
   },
   splashContainer: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: '#F5F5F5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 1000,
-  },
-  logoContainer: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -210,110 +287,150 @@ const styles = StyleSheet.create({
   },
   content: {
     flexGrow: 1,
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-    paddingTop: 60,
+    paddingHorizontal: SPACING.l,
+    paddingBottom: SPACING.xxl,
+    paddingTop: SPACING.xxl * 1.5,
   },
-  iconContainer: {
+  logoSection: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: SPACING.xl,
   },
-  splashLogoContainer: {
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
+  heroSection: {
     alignItems: 'center',
+    marginBottom: SPACING.xl,
   },
-  storefrontIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#000000',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  imageContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
-  },
-  abstractImage: {
-    width: 200,
-    height: 200,
-    position: 'relative',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  circle1: {
-    position: 'absolute',
-    width: 120,
-    height: 120,
-    borderRadius: 60,
-    backgroundColor: '#E0E0E0',
-    top: 0,
-    left: 0,
-  },
-  circle2: {
-    position: 'absolute',
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#F0F0F0',
-    top: 50,
-    right: 0,
-  },
-  circle3: {
-    position: 'absolute',
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#E8E8E8',
-    bottom: 0,
-    left: 30,
-  },
-  headline: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000000',
+  heroTitle: {
+    fontSize: 32,
+    fontWeight: '800',
+    color: COLORS.text,
     textAlign: 'center',
-    marginBottom: 12,
-    paddingHorizontal: 16,
+    lineHeight: 40,
+    marginBottom: SPACING.m,
+    letterSpacing: -0.5,
   },
-  bodyText: {
+  heroSubtitle: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+  },
+  trustSection: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.xl,
+  },
+  trustCard: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  trustCardGradient: {
+    padding: SPACING.m,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: COLORS.glassBorder,
+    borderRadius: 16,
+    minHeight: 140,
+  },
+  trustIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+    ...SHADOWS.small,
+  },
+  trustTitle: {
     fontSize: 13,
-    color: '#666',
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 4,
     textAlign: 'center',
-    marginBottom: 215,
-    paddingHorizontal: 16,
-    lineHeight: 18,
   },
-  getStartedButton: {
-    backgroundColor: '#000000',
-    borderRadius: 8,
-    paddingVertical: 12,
+  trustDesc: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    lineHeight: 16,
+  },
+  statsSection: {
+    marginBottom: SPACING.xl,
+    borderRadius: 20,
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  statsGradient: {
+    flexDirection: 'row',
+    padding: SPACING.l,
     alignItems: 'center',
-    marginHorizontal: 16,
-    marginBottom: 16,
+    justifyContent: 'space-around',
   },
-  getStartedButtonText: {
+  statItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  statNumber: {
+    fontSize: 28,
+    fontWeight: '800',
     color: '#FFFFFF',
-    fontSize: 13,
+    marginBottom: 4,
+  },
+  statLabel: {
+    fontSize: 11,
     fontWeight: '600',
-  },
-  signInContainer: {
-    alignItems: 'center',
-    paddingHorizontal: 16,
-  },
-  signInText: {
-    fontSize: 13,
-    color: '#666',
+    color: 'rgba(255,255,255,0.9)',
     textAlign: 'center',
   },
-  signInLink: {
-    color: '#000000',
+  statDivider: {
+    width: 1,
+    height: 40,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+  },
+  ctaSection: {
+    gap: SPACING.m,
+  },
+  primaryButton: {
+    borderRadius: 16,
+    overflow: 'hidden',
+    ...SHADOWS.medium,
+  },
+  buttonGradient: {
+    flexDirection: 'row',
+    paddingVertical: SPACING.md + 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 58,
+    gap: SPACING.s,
+  },
+  primaryButtonText: {
+    fontSize: 17,
+    fontWeight: '700',
+    color: '#FFFFFF',
+    letterSpacing: 0.3,
+  },
+  secondaryButton: {
+    borderRadius: 16,
+    paddingVertical: SPACING.md + 2,
+    alignItems: 'center',
+    minHeight: 58,
+    borderWidth: 2,
+    borderColor: COLORS.borderLight,
+    backgroundColor: COLORS.surface,
+  },
+  secondaryButtonText: {
+    fontSize: 17,
     fontWeight: '600',
+    color: COLORS.text,
+  },
+  termsText: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    textAlign: 'center',
+    marginTop: SPACING.sm,
+    lineHeight: 16,
   },
 });
 

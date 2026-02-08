@@ -3,6 +3,8 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { storefrontAPI } from '../services/api.service';
 import { StorefrontStore } from '../components/StoreHeader';
 import { StorefrontProduct } from '../components/ProductCard';
+import Navigation from '../components/Navigation';
+import { PackageIcon, TruckIcon, ReturnIcon, ShieldIcon } from '../components/icons/Icons';
 import algeriaCities from '../../../static/willayas/algeria_cities.json';
 import shippingPrices from '../../../static/shipping prices/shipping_prices.json';
 import './ProductPage.css';
@@ -198,29 +200,12 @@ const ProductPage: React.FC = () => {
 
   return (
     <div className="product-page">
-      <nav className="navbar">
-        <div className="nav-wrapper">
-          <div className="nav-left">
-            <div className="logo">{store.name.charAt(0)}</div>
-          </div>
-          <div className="nav-center">
-            <div className="nav-menu">
-              <a href="#" onClick={() => navigate(`/?domain=${domain}`)} className="nav-link">Home</a>
-              <a href="#" onClick={() => navigate(`/contact?domain=${domain}`)} className="nav-link">Contact</a>
-              <a href="#" onClick={() => navigate(`/policies?domain=${domain}`)} className="nav-link">Policies</a>
-            </div>
-          </div>
-          <div className="nav-right">
-            <button className="nav-icon-button" title="Search">⌕</button>
-            <button className="nav-icon-button" title="Favorites">♡</button>
-            <button className="cart-button" title="Cart">⊞</button>
-          </div>
-        </div>
-        <div className="nav-banner">
-          <p>{store.description || 'Free Shipping on Orders $50+'}</p>
-        </div>
-      </nav>
-      
+      <Navigation
+        storeName={store.name}
+        domain={domain}
+        onNavigate={(path) => navigate(path)}
+      />
+
       <main className="product-main">
         <button className="breadcrumb-button" onClick={handleGoBack}>
           ← Back to products
@@ -238,7 +223,7 @@ const ProductPage: React.FC = () => {
               </div>
             ) : (
               <div className="main-image-placeholder">
-                <span className="placeholder-emoji">📦</span>
+                <PackageIcon size={64} color="#999" aria-label="Aucune image de produit disponible" />
               </div>
             )}
             <div className="thumbnail-images">
@@ -263,9 +248,9 @@ const ProductPage: React.FC = () => {
 
           <div className="product-details">
             <div className="breadcrumb">Home / Products / {product.name}</div>
-            
+
             <h1 className="product-title">{product.name}</h1>
-            
+
             <div className="product-meta">
               <span className="product-category">Category</span>
               <div className="color-options">
@@ -376,24 +361,30 @@ const ProductPage: React.FC = () => {
 
             <div className="product-info-section">
               <div className="info-item">
-                <span className="info-icon">📦</span>
+                <div className="info-icon">
+                  <TruckIcon size={24} color="var(--color-primary)" aria-label="Livraison gratuite" />
+                </div>
                 <div>
-                  <p className="info-title">Free Shipping</p>
-                  <p className="info-text">On orders over $50</p>
+                  <p className="info-title">Livraison Gratuite</p>
+                  <p className="info-text">Pour les commandes de plus de 5000 DA</p>
                 </div>
               </div>
               <div className="info-item">
-                <span className="info-icon">↩️</span>
+                <div className="info-icon">
+                  <ReturnIcon size={24} color="var(--color-primary)" aria-label="Retours faciles" />
+                </div>
                 <div>
-                  <p className="info-title">Easy Returns</p>
-                  <p className="info-text">30 days return policy</p>
+                  <p className="info-title">Retours Faciles</p>
+                  <p className="info-text">Politique de retour de 30 jours</p>
                 </div>
               </div>
               <div className="info-item">
-                <span className="info-icon">🛡️</span>
+                <div className="info-icon">
+                  <ShieldIcon size={24} color="var(--color-primary)" aria-label="Paiement sécurisé" />
+                </div>
                 <div>
-                  <p className="info-title">Secure Payment</p>
-                  <p className="info-text">100% secure checkout</p>
+                  <p className="info-title">Paiement Sécurisé</p>
+                  <p className="info-text">Paiement 100% sécurisé</p>
                 </div>
               </div>
             </div>

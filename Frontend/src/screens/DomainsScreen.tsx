@@ -6,18 +6,21 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { storeAPI } from '../services/api.service';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import BackHeader from '../components/BackHeader';
+import StatusBanner from '../components/StatusBanner';
+import { useStatusMessage } from '../components/useStatusMessage';
 
 // Domain Icon
 const DomainIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"
-      fill="#666"
+      fill={COLORS.textSecondary}
     />
   </Svg>
 );
@@ -29,6 +32,7 @@ interface DomainsScreenProps {
 }
 
 const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId }) => {
+  const { message, showSuccess, showError, clear } = useStatusMessage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [customDomain, setCustomDomain] = useState('');
@@ -60,7 +64,7 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
         setCurrentDomain(store.domain || '');
         setCustomDomain(store.domain || '');
       } catch (error: any) {
-        Alert.alert('Error', error.message || 'Failed to load domain.');
+        showError(error.message || 'Failed to load domain.');
       } finally {
         setLoading(false);
       }
@@ -71,12 +75,12 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
 
   const handleSave = async () => {
     if (!storeId) {
-      Alert.alert('Error', 'Store ID is required');
+      showError('Store ID is required');
       return;
     }
 
     if (!customDomain) {
-      Alert.alert('Error', 'Please enter a domain');
+      showError('Please enter a domain');
       return;
     }
 
@@ -86,9 +90,9 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
         domain: customDomain,
       });
       setCurrentDomain(customDomain);
-      Alert.alert('Success', 'Your domain settings have been saved. DNS configuration may take up to 48 hours.');
+      showSuccess('Your domain settings have been saved. DNS configuration may take up to 48 hours.');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to save domain.');
+      showError(error.message || 'Failed to save domain.');
     } finally {
       setSaving(false);
     }
@@ -97,8 +101,8 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#000000" />
-        <Text style={{ marginTop: 12, fontSize: 14, color: '#666' }}>Loading domain...</Text>
+        <ActivityIndicator size="large" color={COLORS.text} />
+        <Text style={{ marginTop: 12, fontSize: 14, color: COLORS.textSecondary }}>Loading domain...</Text>
       </View>
     );
   }
@@ -114,10 +118,12 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
           <DomainIcon />
         </View>
       </View>
-      <Text style={styles.heading}>Domains</Text>
+      <BackHeader title="Domains" onBack={goBack} />
       <Text style={styles.subheading}>
         Manage your domain settings and configurations.
       </Text>
+
+      <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
 
       <View style={styles.formSection}>
         <View style={styles.domainCard}>
@@ -131,7 +137,7 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
           <TextInput
             style={styles.input}
             placeholder="example.com"
-            placeholderTextColor="#999"
+            placeholderTextColor={COLORS.textMuted}
             value={customDomain}
             onChangeText={setCustomDomain}
             autoCapitalize="none"
@@ -149,7 +155,7 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
         disabled={saving || !storeId}
       >
         {saving ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={COLORS.background} />
         ) : (
           <Text style={styles.submitButtonText}>Save Domain</Text>
         )}
@@ -176,7 +182,7 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
   },
   content: {
     flexGrow: 1,
@@ -187,13 +193,13 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   subheading: {
     fontSize: 13,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 18,
@@ -206,7 +212,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -214,27 +220,27 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   domainCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
   },
   domainLabel: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 4,
   },
   domainValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 8,
   },
   domainStatus: {
     fontSize: 10,
-    color: '#2E7D32',
+    color: COLORS.success,
     fontWeight: '600',
   },
   inputContainer: {
@@ -243,27 +249,27 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#333',
+    color: COLORS.text,
     marginBottom: 6,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 10,
     fontSize: 13,
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 8,
   },
   helpText: {
     fontSize: 11,
-    color: '#666',
+    color: COLORS.textSecondary,
     lineHeight: 16,
   },
   submitButton: {
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -271,14 +277,14 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 13,
     fontWeight: '600',
   },
   infoCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
     marginTop: 8,
@@ -286,12 +292,12 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 8,
   },
   infoText: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     lineHeight: 16,
     marginBottom: 12,
   },
@@ -303,13 +309,16 @@ const styles = StyleSheet.create({
   dnsType: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#333',
+    color: COLORS.text,
     width: 80,
   },
   dnsValue: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     flex: 1,
+  },
+  submitButtonDisabled: {
+    opacity: 0.6,
   },
 });
 

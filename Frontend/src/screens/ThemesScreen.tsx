@@ -5,30 +5,33 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import BackHeader from '../components/BackHeader';
+import StatusBanner from '../components/StatusBanner';
+import { useStatusMessage } from '../components/useStatusMessage';
 
 // Theme Icon
 const ThemeIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 2.69L5 6.69L12 10.69L19 6.69L12 2.69Z"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M5 12L12 16L19 12"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M5 17.31L12 21.31L19 17.31"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -36,7 +39,8 @@ const ThemeIcon = () => (
   </Svg>
 );
 
-const ThemesScreen = () => {
+const ThemesScreen = ({ goBack }: { goBack?: () => void }) => {
+  const { message, showSuccess, showError, clear } = useStatusMessage();
   const [selectedTheme, setSelectedTheme] = useState<string | null>('light');
 
   const themes = [
@@ -47,10 +51,10 @@ const ThemesScreen = () => {
 
   const handleSave = () => {
     if (!selectedTheme) {
-      Alert.alert('Error', 'Please select a theme');
+      showError('Please select a theme');
       return;
     }
-    Alert.alert('Success', 'Your theme preference has been saved.');
+    showSuccess('Your theme preference has been saved.');
   };
 
   return (
@@ -64,10 +68,12 @@ const ThemesScreen = () => {
           <ThemeIcon />
         </View>
       </View>
-      <Text style={styles.heading}>Themes</Text>
+      <BackHeader title="Themes" onBack={goBack} />
       <Text style={styles.subheading}>
         Choose a theme for your store appearance.
       </Text>
+
+      <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
 
       <View style={styles.formSection}>
         {themes.map((theme) => (
@@ -120,7 +126,7 @@ const ThemesScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
   },
   content: {
     flexGrow: 1,
@@ -136,20 +142,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   subheading: {
     fontSize: 13,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 18,
@@ -158,9 +164,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   themeCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
@@ -169,7 +175,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   themeCardSelected: {
-    borderColor: '#000000',
+    borderColor: COLORS.primary,
     borderWidth: 2,
   },
   themeContent: {
@@ -178,35 +184,35 @@ const styles = StyleSheet.create({
   themeName: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 4,
   },
   themeNameSelected: {
-    color: '#000000',
+    color: COLORS.text,
   },
   themeDescription: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
   },
   themeDescriptionSelected: {
-    color: '#333',
+    color: COLORS.text,
   },
   checkmark: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
   },
   checkmarkText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 12,
     fontWeight: 'bold',
   },
   submitButton: {
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -214,13 +220,13 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 13,
     fontWeight: '600',
   },
   infoText: {
     fontSize: 11,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
   },

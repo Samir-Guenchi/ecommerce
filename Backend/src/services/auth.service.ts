@@ -84,6 +84,11 @@ export class AuthService {
           userId: existingUser.id,
         });
 
+        // Always log the code in dev so it's easy to find
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`\n🔑 VERIFICATION CODE for ${existingUser.email}: ${verificationCode}\n`);
+        }
+
         // Send verification email
         try {
           await emailService.sendVerificationCode(
@@ -146,6 +151,11 @@ export class AuthService {
       expiresAt,
       userId: savedUser.id,
     });
+
+    // Always log the code in dev so it's easy to find
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n🔑 VERIFICATION CODE for ${savedUser.email}: ${verificationCode}\n`);
+    }
 
     // Send verification email
     try {
@@ -233,6 +243,11 @@ export class AuthService {
       expiresAt,
       userId: user.id,
     });
+
+    // Always log the code in dev so it's easy to find
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n🔑 VERIFICATION CODE for ${user.email}: ${verificationCode}\n`);
+    }
 
     // Send verification email
     await emailService.sendVerificationCode(

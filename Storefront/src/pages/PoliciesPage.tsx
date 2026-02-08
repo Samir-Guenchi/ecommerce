@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import Navigation from '../components/Navigation';
 
 const PoliciesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -7,28 +8,11 @@ const PoliciesPage: React.FC = () => {
 
   return (
     <div className="policies-page">
-      <nav className="navbar">
-        <div className="nav-wrapper">
-          <div className="nav-left">
-            <div className="logo">A</div>
-          </div>
-          <div className="nav-center">
-            <div className="nav-menu">
-              <a href="#" onClick={() => navigate(`/?domain=${domain}`)} className="nav-link">Home</a>
-              <a href="#" onClick={() => navigate(`/contact?domain=${domain}`)} className="nav-link">Contact</a>
-              <a href="#" className="nav-link active">Policies</a>
-            </div>
-          </div>
-          <div className="nav-right">
-            <button className="nav-icon-button" title="Search">⌕</button>
-            <button className="nav-icon-button" title="Favorites">♡</button>
-            <button className="cart-button" title="Cart">⊞</button>
-          </div>
-        </div>
-        <div className="nav-banner">
-          <p>Our Policies</p>
-        </div>
-      </nav>
+      <Navigation
+        storeName="Store"
+        domain={domain}
+        onNavigate={(path) => navigate(path)}
+      />
 
       <main className="main-content">
         <div className="content-wrapper">

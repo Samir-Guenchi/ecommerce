@@ -8,27 +8,28 @@ import {
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { orderAPI, productAPI, storeAPI } from '../services/api.service';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
 
 // Analytics Icon
 const AnalyticsIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M3 3V21H21"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M7 16L12 11L16 15L21 10"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M21 10H16V15H21V10Z"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -101,8 +102,8 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ navigate, goBack, sto
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#000000" />
-        <Text style={{ marginTop: 12, fontSize: 14, color: '#666' }}>Loading analytics...</Text>
+        <ActivityIndicator size="large" color={COLORS.text} />
+        <Text style={{ marginTop: 12, fontSize: 14, color: COLORS.textSecondary }}>Loading analytics...</Text>
       </View>
     );
   }
@@ -160,7 +161,7 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ navigate, goBack, sto
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
   },
   content: {
     flexGrow: 1,
@@ -176,20 +177,20 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
   heading: {
     fontSize: 22,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
     textAlign: 'center',
     marginBottom: 8,
   },
   subheading: {
     fontSize: 13,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 18,
@@ -198,44 +199,40 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   periodCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: COLORS.surface,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
   },
   periodLabel: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 4,
   },
   periodValue: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#000000',
+    color: COLORS.text,
   },
   statCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: COLORS.surface,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     marginBottom: 4,
   },
   statValue: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
   },
   infoText: {
     fontSize: 11,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
   },

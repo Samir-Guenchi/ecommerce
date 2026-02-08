@@ -33,7 +33,7 @@ export const dataSourceOptions: DataSourceOptions = {
   port: parseInt(process.env.DB_PORT || '5432', 10),
   username: process.env.DB_USERNAME || 'postgres',
   password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'algerie_post',
+  database: process.env.DB_DATABASE || process.env.DB_NAME || 'algerie_post_ecom',
   entities: [
     User,
     Plan,

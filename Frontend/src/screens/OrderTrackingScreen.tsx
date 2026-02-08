@@ -9,13 +9,14 @@ import {
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { orderAPI } from '../services/api.service';
 import algeriaCities from '../data/algeria_cities.json';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
 
 // Back Arrow Icon
 const BackArrowIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M19 12H5M5 12L12 19M5 12L12 5"
-      stroke="#000000"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -121,13 +122,13 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Delivered':
-        return { bg: '#E8F5E9', text: '#2E7D32' };
+        return { bg: 'rgba(16,185,129,0.12)', text: COLORS.success };
       case 'Shipped':
-        return { bg: '#E3F2FD', text: '#1565C0' };
+        return { bg: 'rgba(56,189,248,0.12)', text: COLORS.secondary };
       case 'Processing':
-        return { bg: '#FFF3E0', text: '#F57C00' };
+        return { bg: 'rgba(245,158,11,0.12)', text: COLORS.warning };
       default:
-        return { bg: '#F5F5F5', text: '#666' };
+        return { bg: COLORS.surface, text: COLORS.textSecondary };
     }
   };
 
@@ -328,7 +329,7 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
   },
   scroll: {
     flex: 1,
@@ -343,12 +344,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: COLORS.border,
   },
   header: {
     marginBottom: 24,
@@ -356,20 +357,18 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 4,
   },
   orderNumber: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
   },
   orderInfoCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderRadius: 8,
     padding: 16,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   orderInfoRow: {
     flexDirection: 'row',
@@ -379,12 +378,12 @@ const styles = StyleSheet.create({
   },
   orderInfoLabel: {
     fontSize: 14,
-    color: '#666',
+    color: COLORS.textSecondary,
   },
   orderInfoValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000000',
+    color: COLORS.text,
   },
   statusBadge: {
     paddingHorizontal: 12,
@@ -401,16 +400,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 20,
   },
   pathContainer: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderRadius: 8,
     padding: 20,
     marginBottom: 24,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   pathItem: {
     flexDirection: 'row',
@@ -440,31 +437,31 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: COLORS.border,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#FFFFFF',
+    borderColor: COLORS.surface,
   },
   wilayaCircleStart: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.success,
     borderColor: '#4CAF50',
   },
   wilayaCircleCurrent: {
-    backgroundColor: '#2196F3',
+    backgroundColor: COLORS.secondary,
     borderColor: '#2196F3',
   },
   wilayaCircleEnd: {
-    backgroundColor: '#FF9800',
+    backgroundColor: COLORS.warning,
     borderColor: '#FF9800',
   },
   wilayaCircleCompleted: {
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.success,
     borderColor: '#4CAF50',
   },
   wilayaCode: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontWeight: '500',
   },
   wilayaCodeBold: {
@@ -478,30 +475,28 @@ const styles = StyleSheet.create({
   },
   wilayaName: {
     fontSize: 14,
-    color: '#333',
+    color: COLORS.text,
     marginBottom: 4,
   },
   wilayaNameBold: {
     fontWeight: 'bold',
     fontSize: 16,
-    color: '#000000',
+    color: COLORS.text,
   },
   wilayaLabel: {
     fontSize: 11,
-    color: '#666',
+    color: COLORS.textSecondary,
     fontStyle: 'italic',
   },
   timelineSection: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderRadius: 8,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
   },
   timelineTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 16,
   },
   timelineItem: {
@@ -513,7 +508,7 @@ const styles = StyleSheet.create({
     width: 12,
     height: 12,
     borderRadius: 6,
-    backgroundColor: '#4CAF50',
+    backgroundColor: COLORS.success,
     marginTop: 4,
     marginRight: 12,
   },
@@ -529,15 +524,15 @@ const styles = StyleSheet.create({
   timelineWilaya: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#000000',
+    color: COLORS.text,
   },
   timelineTime: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
   },
   timelineDescription: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
     lineHeight: 18,
   },
 });

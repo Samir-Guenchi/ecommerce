@@ -18,6 +18,8 @@ import {
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS } from './src/theme';
+import { I18nProvider } from './src/i18n';
 
 import {
   AccountTypeSelectorScreen,
@@ -260,11 +262,41 @@ type ScreenId = keyof typeof SCREEN_REGISTRY;
 
 const LOGO_IMAGE = require('./src/screens/logo.png');
 
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error, errorInfo) {
+    console.error('Uncaught error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <Text style={{ fontSize: 20, fontWeight: 'bold', marginBottom: 10 }}>Something went wrong.</Text>
+          <Text style={{ color: 'red' }}>{this.state.error?.toString()}</Text>
+        </View>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 function App() {
   return (
-    <SafeAreaProvider>
-      <StatusBar barStyle="dark-content" />
-      <RootNavigator />
+    <SafeAreaProvider style={{ flex: 1 }}>
+      <ErrorBoundary>
+        <StatusBar barStyle="light-content" backgroundColor={COLORS.background} />
+        <RootNavigator />
+      </ErrorBoundary>
     </SafeAreaProvider>
   );
 }
@@ -345,41 +377,45 @@ function RootNavigator() {
   // Pass navigation function and params to screens
   const navigationProps = activeScreen
     ? {
-        navigate,
-        goBack,
-        resetTo,
-        onAuthenticated: handleAuthenticated,
-        onLogout: handleLogout,
-        ...activeScreen.params,
-      }
+      navigate,
+      goBack,
+      resetTo,
+      onAuthenticated: handleAuthenticated,
+      onLogout: handleLogout,
+      ...activeScreen.params,
+    }
     : {
-        navigate,
-        goBack,
-        resetTo,
-        onAuthenticated: handleAuthenticated,
-        onLogout: handleLogout,
-      };
+      navigate,
+      goBack,
+      resetTo,
+      onAuthenticated: handleAuthenticated,
+      onLogout: handleLogout,
+    };
 
   if (!authChecked) {
     return (
-      <SafeAreaView style={styles.safeArea}>
-        <View style={styles.viewerContainer}>
-          <View style={[styles.viewerScreen, { justifyContent: 'center', alignItems: 'center' }]}>
-            <Text>Loading...</Text>
+      <I18nProvider>
+        <SafeAreaView style={styles.safeArea}>
+          <View style={styles.viewerContainer}>
+            <View style={[styles.viewerScreen, { justifyContent: 'center', alignItems: 'center' }]}>
+              <Text>Loading...</Text>
+            </View>
           </View>
-        </View>
-      </SafeAreaView>
+        </SafeAreaView>
+      </I18nProvider>
     );
   }
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <View style={styles.viewerContainer}>
-        <View style={styles.viewerScreen}>
-          <ScreenComponent {...navigationProps} />
+    <I18nProvider>
+      <SafeAreaView style={styles.safeArea}>
+        <View style={styles.viewerContainer}>
+          <View style={styles.viewerScreen}>
+            <ScreenComponent {...navigationProps} />
+          </View>
         </View>
-      </View>
-    </SafeAreaView>
+      </SafeAreaView>
+    </I18nProvider>
   );
 }
 
@@ -426,11 +462,13 @@ function ScreenGallery({ onSelectScreen }: ScreenGalleryProps) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
+    minHeight: '100%',
   },
   viewerContainer: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.background, // Dark background
+    minHeight: '100%',
   },
   viewerScreen: {
     flex: 1,
@@ -439,6 +477,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 32,
     gap: 16,
+    backgroundColor: COLORS.background,
   },
   galleryLogo: {
     width: 120,
@@ -446,46 +485,47 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     marginBottom: 8,
     resizeMode: 'contain',
+    tintColor: COLORS.primary, // Gold logo
   },
   galleryHeading: {
     fontSize: 24,
     fontWeight: '700',
     textAlign: 'center',
-    color: '#111111',
+    color: COLORS.primary, // Gold heading
   },
   gallerySubheading: {
     fontSize: 14,
     textAlign: 'center',
-    color: '#555555',
-    marginBottom: 8,
+    color: COLORS.textSecondary,
+    marginBottom: 16,
   },
   galleryCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#E6E6E6',
+    borderColor: COLORS.border,
     shadowColor: '#000000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.3, // Darker shadow
     shadowRadius: 6,
-    elevation: 2,
+    elevation: 4,
   },
   cardTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#111111',
+    color: COLORS.text, // Light text
     marginBottom: 8,
   },
   cardDescription: {
     fontSize: 14,
-    color: '#666666',
+    color: COLORS.textSecondary,
     marginBottom: 12,
   },
   cardLink: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#111111',
+    color: COLORS.primary, // Gold link
   },
 });
 

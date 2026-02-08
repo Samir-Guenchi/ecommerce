@@ -5,32 +5,39 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { profileAPI } from '../services/api.service';
+import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import BackHeader from '../components/BackHeader';
+import StatusBanner from '../components/StatusBanner';
+import { useStatusMessage } from '../components/useStatusMessage';
+
+interface AccountTypeScreenProps {
+  goBack?: () => void;
+}
 
 // Account Type Icon
 const AccountTypeIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path
       d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M2 17L12 22L22 17"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     />
     <Path
       d="M2 12L12 17L22 12"
-      stroke="#666"
+      stroke={COLORS.textSecondary}
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
@@ -38,10 +45,11 @@ const AccountTypeIcon = () => (
   </Svg>
 );
 
-const AccountTypeScreen = () => {
+const AccountTypeScreen = ({ goBack }: AccountTypeScreenProps) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedType, setSelectedType] = useState<string | null>(null);
+  const { message, showSuccess, showError, clear } = useStatusMessage();
 
   const accountTypes = [
     { id: 'buyer', name: 'Buyer', description: 'Purchase products and services' },
@@ -68,7 +76,7 @@ const AccountTypeScreen = () => {
 
   const handleSave = async () => {
     if (!selectedType) {
-      Alert.alert('Error', 'Please select an account type');
+      showError('Please select an account type');
       return;
     }
     
@@ -79,9 +87,9 @@ const AccountTypeScreen = () => {
       if (response.user && response.user.accountType) {
         setSelectedType(response.user.accountType);
       }
-      Alert.alert('Success', 'Your account type has been updated successfully.');
+      showSuccess('Your account type has been updated successfully.');
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update account type.');
+      showError(error.message || 'Failed to update account type.');
       // Reload account type on error to ensure consistency
       try {
         const response = await profileAPI.getProfile();
@@ -97,8 +105,8 @@ const AccountTypeScreen = () => {
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#000000" />
-        <Text style={{ marginTop: 12, fontSize: 14, color: '#666' }}>Loading account type...</Text>
+        <ActivityIndicator size="large" color={COLORS.text} />
+        <Text style={{ marginTop: 12, fontSize: 14, color: COLORS.textSecondary }}>Loading account type...</Text>
       </View>
     );
   }
@@ -114,7 +122,8 @@ const AccountTypeScreen = () => {
           <AccountTypeIcon />
         </View>
       </View>
-      <Text style={styles.heading}>Account Type</Text>
+      <BackHeader title="Account Type" onBack={goBack} />
+      <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
       <Text style={styles.subheading}>
         Select your account type. You can change this later if needed.
       </Text>
@@ -162,7 +171,7 @@ const AccountTypeScreen = () => {
         disabled={saving}
       >
         {saving ? (
-          <ActivityIndicator color="#FFFFFF" />
+          <ActivityIndicator color={COLORS.background} />
         ) : (
           <Text style={styles.submitButtonText}>Save Changes</Text>
         )}
@@ -178,7 +187,7 @@ const AccountTypeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
   },
   content: {
     flexGrow: 1,
@@ -186,16 +195,9 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
     paddingTop: 35,
   },
-  heading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
   subheading: {
     fontSize: 13,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     marginBottom: 32,
     lineHeight: 18,
@@ -208,7 +210,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -216,9 +218,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   typeCard: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E0E0E0',
+    backgroundColor: COLORS.surface,
     borderRadius: 8,
     padding: 12,
     marginBottom: 12,
@@ -227,7 +227,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   typeCardSelected: {
-    borderColor: '#000000',
+    borderColor: COLORS.primary,
     borderWidth: 2,
   },
   typeContent: {
@@ -236,35 +236,35 @@ const styles = StyleSheet.create({
   typeName: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#000000',
+    color: COLORS.text,
     marginBottom: 4,
   },
   typeNameSelected: {
-    color: '#000000',
+    color: COLORS.text,
   },
   typeDescription: {
     fontSize: 12,
-    color: '#666',
+    color: COLORS.textSecondary,
   },
   typeDescriptionSelected: {
-    color: '#333',
+    color: COLORS.text,
   },
   checkmark: {
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
   },
   checkmarkText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 12,
     fontWeight: 'bold',
   },
   submitButton: {
-    backgroundColor: '#000000',
+    backgroundColor: COLORS.primary,
     borderRadius: 8,
     paddingVertical: 12,
     alignItems: 'center',
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   submitButtonText: {
-    color: '#FFFFFF',
+    color: COLORS.background,
     fontSize: 13,
     fontWeight: '600',
   },
@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 11,
-    color: '#666',
+    color: COLORS.textSecondary,
     textAlign: 'center',
     lineHeight: 16,
   },
