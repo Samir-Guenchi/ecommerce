@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   RefreshControl,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import { dashboardAPI } from '../services/api.service';
@@ -139,6 +140,25 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
   const [refreshing, setRefreshing] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [stats, setStats] = useState<any>(null);
+  const [userType, setUserType] = useState<'buyer' | 'seller' | 'both'>('buyer');
+  const [userName, setUserName] = useState('');
+
+  // Load user data
+  useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = await AsyncStorage.getItem('userData');
+        if (userData) {
+          const user = JSON.parse(userData);
+          setUserType(user.accountType || 'buyer');
+          setUserName(user.fullName || 'User');
+        }
+      } catch (error) {
+        console.error('Failed to load user data', error);
+      }
+    };
+    loadUserData();
+  }, []);
 
   const loadData = useCallback(async (isRefresh = false) => {
     try {
@@ -186,8 +206,12 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
             <View style={styles.headerLeft}>
               <Logo variant="icon" size={40} />
               <View style={{ marginLeft: 12 }}>
-                <Text style={[styles.greeting, { color: COLORS.textMuted }]}>Welcome back</Text>
-                <Text style={[styles.title, { color: COLORS.text }]}>Dashboard</Text>
+                <Text style={[styles.greeting, { color: COLORS.textMuted }]}>
+                  Welcome back, {userName}
+                </Text>
+                <Text style={[styles.title, { color: COLORS.text }]}>
+                  {userType === 'seller' || userType === 'both' ? 'Seller Dashboard' : 'My Orders'}
+                </Text>
               </View>
             </View>
             <TouchableOpacity
@@ -199,34 +223,38 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
             </TouchableOpacity>
           </View>
 
-          {/* Revenue Hero Card */}
-          <View style={[styles.heroCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-            <LinearGradient
-              colors={[COLORS.primary, COLORS.primaryLight, COLORS.secondary]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.heroGradient}
-            >
-              <View style={styles.heroContent}>
-                <Text style={styles.heroLabel}>Total Revenue</Text>
-                <Text style={styles.heroValue}>${stats.totalRevenue.toLocaleString()}</Text>
-                <View style={styles.heroMeta}>
-                  <View style={styles.heroMetaItem}>
-                    <Text style={styles.heroMetaLabel}>Orders</Text>
-                    <Text style={styles.heroMetaValue}>{stats.totalOrders}</Text>
+          {/* Conditional Content Based on User Type */}
+          {(userType === 'seller' || userType === 'both') ? (
+            <>
+              {/* SELLER DASHBOARD */}
+              {/* Revenue Hero Card */}
+              <View style={[styles.heroCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                <LinearGradient
+                  colors={[COLORS.primary, COLORS.primaryLight, COLORS.secondary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.heroGradient}
+                >
+                  <View style={styles.heroContent}>
+                    <Text style={styles.heroLabel}>Total Revenue</Text>
+                    <Text style={styles.heroValue}>${stats.totalRevenue.toLocaleString()}</Text>
+                    <View style={styles.heroMeta}>
+                      <View style={styles.heroMetaItem}>
+                        <Text style={styles.heroMetaLabel}>Orders</Text>
+                        <Text style={styles.heroMetaValue}>{stats.totalOrders}</Text>
+                      </View>
+                      <View style={styles.heroDivider} />
+                      <View style={styles.heroMetaItem}>
+                        <Text style={styles.heroMetaLabel}>Stores</Text>
+                        <Text style={styles.heroMetaValue}>{stats.totalStores}</Text>
+                      </View>
+                    </View>
                   </View>
-                  <View style={styles.heroDivider} />
-                  <View style={styles.heroMetaItem}>
-                    <Text style={styles.heroMetaLabel}>Stores</Text>
-                    <Text style={styles.heroMetaValue}>{stats.totalStores}</Text>
-                  </View>
-                </View>
+                </LinearGradient>
               </View>
-            </LinearGradient>
-          </View>
 
-          {/* Metrics Grid */}
-          <View style={styles.metricsGrid}>
+              {/* Metrics Grid */}
+              <View style={styles.metricsGrid}>
             <MetricCard
               title="Products"
               value={stats.totalProducts}
@@ -342,6 +370,115 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
               <Text style={[styles.actionText, { color: COLORS.text }]}>View Orders</Text>
             </TouchableOpacity>
           </View>
+            </>
+          ) : (
+            <>
+              {/* BUYER DASHBOARD */}
+              {/* Welcome Card */}
+              <View style={[styles.heroCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                <LinearGradient
+                  colors={[COLORS.primary, COLORS.primaryLight, COLORS.secondary]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.heroGradient}
+                >
+                  <View style={styles.heroContent}>
+                    <Text style={styles.heroLabel}>Your Orders</Text>
+                    <Text style={styles.heroValue}>{stats?.totalOrders || 0}</Text>
+                    <View style={styles.heroMeta}>
+                      <View style={styles.heroMetaItem}>
+                        <Text style={styles.heroMetaLabel}>Active</Text>
+                        <Text style={styles.heroMetaValue}>{stats?.activeOrders || 0}</Text>
+                      </View>
+                      <View style={styles.heroDivider} />
+                      <View style={styles.heroMetaItem}>
+                        <Text style={styles.heroMetaLabel}>Delivered</Text>
+                        <Text style={styles.heroMetaValue}>{stats?.deliveredOrders || 0}</Text>
+                      </View>
+                    </View>
+                  </View>
+                </LinearGradient>
+              </View>
+
+              {/* Order Status Cards */}
+              <View style={styles.metricsGrid}>
+                <View style={[styles.metricCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                  <View style={styles.metricHeader}>
+                    <View style={[styles.metricIconContainer, { backgroundColor: COLORS.info + '15' }]}>
+                      <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                        <Circle cx="12" cy="12" r="10" stroke={COLORS.info} strokeWidth="2" />
+                        <Path d="M12 6V12L16 14" stroke={COLORS.info} strokeWidth="2" strokeLinecap="round" />
+                      </Svg>
+                    </View>
+                  </View>
+                  <Text style={[styles.metricValue, { color: COLORS.text }]}>{stats?.processingOrders || 0}</Text>
+                  <Text style={[styles.metricTitle, { color: COLORS.textMuted }]}>Processing</Text>
+                </View>
+
+                <View style={[styles.metricCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                  <View style={styles.metricHeader}>
+                    <View style={[styles.metricIconContainer, { backgroundColor: COLORS.secondary + '15' }]}>
+                      <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                        <Path d="M1 1H5L7.68 14.39C7.77 14.83 8.02 15.22 8.38 15.49C8.74 15.76 9.19 15.9 9.64 15.88H19.4C19.85 15.9 20.3 15.76 20.66 15.49C21.02 15.22 21.27 14.83 21.36 14.39L23 6H6" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                      </Svg>
+                    </View>
+                  </View>
+                  <Text style={[styles.metricValue, { color: COLORS.text }]}>{stats?.shippedOrders || 0}</Text>
+                  <Text style={[styles.metricTitle, { color: COLORS.textMuted }]}>Shipped</Text>
+                </View>
+              </View>
+
+              {/* Recent Orders */}
+              {stats?.recentOrders?.length > 0 && (
+                <View style={[styles.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                  <View style={styles.sectionHeader}>
+                    <Text style={[styles.sectionTitle, { color: COLORS.text }]}>Recent Orders</Text>
+                    <TouchableOpacity onPress={() => navigate?.('orders')} activeOpacity={0.7}>
+                      <Text style={[styles.viewAllLink, { color: COLORS.primary }]}>View All</Text>
+                    </TouchableOpacity>
+                  </View>
+                  {stats.recentOrders.slice(0, 5).map((order: any, i: number) => (
+                    <React.Fragment key={order.id}>
+                      <OrderRow order={order} COLORS={COLORS} />
+                      {i < Math.min(stats.recentOrders.length, 5) - 1 && (
+                        <View style={[styles.divider, { backgroundColor: COLORS.border }]} />
+                      )}
+                    </React.Fragment>
+                  ))}
+                </View>
+              )}
+
+              {/* Quick Actions for Buyers */}
+              <View style={styles.actionsGrid}>
+                <TouchableOpacity
+                  style={[styles.actionCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                  onPress={() => navigate?.('stores')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.actionIcon, { backgroundColor: COLORS.primary + '15' }]}>
+                    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                      <Path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
+                  </View>
+                  <Text style={[styles.actionText, { color: COLORS.text }]}>Browse Stores</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.actionCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+                  onPress={() => navigate?.('orders')}
+                  activeOpacity={0.7}
+                >
+                  <View style={[styles.actionIcon, { backgroundColor: COLORS.secondary + '15' }]}>
+                    <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+                      <Path d="M9 11L12 14L22 4" stroke={COLORS.secondary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                      <Path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    </Svg>
+                  </View>
+                  <Text style={[styles.actionText, { color: COLORS.text }]}>Track Orders</Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
         </Animated.View>
       </ScrollView>
