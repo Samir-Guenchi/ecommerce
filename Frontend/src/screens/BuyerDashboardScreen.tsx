@@ -20,6 +20,7 @@ import { getColors, SPACING } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import { Logo } from '../components/Logo';
+import BottomNav from './BottomNav';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -512,55 +513,9 @@ const BuyerDashboardScreen = ({ navigate, resetTo }: BuyerDashboardScreenProps) 
         </Animated.View>
       </ScrollView>
 
-      {/* ═══ FLOATING MODERN TAB BAR ═══ */}
-      <FloatingTabBar activeTab="dashboard" onTabPress={(tab) => resetTo?.(tab)} COLORS={COLORS} isRTL={isRTL} mode={mode} />
+      {/* ═══ BOTTOM NAVIGATION ═══ */}
+      <BottomNav activeTab="dashboard" onTabPress={(tab) => resetTo?.(tab)} />
     </View>
-  );
-};
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   FLOATING TAB BAR COMPONENT
-   ═══════════════════════════════════════════════════════════════════════════ */
-
-const FloatingTabBar = ({ activeTab, onTabPress, COLORS, isRTL, mode }: any) => {
-  const { t } = useTranslation();
-  
-  const tabs = [
-    { id: 'dashboard', icon: 'home', label: t('nav_dashboard') },
-    { id: 'stores', icon: 'store', label: t('nav_stores') },
-    { id: 'orders', icon: 'package', label: t('nav_orders') },
-    { id: 'userSettings', icon: 'settings', label: t('nav_settings') },
-  ];
-
-  return (
-    <GlassContainer style={styles.tabBarContainer} intensity="strong">
-      <View style={[styles.tabBar, { backgroundColor: 'transparent', borderColor: COLORS.border }]}>
-        {tabs.map((tab) => {
-          const isActive = activeTab === tab.id;
-          return (
-            <TouchableOpacity
-              key={tab.id}
-              style={styles.tabItem}
-              onPress={() => onTabPress(tab.id)}
-              activeOpacity={0.7}
-            >
-              <Animated.View style={[
-                styles.tabIconContainer,
-                isActive && { backgroundColor: COLORS.primary + '15' }
-              ]}>
-                {tab.icon === 'home' && <Svg width={22} height={22} viewBox="0 0 24 24" fill="none"><Path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke={isActive ? COLORS.primary : COLORS.textMuted} strokeWidth="2" /></Svg>}
-                {tab.icon === 'store' && <StoreIcon color={isActive ? COLORS.primary : COLORS.textMuted} />}
-                {tab.icon === 'package' && <PackageIcon color={isActive ? COLORS.primary : COLORS.textMuted} />}
-                {tab.icon === 'settings' && <Svg width={22} height={22} viewBox="0 0 24 24" fill="none"><Circle cx="12" cy="12" r="3" stroke={isActive ? COLORS.primary : COLORS.textMuted} strokeWidth="2" /><Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke={isActive ? COLORS.primary : COLORS.textMuted} strokeWidth="2" strokeLinecap="round" /></Svg>}
-              </Animated.View>
-              <Text style={[styles.tabLabel, { color: isActive ? COLORS.primary : COLORS.textMuted }]}>
-                {tab.label}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </View>
-    </GlassContainer>
   );
 };
 
@@ -576,7 +531,7 @@ const getStatusColor = (status: string, COLORS: any) => {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════════
-   STYLES - GLASSMORPHISM & CLAYMORPHISM
+   STYLES - PROFESSIONAL & CLEAN
    ═══════════════════════════════════════════════════════════════════════════ */
 
 const styles = StyleSheet.create({
@@ -1013,45 +968,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     textAlign: 'center',
-  },
-
-  /* Floating Tab Bar */
-  tabBarContainer: {
-    position: 'absolute',
-    bottom: 20,
-    left: 20,
-    right: 20,
-    borderRadius: 24,
-    overflow: 'hidden',
-  },
-  tabBar: {
-    flexDirection: 'row',
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderRadius: 24,
-    borderWidth: 1,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.2,
-    shadowRadius: 16,
-    elevation: 12,
-  },
-  tabItem: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 8,
-  },
-  tabIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  tabLabel: {
-    fontSize: 11,
-    fontWeight: '600',
   },
 });
 
