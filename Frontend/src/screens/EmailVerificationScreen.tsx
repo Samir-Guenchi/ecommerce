@@ -88,9 +88,10 @@ export default function EmailVerificationScreen({
 
         setStatusMessage('Email verified successfully!');
 
-        // Navigate to main app after a brief moment
+        // Navigate to dashboard after a brief moment
         setTimeout(() => {
           onAuthenticated?.();
+          resetTo?.('dashboard');
         }, 600);
       } else {
         setErrorMessage(data.error || 'Verification failed. Please check the code and try again.');
