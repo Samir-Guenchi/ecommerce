@@ -19,12 +19,16 @@ router.get('/google/callback',
   authController.googleCallback.bind(authController) as any
 );
 
-// OAuth routes - Facebook
-router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
-router.get('/facebook/callback',
-  passport.authenticate('facebook', { failureRedirect: `${process.env.FRONTEND_URL}?error=oauth_failed`, session: false }),
-  authController.facebookCallback.bind(authController) as any
-);
+// OAuth routes - Facebook (Coming Soon)
+router.get('/facebook', (req: any, res: any) => {
+  res.status(503).json({ 
+    error: 'Facebook OAuth is coming soon',
+    message: 'Facebook authentication will be available in a future update. Please use Google OAuth or email sign up for now.'
+  });
+});
+router.get('/facebook/callback', (req: any, res: any) => {
+  res.redirect(`${process.env.FRONTEND_URL}?error=facebook_coming_soon`);
+});
 
 // Protected routes
 router.get('/me', authenticate as any, authController.getCurrentUser.bind(authController) as any);

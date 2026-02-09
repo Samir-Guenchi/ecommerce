@@ -292,24 +292,8 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
 
   const handleFacebookSignIn = async () => {
     try {
-      // Check if OAuth is available
-      const response = await fetch(`${API_URL}/auth/facebook`);
-      const data = await response.json();
-      
-      if (response.status === 501) {
-        setError(data.message || 'Facebook sign-in not available yet');
-        return;
-      }
-      
-      // If OAuth is configured, open the URL
-      const facebookAuthUrl = `${API_URL}/auth/facebook`;
-      const supported = await Linking.canOpenURL(facebookAuthUrl);
-      
-      if (supported) {
-        await Linking.openURL(facebookAuthUrl);
-      } else {
-        setError('Cannot open Facebook sign in');
-      }
+      // Facebook OAuth coming soon
+      setError('Facebook sign-in will be available soon. Please use Google or email sign up.');
     } catch (err: any) {
       setError(err.message || 'Facebook sign in not available');
     }

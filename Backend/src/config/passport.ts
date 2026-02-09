@@ -53,7 +53,9 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
   );
 }
 
-if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
+if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET && 
+    process.env.FACEBOOK_APP_ID !== 'coming-soon' && 
+    process.env.FACEBOOK_APP_SECRET !== 'coming-soon') {
   passport.use(
     new FacebookStrategy(
       {
@@ -87,6 +89,8 @@ if (process.env.FACEBOOK_APP_ID && process.env.FACEBOOK_APP_SECRET) {
       }
     )
   );
+} else {
+  console.log('ℹ️  Facebook OAuth not configured - will be available soon');
 }
 
 export default passport;
