@@ -8,11 +8,14 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  ScrollView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Svg, { Path } from 'react-native-svg';
 import { API_URL } from '../config/api.config';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { getColors, SPACING, SHADOWS } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
+import { Logo } from '../components/Logo';
 
 interface EmailVerificationScreenProps {
   email: string;
@@ -35,6 +38,8 @@ export default function EmailVerificationScreen({
   resetTo,
   onAuthenticated,
 }: EmailVerificationScreenProps) {
+  const { mode } = useTheme();
+  const COLORS = getColors(mode);
 
   const [verificationCode, setVerificationCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -134,25 +139,154 @@ export default function EmailVerificationScreen({
     resetTo?.('loginSignup', { initialMode: 'login' });
   };
 
+  const styles = StyleSheet.create({
+    container: { flex: 1, backgroundColor: COLORS.background },
+    scroll: { flex: 1 },
+    content: { 
+      flexGrow: 1,
+      paddingHorizontal: 24,
+      paddingTop: 60,
+      paddingBottom: 40,
+      justifyContent: 'center',
+    },
+    
+    logoWrap: { alignItems: 'center', marginBottom: 32 },
+    
+    heading: { 
+      fontSize: 28, 
+      fontWeight: '700', 
+      color: COLORS.text, 
+      marginBottom: 8,
+      textAlign: 'center',
+    },
+    subheading: { 
+      fontSize: 15, 
+      color: COLORS.textSecondary, 
+      marginBottom: 40,
+      textAlign: 'center',
+      lineHeight: 22,
+    },
+    emailText: {
+      fontWeight: '600',
+      color: COLORS.primary,
+    },
+    
+    form: { marginBottom: 24 },
+    
+    successBanner: {
+      backgroundColor: COLORS.successBg,
+      borderWidth: 1,
+      borderColor: COLORS.success,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+    },
+    successText: {
+      color: COLORS.success,
+      fontSize: 14,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+    errorBanner: {
+      backgroundColor: COLORS.errorBg,
+      borderWidth: 1,
+      borderColor: COLORS.error,
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 16,
+    },
+    errorText: {
+      color: COLORS.error,
+      fontSize: 14,
+      fontWeight: '600',
+      textAlign: 'center',
+    },
+    
+    label: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: COLORS.textSecondary,
+      marginBottom: 8,
+      letterSpacing: 0.3,
+    },
+    input: {
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      borderRadius: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      fontSize: 24,
+      color: COLORS.text,
+      marginBottom: 20,
+      textAlign: 'center',
+      letterSpacing: 8,
+      fontWeight: '700',
+      minHeight: 56,
+    },
+    
+    button: {
+      backgroundColor: COLORS.primary,
+      borderRadius: 12,
+      paddingVertical: 16,
+      alignItems: 'center',
+      marginBottom: 20,
+      minHeight: 52,
+      ...SHADOWS.medium,
+    },
+    buttonDisabled: { opacity: 0.6 },
+    buttonText: {
+      fontSize: 16,
+      fontWeight: '700',
+      color: '#FFFFFF',
+      letterSpacing: 0.5,
+    },
+    
+    resendContainer: { alignItems: 'center', marginBottom: 24 },
+    resendText: {
+      fontSize: 14,
+      color: COLORS.textSecondary,
+      marginBottom: 8,
+    },
+    resendButton: {
+      fontSize: 15,
+      fontWeight: '600',
+      color: COLORS.primary,
+      paddingVertical: 8,
+    },
+    resendButtonDisabled: { color: COLORS.textMuted },
+    
+    backButton: {
+      alignItems: 'center',
+      paddingVertical: 12,
+    },
+    backButtonText: {
+      fontSize: 15,
+      color: COLORS.textSecondary,
+      fontWeight: '500',
+    },
+  });
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={styles.content}>
-        <View style={styles.header}>
-          {/* Shield Icon */}
-          <View style={styles.iconCircle}>
-            <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
-              <Path d="M20 4H4C2.9 4 2 4.9 2 6V18C2 19.1 2.9 20 4 20H20C21.1 20 22 19.1 22 18V6C22 4.9 21.1 4 20 4ZM20 8L12 13L4 8V6L12 11L20 6V8Z" fill={COLORS.primary} />
-            </Svg>
-          </View>
-          <Text style={styles.title}>Verify Your Email</Text>
-          <Text style={styles.subtitle}>
-            We've sent a verification code to{' '}
-            <Text style={styles.emailText}>{email}</Text>
-          </Text>
+      <ScrollView 
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.logoWrap}>
+          <Logo variant="full" size={64} />
         </View>
+        
+        <Text style={styles.heading}>Verify Your Email</Text>
+        <Text style={styles.subheading}>
+          We've sent a 6-digit code to{'\n'}
+          <Text style={styles.emailText}>{email}</Text>
+        </Text>
 
         <View style={styles.form}>
           {/* Status/Error Messages */}
@@ -167,18 +301,17 @@ export default function EmailVerificationScreen({
             </View>
           ) : null}
 
-          <Text style={styles.label} nativeID="code-label">Verification Code</Text>
+          <Text style={styles.label}>Verification Code</Text>
           <TextInput
             style={styles.input}
             value={verificationCode}
             onChangeText={setVerificationCode}
-            placeholder="Enter 6-digit code"
+            placeholder="000000"
             placeholderTextColor={COLORS.textMuted}
             keyboardType="default"
             maxLength={6}
             autoCapitalize="characters"
             autoCorrect={false}
-            accessibilityLabelledBy="code-label"
             accessibilityLabel="Enter verification code"
           />
 
@@ -190,7 +323,7 @@ export default function EmailVerificationScreen({
             accessibilityLabel="Verify your email address"
           >
             {isLoading ? (
-              <ActivityIndicator color={COLORS.background} />
+              <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.buttonText}>Verify Email</Text>
             )}
@@ -228,149 +361,7 @@ export default function EmailVerificationScreen({
         >
           <Text style={styles.backButtonText}>Back to Login</Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: SPACING.l,
-    paddingVertical: SPACING.xxl,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: SPACING.xxl,
-  },
-  iconCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: COLORS.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.l,
-    ...SHADOWS.glow,
-  },
-  title: {
-    ...TYPOGRAPHY.h1,
-    fontSize: 26,
-    color: COLORS.text,
-    marginBottom: SPACING.s,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 22,
-  },
-  emailText: {
-    fontWeight: '700',
-    color: COLORS.primary,
-  },
-  form: {
-    marginBottom: SPACING.xl,
-  },
-  successBanner: {
-    backgroundColor: 'rgba(16, 185, 129, 0.15)',
-    borderWidth: 1,
-    borderColor: COLORS.success,
-    borderRadius: 10,
-    padding: SPACING.m,
-    marginBottom: SPACING.m,
-  },
-  successText: {
-    color: COLORS.success,
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  errorBanner: {
-    backgroundColor: 'rgba(239, 68, 68, 0.15)',
-    borderWidth: 1,
-    borderColor: COLORS.error,
-    borderRadius: 10,
-    padding: SPACING.m,
-    marginBottom: SPACING.m,
-  },
-  errorText: {
-    color: COLORS.error,
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.s,
-    letterSpacing: 0.3,
-  },
-  input: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 12,
-    paddingHorizontal: SPACING.m,
-    paddingVertical: 14,
-    fontSize: 22,
-    color: COLORS.text,
-    marginBottom: SPACING.l,
-    textAlign: 'center',
-    letterSpacing: 6,
-    fontWeight: '700',
-    minHeight: 56,
-  },
-  button: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: SPACING.l,
-    minHeight: 48,
-    ...SHADOWS.glow,
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    ...TYPOGRAPHY.button,
-    color: COLORS.background,
-  },
-  resendContainer: {
-    alignItems: 'center',
-  },
-  resendText: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-    marginBottom: SPACING.s,
-  },
-  resendButton: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: COLORS.primary,
-    minHeight: 44,
-    lineHeight: 44,
-  },
-  resendButtonDisabled: {
-    color: COLORS.textMuted,
-  },
-  backButton: {
-    alignItems: 'center',
-    paddingVertical: SPACING.m,
-    minHeight: 48,
-    justifyContent: 'center',
-  },
-  backButtonText: {
-    fontSize: 15,
-    color: COLORS.textSecondary,
-    fontWeight: '500',
-  },
-});

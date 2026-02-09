@@ -57,6 +57,68 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [passwordStrength, setPasswordStrength] = useState({ score: 0, feedback: '' });
+  const [showPasswordHints, setShowPasswordHints] = useState(false);
+
+  // Password strength checker
+  const checkPasswordStrength = (pwd: string) => {
+    if (!pwd) {
+      return { score: 0, feedback: '' };
+    }
+
+    let score = 0;
+    const feedback: string[] = [];
+
+    // Length check
+    if (pwd.length >= 8) {
+      score += 1;
+    } else {
+      feedback.push('At least 8 characters');
+    }
+
+    // Uppercase check
+    if (/[A-Z]/.test(pwd)) {
+      score += 1;
+    } else {
+      feedback.push('One uppercase letter');
+    }
+
+    // Lowercase check
+    if (/[a-z]/.test(pwd)) {
+      score += 1;
+    } else {
+      feedback.push('One lowercase letter');
+    }
+
+    // Number check
+    if (/[0-9]/.test(pwd)) {
+      score += 1;
+    } else {
+      feedback.push('One number');
+    }
+
+    // Special character check
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
+      score += 1;
+    } else {
+      feedback.push('One special character (!@#$%...)');
+    }
+
+    const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+    const strengthLabel = strengthLabels[score] || '';
+
+    return {
+      score,
+      feedback: feedback.length > 0 ? `Missing: ${feedback.join(', ')}` : strengthLabel,
+    };
+  };
+
+  // Update password strength when password changes
+  React.useEffect(() => {
+    if (!isLogin && password) {
+      setPasswordStrength(checkPasswordStrength(password));
+    }
+  }, [password, isLogin]);
 
   // Handle OAuth callback
   React.useEffect(() => {
@@ -148,6 +210,44 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
       color: COLORS.text,
     },
     
+    passwordStrength: {
+      marginTop: 8,
+      gap: 6,
+    },
+    strengthBars: {
+      flexDirection: 'row',
+      gap: 4,
+    },
+    strengthBar: {
+      flex: 1,
+      height: 4,
+      backgroundColor: COLORS.border,
+      borderRadius: 2,
+    },
+    strengthText: {
+      fontSize: 12,
+      fontWeight: '600',
+    },
+    passwordHints: {
+      marginTop: 8,
+      padding: 12,
+      backgroundColor: COLORS.surface,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+    },
+    hintsTitle: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: COLORS.text,
+      marginBottom: 6,
+    },
+    hintItem: {
+      fontSize: 12,
+      color: COLORS.textSecondary,
+      marginBottom: 2,
+    },
+    
     errorBox: {
       backgroundColor: COLORS.error + '15',
       borderWidth: 1,
@@ -235,15 +335,26 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
       setError('Please fill in all fields');
       return;
     }
-    
-    if (!isLogin && password !== confirmPassword) {
-      setError('Passwords do not match');
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      setError('Please enter a valid email address');
       return;
     }
     
-    if (!isLogin && password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
+    if (!isLogin) {
+      // Password strength validation for sign up
+      if (passwordStrength.score < 3) {
+        setError('Password is too weak. ' + passwordStrength.feedback);
+        setShowPasswordHints(true);
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        setError('Passwords do not match');
+        return;
+      }
     }
     
     setLoading(true);
@@ -399,13 +510,63 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
             <Text style={styles.label}>Password</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter password"
+              placeholder={isLogin ? "Enter password" : "Create strong password"}
               placeholderTextColor={COLORS.textMuted}
               value={password}
-              onChangeText={setPassword}
+              onChangeText={(text) => {
+                setPassword(text);
+                if (!isLogin) setShowPasswordHints(true);
+              }}
               secureTextEntry
               editable={!loading}
             />
+            {!isLogin && password && (
+              <View style={styles.passwordStrength}>
+                <View style={styles.strengthBars}>
+                  {[1, 2, 3, 4, 5].map((level) => (
+                    <View
+                      key={level}
+                      style={[
+                        styles.strengthBar,
+                        passwordStrength.score >= level && {
+                          backgroundColor:
+                            passwordStrength.score <= 2
+                              ? COLORS.error
+                              : passwordStrength.score === 3
+                              ? COLORS.warning
+                              : COLORS.success,
+                        },
+                      ]}
+                    />
+                  ))}
+                </View>
+                <Text
+                  style={[
+                    styles.strengthText,
+                    {
+                      color:
+                        passwordStrength.score <= 2
+                          ? COLORS.error
+                          : passwordStrength.score === 3
+                          ? COLORS.warning
+                          : COLORS.success,
+                    },
+                  ]}
+                >
+                  {passwordStrength.feedback}
+                </Text>
+              </View>
+            )}
+            {!isLogin && showPasswordHints && passwordStrength.score < 3 && (
+              <View style={styles.passwordHints}>
+                <Text style={styles.hintsTitle}>Password must include:</Text>
+                <Text style={styles.hintItem}>• At least 8 characters</Text>
+                <Text style={styles.hintItem}>• One uppercase letter (A-Z)</Text>
+                <Text style={styles.hintItem}>• One lowercase letter (a-z)</Text>
+                <Text style={styles.hintItem}>• One number (0-9)</Text>
+                <Text style={styles.hintItem}>• One special character (!@#$%...)</Text>
+              </View>
+            )}
           </View>
           
           {!isLogin && (
