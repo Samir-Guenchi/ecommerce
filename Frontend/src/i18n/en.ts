@@ -32,6 +32,24 @@
   dashboard_sat: 'S',
   dashboard_sun: 'S',
 
+  // Buyer Dashboard
+  buyer_hello: 'Hello',
+  buyer_shoppingJourney: 'Your Shopping Journey',
+  buyer_loadingJourney: 'Loading your journey...',
+  buyer_emptyTitle: 'Start Your Shopping Journey',
+  buyer_emptyMessage: 'Discover thousands of products from trusted stores across Algeria',
+  buyer_browseStores: 'Browse Stores',
+  buyer_searchPlaceholder: 'Search products...',
+  buyer_yourOrders: 'Your Orders',
+  buyer_recentOrders: 'Recent Orders',
+  buyer_viewAll: 'View All',
+  buyer_track: 'Track',
+  buyer_recommendedForYou: 'Recommended for You',
+  buyer_myOrders: 'My Orders',
+  buyer_processing: 'Processing',
+  buyer_shipped: 'Shipped',
+  buyer_delivered: 'Delivered',
+
   // Products
   products_subtitle: 'Manage your store products and inventory.',
   products_loading: 'Loading products...',
