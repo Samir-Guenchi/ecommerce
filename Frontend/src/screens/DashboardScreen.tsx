@@ -15,6 +15,7 @@ import { dashboardAPI } from '../services/api.service';
 import { getColors, SPACING, SHADOWS } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
+import { Logo } from '../components/Logo';
 import BottomNav, { BottomTabId } from './BottomNav';
 
 /* Icons */
@@ -182,9 +183,12 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
           
           {/* Header */}
           <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <Text style={[styles.greeting, { color: COLORS.textMuted }]}>Welcome back</Text>
-              <Text style={[styles.title, { color: COLORS.text }]}>Dashboard</Text>
+            <View style={styles.headerLeft}>
+              <Logo variant="icon" size={40} />
+              <View style={{ marginLeft: 12 }}>
+                <Text style={[styles.greeting, { color: COLORS.textMuted }]}>Welcome back</Text>
+                <Text style={[styles.title, { color: COLORS.text }]}>Dashboard</Text>
+              </View>
             </View>
             <TouchableOpacity
               style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
@@ -354,8 +358,9 @@ const styles = StyleSheet.create({
   
   // Header
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   greeting: { fontSize: 14, fontWeight: '600', marginBottom: 4 },
-  title: { fontSize: 32, fontWeight: '800', letterSpacing: -0.5 },
+  title: { fontSize: 28, fontWeight: '800', letterSpacing: -0.5 },
   themeToggle: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
   
   // Hero Card
