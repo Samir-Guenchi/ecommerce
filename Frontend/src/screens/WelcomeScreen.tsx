@@ -140,7 +140,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigate }) => {
         <View style={styles.bottom}>
           <TouchableOpacity 
             style={[styles.btn, styles.primaryBtn]} 
-            onPress={() => navigate?.('accountTypeSelector')} 
+            onPress={() => navigate?.('accountType')} 
             activeOpacity={0.8}
           >
             <Text style={styles.primaryBtnText}>Get Started</Text>
@@ -148,7 +148,7 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigate }) => {
           
           <TouchableOpacity 
             style={[styles.btn, styles.secondaryBtn]} 
-            onPress={() => navigate?.('loginSignUp')} 
+            onPress={() => navigate?.('loginSignup')} 
             activeOpacity={0.8}
           >
             <Text style={styles.secondaryBtnText}>Sign In</Text>
