@@ -5,6 +5,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { getColors, SHADOWS } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { Logo } from '../components/Logo';
+import { PackageIcon, ClockIcon, ShieldIcon, GlobeIcon, CheckCircleIcon } from '../components/ModernIcons';
 
 const { width } = Dimensions.get('window');
 
@@ -181,7 +182,7 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
             </View>
           </View>
 
-          {/* Value Propositions - Expert Grid */}
+          {/* Value Propositions */}
           <View style={styles.valuesGrid}>
             <View style={[styles.valueCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
               <LinearGradient
@@ -189,11 +190,7 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 style={styles.valueGradient}
               >
                 <View style={[styles.valueIcon, { backgroundColor: COLORS.primary }]}>
-                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                    <Path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M2 17L12 22L22 17" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M2 12L12 17L22 12" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
+                  <PackageIcon size={24} color="#FFFFFF" strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.valueTitle, { color: COLORS.text }]}>58 Wilayas</Text>
                 <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
@@ -208,10 +205,7 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 style={styles.valueGradient}
               >
                 <View style={[styles.valueIcon, { backgroundColor: COLORS.secondary }]}>
-                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                    <Circle cx="12" cy="12" r="10" stroke="#FFFFFF" strokeWidth="2.5" />
-                    <Path d="M12 6V12L16 14" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" />
-                  </Svg>
+                  <ClockIcon size={24} color="#FFFFFF" strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.valueTitle, { color: COLORS.text }]}>Fast Delivery</Text>
                 <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
@@ -226,10 +220,7 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 style={styles.valueGradient}
               >
                 <View style={[styles.valueIcon, { backgroundColor: COLORS.success }]}>
-                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                    <Path d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M9 12L11 14L15 10" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
+                  <ShieldIcon size={24} color="#FFFFFF" strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.valueTitle, { color: COLORS.text }]}>Secure</Text>
                 <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
@@ -244,10 +235,7 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
                 style={styles.valueGradient}
               >
                 <View style={[styles.valueIcon, { backgroundColor: COLORS.info }]}>
-                  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
-                    <Circle cx="12" cy="12" r="10" stroke="#FFFFFF" strokeWidth="2.5" />
-                    <Path d="M2 12H22M12 2C14.5 4.74 16 8.29 16 12C16 15.71 14.5 19.26 12 22C9.5 19.26 8 15.71 8 12C8 8.29 9.5 4.74 12 2Z" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
+                  <GlobeIcon size={24} color="#FFFFFF" strokeWidth={2.5} />
                 </View>
                 <Text style={[styles.valueTitle, { color: COLORS.text }]}>3 Languages</Text>
                 <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
@@ -260,28 +248,19 @@ const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
           {/* Trust */}
           <View style={[styles.trustSection, { backgroundColor: COLORS.surfaceHighlight, borderColor: COLORS.border }]}>
             <View style={styles.trustRow}>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path d="M22 11.08V12C22 17.52 17.52 22 12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2C12.96 2 13.88 2.14 14.75 2.4" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <Path d="M22 4L12 14.01L9 11.01" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <CheckCircleIcon size={20} color={COLORS.success} strokeWidth={2} />
               <Text style={[styles.trustText, { color: COLORS.textSecondary }]}>
                 10,000+ sellers
               </Text>
             </View>
             <View style={styles.trustRow}>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path d="M12 2L3 7V11C3 16.55 6.84 21.74 12 23C17.16 21.74 21 16.55 21 11V7L12 2Z" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <Path d="M22 4L12 14.01L9 11.01" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <CheckCircleIcon size={20} color={COLORS.success} strokeWidth={2} />
               <Text style={[styles.trustText, { color: COLORS.textSecondary }]}>
                 Official partner
               </Text>
             </View>
             <View style={styles.trustRow}>
-              <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                <Path d="M12 22C6.48 22 2 17.52 2 12C2 6.48 6.48 2 12 2C12.96 2 13.88 2.14 14.75 2.4" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                <Path d="M22 4L12 14.01L9 11.01" stroke={COLORS.success} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-              </Svg>
+              <CheckCircleIcon size={20} color={COLORS.success} strokeWidth={2} />
               <Text style={[styles.trustText, { color: COLORS.textSecondary }]}>
                 Free setup
               </Text>

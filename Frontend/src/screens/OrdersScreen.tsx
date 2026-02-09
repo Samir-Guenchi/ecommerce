@@ -17,15 +17,7 @@ import { getColors, SPACING, SHADOWS } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import BottomNav, { BottomTabId } from './BottomNav';
-
-/* Icons */
-const ExportIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M17 8L12 3L7 8" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M12 3V15" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </Svg>
-);
+import { UploadIcon } from '../components/ModernIcons';
 
 interface Order {
   id: number;
@@ -177,8 +169,8 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
             <Text style={[styles.title, isRTL && styles.textRight]}>{t('nav_orders')}</Text>
             <Text style={[styles.subtitle, isRTL && styles.textRight]}>{t('orders_subtitle')}</Text>
           </View>
-          <TouchableOpacity style={styles.exportBtn} onPress={handleExportOrders}>
-            <ExportIcon />
+          <TouchableOpacity style={styles.exportBtn} onPress={handleExportOrders} activeOpacity={0.8}>
+            <UploadIcon size={16} color="#FFFFFF" strokeWidth={2.5} />
             <Text style={styles.exportBtnText}>{t('orders_export')}</Text>
           </TouchableOpacity>
         </View>
