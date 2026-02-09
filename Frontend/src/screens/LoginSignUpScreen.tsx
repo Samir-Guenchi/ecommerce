@@ -58,6 +58,26 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Handle OAuth callback
+  React.useEffect(() => {
+    if (Platform.OS === 'web') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('token');
+      const oauthSuccess = urlParams.get('oauth');
+      const oauthError = urlParams.get('error');
+
+      if (token && oauthSuccess === 'success') {
+        // Save token and redirect to dashboard
+        AsyncStorage.setItem('authToken', token).then(() => {
+          onAuthenticated?.();
+          resetTo?.('dashboard');
+        });
+      } else if (oauthError) {
+        setError('OAuth authentication failed. Please try again.');
+      }
+    }
+  }, [onAuthenticated, resetTo]);
+
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
     scroll: { flex: 1 },
@@ -267,23 +287,20 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
 
   const handleGoogleSignIn = async () => {
     try {
-      // Check if OAuth is available
-      const response = await fetch(`${API_URL}/auth/google`);
-      const data = await response.json();
-      
-      if (response.status === 501) {
-        setError(data.message || 'Google sign-in not available yet');
-        return;
-      }
-      
-      // If OAuth is configured, open the URL
+      // Open Google OAuth directly in browser
       const googleAuthUrl = `${API_URL}/auth/google`;
-      const supported = await Linking.canOpenURL(googleAuthUrl);
       
-      if (supported) {
-        await Linking.openURL(googleAuthUrl);
+      // For web, use window.open
+      if (Platform.OS === 'web') {
+        window.open(googleAuthUrl, '_blank');
       } else {
-        setError('Cannot open Google sign in');
+        // For mobile, use Linking
+        const supported = await Linking.canOpenURL(googleAuthUrl);
+        if (supported) {
+          await Linking.openURL(googleAuthUrl);
+        } else {
+          setError('Cannot open Google sign in');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Google sign in not available');
