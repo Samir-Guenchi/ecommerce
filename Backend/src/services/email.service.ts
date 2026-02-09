@@ -15,7 +15,7 @@ let transporter: nodemailer.Transporter | null = null;
 const getTransporter = async (): Promise<nodemailer.Transporter> => {
   if (transporter) return transporter;
 
-  const hasSmtpCreds = process.env.SMTP_USER && process.env.SMTP_PASSWORD;
+  const hasSmtpCreds = process.env.SMTP_USER && (process.env.SMTP_PASS || process.env.SMTP_PASSWORD);
 
   if (!hasSmtpCreds && isDev) {
     // Create an Ethereal test account on-the-fly
