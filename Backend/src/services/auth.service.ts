@@ -270,6 +270,11 @@ export class AuthService {
       throw new Error('Invalid email or password');
     }
 
+    // Check if user has a password (OAuth users don't have passwords)
+    if (!user.passwordHash) {
+      throw new Error('This account uses OAuth sign-in. Please use Google sign-in instead.');
+    }
+
     // Check password
     const isPasswordValid = await bcrypt.compare(data.password, user.passwordHash);
 

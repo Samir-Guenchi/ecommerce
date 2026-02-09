@@ -322,6 +322,33 @@ function RootNavigator() {
   useEffect(() => {
     const bootstrapAuth = async () => {
       try {
+        // Check for OAuth callback parameters (web only)
+        if (typeof window !== 'undefined') {
+          const urlParams = new URLSearchParams(window.location.search);
+          const token = urlParams.get('token');
+          const oauthSuccess = urlParams.get('oauth');
+          const oauthError = urlParams.get('error');
+
+          if (token && oauthSuccess === 'success') {
+            // Save token from OAuth callback
+            await AsyncStorage.setItem('authToken', token);
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            // Go to dashboard
+            setScreenStack([{ screenId: 'dashboard' }]);
+            setAuthChecked(true);
+            return;
+          } else if (oauthError) {
+            console.error('OAuth error:', oauthError);
+            // Clean URL and show welcome screen
+            window.history.replaceState({}, document.title, window.location.pathname);
+            setScreenStack([{ screenId: 'welcome' }]);
+            setAuthChecked(true);
+            return;
+          }
+        }
+
+        // Normal auth check
         const token = await AsyncStorage.getItem('authToken');
         if (token) {
           setScreenStack([{ screenId: 'dashboard' }]);
