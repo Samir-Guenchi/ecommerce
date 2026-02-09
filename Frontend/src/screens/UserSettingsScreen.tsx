@@ -8,15 +8,30 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Svg, { Path, Circle as SvgCircle } from 'react-native-svg';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { getColors, SPACING, SHADOWS } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
 import { profileAPI } from '../services/api.service';
 import { useTranslation } from '../i18n';
+import { Logo } from '../components/Logo';
 import BottomNav, { BottomTabId } from './BottomNav';
 
 /* ─── Icon helpers ─── */
-const ChevronRight = () => (
+const SunIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
+    <Path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" stroke="#FDB913" strokeWidth="2" />
+  </Svg>
+);
+
+const MoonIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
+const ChevronRight = ({ color }: { color: string }) => (
   <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-    <Path d="M9 18L15 12L9 6" stroke={COLORS.textMuted} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M9 18L15 12L9 6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
@@ -119,11 +134,11 @@ const UsersIcon = ({ color }: { color: string }) => (
   </Svg>
 );
 
-const LogOutIcon = () => (
+const LogOutIcon = ({ color }: { color: string }) => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path d="M9 21H5C4.47 21 3.96 20.79 3.59 20.41C3.21 20.04 3 19.53 3 19V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H9" stroke={COLORS.error} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M16 17L21 12L16 7" stroke={COLORS.error} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M21 12H9" stroke={COLORS.error} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M9 21H5C4.47 21 3.96 20.79 3.59 20.41C3.21 20.04 3 19.53 3 19V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H9" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M16 17L21 12L16 7" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M21 12H9" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
@@ -142,28 +157,29 @@ interface SettingItemProps {
   subtitle?: string;
   onPress?: () => void;
   isLast?: boolean;
+  COLORS: any;
 }
 
-const SettingItem: React.FC<SettingItemProps> = ({ icon, title, subtitle, onPress, isLast }) => (
+const SettingItem: React.FC<SettingItemProps> = ({ icon, title, subtitle, onPress, isLast, COLORS }) => (
   <TouchableOpacity
-    style={[styles.settingItem, !isLast && styles.settingItemBorder]}
+    style={[styles.settingItem, !isLast && styles.settingItemBorder, !isLast && { borderBottomColor: COLORS.border }]}
     onPress={onPress}
     activeOpacity={0.6}
   >
     <View style={styles.settingLeft}>
       {icon}
       <View style={styles.settingTextWrap}>
-        <Text style={styles.settingTitle}>{title}</Text>
-        {subtitle ? <Text style={styles.settingSubtitle}>{subtitle}</Text> : null}
+        <Text style={[styles.settingTitle, { color: COLORS.text }]}>{title}</Text>
+        {subtitle ? <Text style={[styles.settingSubtitle, { color: COLORS.textMuted }]}>{subtitle}</Text> : null}
       </View>
     </View>
-    <ChevronRight />
+    <ChevronRight color={COLORS.textMuted} />
   </TouchableOpacity>
 );
 
 /* ─── Section label ─── */
-const SectionHeader = ({ label }: { label: string }) => (
-  <Text style={styles.sectionLabel}>{label}</Text>
+const SectionHeader = ({ label, COLORS }: { label: string; COLORS: any }) => (
+  <Text style={[styles.sectionLabel, { color: COLORS.textMuted }]}>{label}</Text>
 );
 
 /* ─── Icon badge ─── */
@@ -181,6 +197,8 @@ interface UserSettingsScreenProps {
 }
 
 const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, resetTo, onLogout }) => {
+  const { mode, toggleTheme } = useTheme();
+  const COLORS = getColors(mode);
   const { t, isRTL } = useTranslation();
   const [profileName, setProfileName] = useState('');
   const [profileEmail, setProfileEmail] = useState('');
@@ -216,48 +234,63 @@ const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, reset
     .slice(0, 2) || 'SO';
 
   return (
-    <View style={styles.outer}>
+    <View style={[styles.outer, { backgroundColor: COLORS.background }]}>
       <ScrollView style={styles.scroller} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        
+        {/* Header with Logo and Theme Toggle */}
+        <View style={styles.topHeader}>
+          <Logo variant="icon" size={40} />
+          <TouchableOpacity
+            style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+            onPress={toggleTheme}
+            activeOpacity={0.7}
+          >
+            {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+          </TouchableOpacity>
+        </View>
+
         {/* ── Profile header ── */}
-        <View style={styles.profileCard}>
-          <View style={styles.avatar}>
+        <View style={[styles.profileCard, { backgroundColor: COLORS.surface }]}>
+          <View style={[styles.avatar, { backgroundColor: COLORS.primary + '18' }]}>
             {profileLoading ? (
               <ActivityIndicator size="small" color={COLORS.primary} />
             ) : (
-              <Text style={styles.avatarText}>{initials}</Text>
+              <Text style={[styles.avatarText, { color: COLORS.primary }]}>{initials}</Text>
             )}
           </View>
           <View style={styles.profileInfo}>
-            <Text style={styles.profileName} numberOfLines={1}>
+            <Text style={[styles.profileName, { color: COLORS.text }]} numberOfLines={1}>
               {profileLoading ? 'Loading…' : profileName}
             </Text>
             {profileEmail ? (
-              <Text style={styles.profileEmail} numberOfLines={1}>{profileEmail}</Text>
+              <Text style={[styles.profileEmail, { color: COLORS.textSecondary }]} numberOfLines={1}>{profileEmail}</Text>
             ) : null}
           </View>
           <TouchableOpacity
-            style={styles.profileEditBtn}
+            style={[styles.profileEditBtn, { backgroundColor: COLORS.surfaceHighlight }]}
             onPress={() => go('profileSettings')}
             activeOpacity={0.7}
           >
-            <Text style={styles.profileEditText}>{t('common_edit')}</Text>
+            <Text style={[styles.profileEditText, { color: COLORS.primary }]}>{t('common_edit')}</Text>
           </TouchableOpacity>
         </View>
 
         {/* ── Account ── */}
-        <SectionHeader label={t('settings_account')} />
-        <View style={styles.sectionCard}>
+        <SectionHeader label={t('settings_account')} COLORS={COLORS} />
+        <View style={[styles.sectionCard, { backgroundColor: COLORS.surface }]}>
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.account}><ProfileIcon color={SECTION_COLORS.account} /></IconBadge>}
             title={t('settings_profileSettings')}
             subtitle={t('settings_profileSettingsDesc')}
             onPress={() => go('profileSettings')}
+            COLORS={COLORS}
           />
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.account}><AccountTypeIcon color={SECTION_COLORS.account} /></IconBadge>}
             title={t('settings_accountType')}
             subtitle={t('settings_accountTypeDesc')}
             onPress={() => go('userAccountType')}
+            COLORS={COLORS}
           />
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.account}><StatusIcon color={SECTION_COLORS.account} /></IconBadge>}
@@ -265,41 +298,47 @@ const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, reset
             subtitle={t('settings_accountStatusDesc')}
             onPress={() => go('accountStatus')}
             isLast
+            COLORS={COLORS}
           />
         </View>
 
         {/* ── Store Management ── */}
-        <SectionHeader label={t('settings_storeManagement')} />
-        <View style={styles.sectionCard}>
+        <SectionHeader label={t('settings_storeManagement')} COLORS={COLORS} />
+        <View style={[styles.sectionCard, { backgroundColor: COLORS.surface }]}>
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.store}><TrackingIcon color={SECTION_COLORS.store} /></IconBadge>}
             title={t('settings_tracking')}
             subtitle={t('settings_trackingDesc')}
             onPress={() => go('trackingSystem')}
+            COLORS={COLORS}
           />
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.store}><BillingIcon color={SECTION_COLORS.store} /></IconBadge>}
             title={t('settings_planBilling')}
             subtitle={t('settings_planBillingDesc')}
             onPress={() => go('planBilling')}
+            COLORS={COLORS}
           />
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.store}><PaymentIcon color={SECTION_COLORS.store} /></IconBadge>}
             title={t('settings_payments')}
             subtitle={t('settings_paymentsDesc')}
             onPress={() => go('payments')}
+            COLORS={COLORS}
           />
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.store}><DeliveryIcon color={SECTION_COLORS.store} /></IconBadge>}
             title={t('settings_delivery')}
             subtitle={t('settings_deliveryDesc')}
             onPress={() => go('delivery')}
+            COLORS={COLORS}
           />
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.store}><TaxIcon color={SECTION_COLORS.store} /></IconBadge>}
             title={t('settings_taxes')}
             subtitle={t('settings_taxesDesc')}
             onPress={() => go('taxesDuties')}
+            COLORS={COLORS}
           />
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.store}><LocationIcon color={SECTION_COLORS.store} /></IconBadge>}
@@ -307,17 +346,19 @@ const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, reset
             subtitle={t('settings_locationsDesc')}
             onPress={() => go('locations')}
             isLast
+            COLORS={COLORS}
           />
         </View>
 
         {/* ── Preferences ── */}
-        <SectionHeader label={t('settings_preferences')} />
-        <View style={styles.sectionCard}>
+        <SectionHeader label={t('settings_preferences')} COLORS={COLORS} />
+        <View style={[styles.sectionCard, { backgroundColor: COLORS.surface }]}>
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.preferences}><NotificationIcon color={SECTION_COLORS.preferences} /></IconBadge>}
             title={t('settings_notifications')}
             subtitle={t('settings_notificationsDesc')}
             onPress={() => go('notifications')}
+            COLORS={COLORS}
           />
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.preferences}><LanguageIcon color={SECTION_COLORS.preferences} /></IconBadge>}
@@ -325,17 +366,19 @@ const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, reset
             subtitle={t('settings_languagesDesc')}
             onPress={() => go('languages')}
             isLast
+            COLORS={COLORS}
           />
         </View>
 
         {/* ── Support & Legal ── */}
-        <SectionHeader label={t('settings_supportLegal')} />
-        <View style={styles.sectionCard}>
+        <SectionHeader label={t('settings_supportLegal')} COLORS={COLORS} />
+        <View style={[styles.sectionCard, { backgroundColor: COLORS.surface }]}>
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.support}><PolicyIcon color={SECTION_COLORS.support} /></IconBadge>}
             title={t('settings_policies')}
             subtitle={t('settings_policiesDesc')}
             onPress={() => go('policies')}
+            COLORS={COLORS}
           />
           <SettingItem
             icon={<IconBadge color={SECTION_COLORS.support}><UsersIcon color={SECTION_COLORS.support} /></IconBadge>}
@@ -343,18 +386,19 @@ const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, reset
             subtitle={t('settings_usersPermissionsDesc')}
             onPress={() => go('usersPermissions')}
             isLast
+            COLORS={COLORS}
           />
         </View>
 
         {/* ── Logout ── */}
         {onLogout && (
-          <TouchableOpacity style={styles.logoutRow} onPress={onLogout} activeOpacity={0.6}>
-            <LogOutIcon />
-            <Text style={styles.logoutText}>{t('settings_logout')}</Text>
+          <TouchableOpacity style={[styles.logoutRow, { backgroundColor: COLORS.error + '10' }]} onPress={onLogout} activeOpacity={0.6}>
+            <LogOutIcon color={COLORS.error} />
+            <Text style={[styles.logoutText, { color: COLORS.error }]}>{t('settings_logout')}</Text>
           </TouchableOpacity>
         )}
 
-        <Text style={styles.versionText}>Version 1.0.0</Text>
+        <Text style={[styles.versionText, { color: COLORS.textMuted }]}>Version 1.0.0</Text>
       </ScrollView>
       <BottomNav activeTab="userSettings" onTabPress={handleTabPress} />
     </View>
@@ -365,7 +409,6 @@ const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, reset
 const styles = StyleSheet.create({
   outer: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scroller: {
     flex: 1,
@@ -376,11 +419,26 @@ const styles = StyleSheet.create({
     paddingBottom: 110,
   },
 
+  /* Top Header with Logo and Theme Toggle */
+  topHeader: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: SPACING.lg 
+  },
+  themeToggle: { 
+    width: 48, 
+    height: 48, 
+    borderRadius: 24, 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    borderWidth: 1 
+  },
+
   /* Profile card */
   profileCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
     borderRadius: 16,
     padding: 18,
     marginBottom: SPACING.lg,
@@ -389,14 +447,12 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: COLORS.primary + '18',
     justifyContent: 'center',
     alignItems: 'center',
   },
   avatarText: {
     fontSize: 16,
     fontWeight: '700',
-    color: COLORS.primary,
   },
   profileInfo: {
     flex: 1,
@@ -405,37 +461,31 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.text,
   },
   profileEmail: {
     fontSize: 13,
-    color: COLORS.textSecondary,
     marginTop: 2,
   },
   profileEditBtn: {
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: COLORS.surfaceHighlight,
   },
   profileEditText: {
     fontSize: 13,
     fontWeight: '600',
-    color: COLORS.primary,
   },
 
   /* Sections */
   sectionLabel: {
     fontSize: 11,
     fontWeight: '600',
-    color: COLORS.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: 8,
     marginLeft: 2,
   },
   sectionCard: {
-    backgroundColor: COLORS.surface,
     borderRadius: 14,
     marginBottom: SPACING.lg,
     overflow: 'hidden',
@@ -451,7 +501,6 @@ const styles = StyleSheet.create({
   },
   settingItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
   },
   settingLeft: {
     flexDirection: 'row',
@@ -465,11 +514,9 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 14,
     fontWeight: '500',
-    color: COLORS.text,
   },
   settingSubtitle: {
     fontSize: 11,
-    color: COLORS.textMuted,
     marginTop: 2,
   },
 
@@ -487,7 +534,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: COLORS.error + '10',
     borderRadius: 12,
     paddingVertical: 14,
     marginTop: 8,
@@ -496,14 +542,12 @@ const styles = StyleSheet.create({
   logoutText: {
     fontSize: 14,
     fontWeight: '600',
-    color: COLORS.error,
     marginLeft: 10,
   },
 
   /* Footer */
   versionText: {
     fontSize: 11,
-    color: COLORS.textMuted,
     textAlign: 'center',
     marginTop: 4,
     marginBottom: 8,

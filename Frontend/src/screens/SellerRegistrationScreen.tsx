@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,450 +6,441 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  ActivityIndicator,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import Svg, { Path, Circle } from 'react-native-svg';
+import { getColors, SPACING } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
+import { Logo } from '../components/Logo';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 import { confirmAction } from '../components/confirmAction';
 
-// Upload Icon Component
-const UploadIcon = () => (
+/* Icons */
+const SunIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M17 8L12 3L7 8"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M12 3V15"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
+    <Path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" stroke="#FDB913" strokeWidth="2" />
   </Svg>
 );
 
-// Document Icon Component
-const DocumentIcon = () => (
+const MoonIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M14 2V8H20"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M16 13H8"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M16 17H8"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M10 9H9H8"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-// Check Icon Component
-const CheckIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M20 6L9 17L4 12"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const UploadIcon = ({ color }: { color: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M17 8L12 3L7 8" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M12 3V15" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-// Seller Registration Icon Component
-const SellerIcon = () => (
+const CheckIcon = ({ color }: { color: string }) => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 17L12 22L22 17"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 12L12 17L22 12"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <Path d="M20 6L9 17L4 12" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
 interface DocumentUploadProps {
   label: string;
+  description: string;
   fileName?: string;
   onPress: () => void;
-  style?: object;
+  COLORS: any;
 }
 
-const DocumentUpload: React.FC<DocumentUploadProps> = ({
-  label,
-  fileName,
-  onPress,
-  style,
-}) => (
-  <TouchableOpacity style={[styles.documentUpload, style]} onPress={onPress}>
-    <View style={styles.documentIconContainer}>
-      {fileName ? <CheckIcon /> : <DocumentIcon />}
+const DocumentUpload: React.FC<DocumentUploadProps> = ({ label, description, fileName, onPress, COLORS }) => (
+  <TouchableOpacity
+    style={[styles.documentCard, { backgroundColor: COLORS.surface, borderColor: fileName ? COLORS.success + '30' : COLORS.border }]}
+    onPress={onPress}
+    activeOpacity={0.7}
+  >
+    <View style={[styles.documentIcon, { backgroundColor: fileName ? COLORS.success + '15' : COLORS.surfaceHighlight }]}>
+      {fileName ? <CheckIcon color={COLORS.success} /> : <UploadIcon color={COLORS.textSecondary} />}
     </View>
-    <View style={styles.documentTextContainer}>
-      <Text style={styles.documentLabel}>{label}</Text>
+    <View style={styles.documentInfo}>
+      <Text style={[styles.documentLabel, { color: COLORS.text }]}>{label}</Text>
+      <Text style={[styles.documentDescription, { color: COLORS.textMuted }]}>{description}</Text>
       {fileName ? (
-        <Text style={styles.documentFileName} numberOfLines={1}>
-          {fileName}
-        </Text>
+        <Text style={[styles.documentFileName, { color: COLORS.success }]} numberOfLines={1}>✓ {fileName}</Text>
       ) : (
-        <Text style={styles.documentPlaceholder}>Tap to upload</Text>
+        <Text style={[styles.documentPlaceholder, { color: COLORS.textSecondary }]}>Tap to upload</Text>
       )}
-    </View>
-    <View style={styles.uploadIconContainer}>
-      <UploadIcon />
     </View>
   </TouchableOpacity>
 );
 
 interface SellerRegistrationScreenProps {
   navigate?: (screenId: string) => void;
+  goBack?: () => void;
 }
 
-const SellerRegistrationScreen = ({ navigate }: SellerRegistrationScreenProps) => {
+const SellerRegistrationScreen = ({ navigate, goBack }: SellerRegistrationScreenProps) => {
+  const { mode, toggleTheme } = useTheme();
+  const COLORS = getColors(mode);
+  const [loading, setLoading] = useState(false);
   const [fullName, setFullName] = useState('');
   const [ssid, setSsid] = useState('');
   const [businessId, setBusinessId] = useState('');
-  const [document1, setDocument1] = useState<string | undefined>(undefined);
-  const [document2, setDocument2] = useState<string | undefined>(undefined);
-  const [document3, setDocument3] = useState<string | undefined>(undefined);
+  const [commercialRegister, setCommercialRegister] = useState<string | undefined>(undefined);
+  const [taxCertificate, setTaxCertificate] = useState<string | undefined>(undefined);
+  const [identityDocument, setIdentityDocument] = useState<string | undefined>(undefined);
   const { message, showSuccess, showError, clear } = useStatusMessage();
 
   const handleDocumentUpload = async (
     setter: (value: string) => void,
-    documentNumber: number,
+    documentName: string,
   ) => {
-    // In a real app, this would open a document picker
+    // In production, integrate with react-native-document-picker
     const confirmed = await confirmAction(
       'Upload Document',
-      `This would open a document picker for document ${documentNumber}. In production, integrate with react-native-document-picker or similar. Simulate upload?`,
+      `Select ${documentName} from your device. Supported formats: PDF, JPG, PNG (Max 5MB)`,
     );
     if (confirmed) {
-      setter(`document_${documentNumber}.pdf`);
+      setter(`${documentName.toLowerCase().replace(/\s+/g, '_')}.pdf`);
+      showSuccess(`${documentName} uploaded successfully`);
     }
   };
 
-  const handleSubmit = () => {
-    if (!fullName || !ssid || !businessId) {
-      showError('Please fill in all required fields');
+  const handleSubmit = async () => {
+    // Validation
+    if (!fullName.trim()) {
+      showError('Please enter your full name');
       return;
     }
 
-    if (!document1 || !document2 || !document3) {
+    if (!ssid.trim() || ssid.length < 10) {
+      showError('Please enter a valid SSID (Social Security ID)');
+      return;
+    }
+
+    if (!businessId.trim()) {
+      showError('Please enter your business registration number');
+      return;
+    }
+
+    if (!commercialRegister || !taxCertificate || !identityDocument) {
       showError('Please upload all required documents');
       return;
     }
 
-    // Handle form submission
-    showSuccess('Your seller registration information has been submitted for review.');
-    setTimeout(() => {
-      if (navigate) navigate('dashboard');
-    }, 2000);
+    try {
+      setLoading(true);
+      // TODO: API call to submit seller registration
+      // await sellerAPI.submitRegistration({ fullName, ssid, businessId, documents: [...] });
+      
+      showSuccess('Registration submitted successfully! You will be notified once reviewed.');
+      
+      setTimeout(() => {
+        navigate?.('stores');
+      }, 2000);
+    } catch (error: any) {
+      showError(error.message || 'Failed to submit registration');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      {/* Icon */}
-      <View style={styles.iconContainer}>
-        <View style={styles.iconWrapper}>
-          <SellerIcon />
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <ScrollView
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header with Logo and Theme Toggle */}
+        <View style={styles.topHeader}>
+          <TouchableOpacity onPress={goBack} activeOpacity={0.7}>
+            <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+              <Path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          </TouchableOpacity>
+          <Logo variant="icon" size={36} />
+          <TouchableOpacity
+            style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+            onPress={toggleTheme}
+            activeOpacity={0.7}
+          >
+            {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+          </TouchableOpacity>
         </View>
-      </View>
 
-      {/* Header */}
-      <Text style={styles.heading}>Seller Registration</Text>
-      <Text style={styles.subheading}>
-        Please provide your information and required documents to complete your
-        seller account setup.
-      </Text>
-
-      <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
-
-      {/* Form Fields */}
-      <View style={styles.formSection}>
-
-        {/* Full Name */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>
-            Full Name
+        {/* Header */}
+        <View style={styles.headerSection}>
+          <View style={[styles.iconBadge, { backgroundColor: COLORS.primary + '15' }]}>
+            <Svg width={32} height={32} viewBox="0 0 24 24" fill="none">
+              <Path d="M12 2L2 7L12 12L22 7L12 2Z" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="M2 17L12 22L22 17" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="M2 12L12 17L22 12" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          </View>
+          <Text style={[styles.heading, { color: COLORS.text }]}>Seller Registration</Text>
+          <Text style={[styles.subheading, { color: COLORS.textSecondary }]}>
+            Complete your seller verification to start selling on Algerie Poste E-Commerce platform
           </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your full name"
-            placeholderTextColor={COLORS.textMuted}
-            value={fullName}
-            onChangeText={setFullName}
-          />
         </View>
 
-        {/* SSID */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>
-            SSID
+        <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
+
+        {/* Personal Information */}
+        <View style={[styles.section, { backgroundColor: COLORS.surface }]}>
+          <Text style={[styles.sectionTitle, { color: COLORS.text }]}>Personal Information</Text>
+          
+          <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: COLORS.text }]}>Full Name <Text style={styles.required}>*</Text></Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }]}
+              placeholder="Enter your full legal name"
+              placeholderTextColor={COLORS.textMuted}
+              value={fullName}
+              onChangeText={setFullName}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: COLORS.text }]}>SSID (Social Security ID) <Text style={styles.required}>*</Text></Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }]}
+              placeholder="Enter your 15-digit SSID"
+              placeholderTextColor={COLORS.textMuted}
+              value={ssid}
+              onChangeText={setSsid}
+              keyboardType="numeric"
+              maxLength={15}
+            />
+          </View>
+
+          <View style={styles.inputContainer}>
+            <Text style={[styles.label, { color: COLORS.text }]}>Business Registration Number <Text style={styles.required}>*</Text></Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }]}
+              placeholder="Enter your NIF or RC number"
+              placeholderTextColor={COLORS.textMuted}
+              value={businessId}
+              onChangeText={setBusinessId}
+            />
+          </View>
+        </View>
+
+        {/* Required Documents */}
+        <View style={styles.documentsSection}>
+          <Text style={[styles.sectionTitle, { color: COLORS.text }]}>Required Documents</Text>
+          <Text style={[styles.sectionDescription, { color: COLORS.textSecondary }]}>
+            Upload clear copies of the following documents (PDF, JPG, or PNG format, max 5MB each)
           </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your SSID"
-            placeholderTextColor={COLORS.textMuted}
-            value={ssid}
-            onChangeText={setSsid}
-            keyboardType="numeric"
+
+          <DocumentUpload
+            label="Commercial Register (RC)"
+            description="Official business registration certificate"
+            fileName={commercialRegister}
+            onPress={() => handleDocumentUpload(setCommercialRegister, 'Commercial Register')}
+            COLORS={COLORS}
+          />
+
+          <DocumentUpload
+            label="Tax Certificate (NIF)"
+            description="Tax identification number certificate"
+            fileName={taxCertificate}
+            onPress={() => handleDocumentUpload(setTaxCertificate, 'Tax Certificate')}
+            COLORS={COLORS}
+          />
+
+          <DocumentUpload
+            label="Identity Document"
+            description="National ID card or passport"
+            fileName={identityDocument}
+            onPress={() => handleDocumentUpload(setIdentityDocument, 'Identity Document')}
+            COLORS={COLORS}
           />
         </View>
 
-        {/* Business ID */}
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>
-            Business ID
+        {/* Info Box */}
+        <View style={[styles.infoBox, { backgroundColor: COLORS.info + '10', borderColor: COLORS.info + '30' }]}>
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+            <Circle cx="12" cy="12" r="10" stroke={COLORS.info} strokeWidth="2" />
+            <Path d="M12 16V12M12 8H12.01" stroke={COLORS.info} strokeWidth="2" strokeLinecap="round" />
+          </Svg>
+          <Text style={[styles.infoText, { color: COLORS.text }]}>
+            Your documents will be reviewed by our admin team within 2-3 business days. You'll receive a notification once your application is processed.
           </Text>
-          <TextInput
-            style={styles.input}
-            placeholder="Enter your business ID"
-            placeholderTextColor={COLORS.textMuted}
-            value={businessId}
-            onChangeText={setBusinessId}
-          />
         </View>
-      </View>
 
-      {/* Documents Section */}
-      <View style={styles.formSection}>
-        <View style={styles.documentsRow}>
-          <DocumentUpload
-            label="Document 1"
-            fileName={document1}
-            onPress={() => handleDocumentUpload(setDocument1, 1)}
-          />
-
-          <DocumentUpload
-            label="Document 2"
-            fileName={document2}
-            onPress={() => handleDocumentUpload(setDocument2, 2)}
-          />
-
-          <DocumentUpload
-            label="Document 3"
-            fileName={document3}
-            onPress={() => handleDocumentUpload(setDocument3, 3)}
-            style={styles.documentUploadLast}
-          />
-        </View>
-      </View>
-
-      {/* Submit Button */}
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit}>
-        <Text style={styles.submitButtonText}>Submit Registration</Text>
-      </TouchableOpacity>
-
-      {/* Info Text */}
-      <Text style={styles.infoText}>
-        Your information will be reviewed and verified. You will be notified
-        once your seller account is approved.
-      </Text>
-    </ScrollView>
+        {/* Submit Button */}
+        <TouchableOpacity
+          style={[styles.submitButton, { backgroundColor: COLORS.primary }]}
+          onPress={handleSubmit}
+          disabled={loading}
+          activeOpacity={0.8}
+        >
+          {loading ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <Text style={styles.submitButtonText}>Submit for Review</Text>
+          )}
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
   content: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
+    padding: SPACING.md,
+    paddingTop: 48,
     paddingBottom: 40,
-    paddingTop: 35,
   },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  iconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subheading: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 18,
-  },
-  formSection: {
-    marginBottom: 8,
-  },
-  sectionTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  sectionDescription: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    marginBottom: 16,
-    lineHeight: 14,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: COLORS.text,
-    marginBottom: 6,
-  },
-  required: {
-    color: '#FF0000',
-  },
-  input: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    fontSize: 13,
-    color: COLORS.text,
-  },
-  documentsRow: {
+
+  /* Top Header */
+  topHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-  },
-  documentUpload: {
-    flex: 1,
-    flexDirection: 'column',
     alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 8,
-    padding: 12,
-    minHeight: 100,
-    marginRight: 8,
+    marginBottom: SPACING.lg,
   },
-  documentUploadLast: {
-    marginRight: 0,
-  },
-  documentIconContainer: {
+  themeToggle: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: COLORS.background,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+  },
+
+  /* Header Section */
+  headerSection: {
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  iconBadge: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  heading: {
+    fontSize: 26,
+    fontWeight: '800',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  subheading: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 21,
+    paddingHorizontal: 20,
+  },
+
+  /* Section */
+  section: {
+    borderRadius: 16,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    marginBottom: SPACING.md,
+  },
+  sectionDescription: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginBottom: SPACING.md,
+  },
+
+  /* Input */
+  inputContainer: {
+    marginBottom: SPACING.md,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600',
     marginBottom: 8,
   },
-  documentTextContainer: {
+  required: {
+    color: '#EF4444',
+  },
+  input: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 14,
+  },
+
+  /* Documents */
+  documentsSection: {
+    marginBottom: SPACING.md,
+  },
+  documentCard: {
+    flexDirection: 'row',
+    borderRadius: 16,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderWidth: 2,
+  },
+  documentIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: 'center',
     alignItems: 'center',
-    width: '100%',
+    marginRight: SPACING.md,
+  },
+  documentInfo: {
+    flex: 1,
+    justifyContent: 'center',
   },
   documentLabel: {
-    fontSize: 12,
-    fontWeight: '500',
-    color: COLORS.text,
+    fontSize: 15,
+    fontWeight: '700',
     marginBottom: 4,
-    textAlign: 'center',
+  },
+  documentDescription: {
+    fontSize: 12,
+    marginBottom: 6,
   },
   documentFileName: {
-    fontSize: 10,
-    color: COLORS.text,
-    textAlign: 'center',
-  },
-  documentPlaceholder: {
-    fontSize: 10,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-  },
-  uploadIconContainer: {
-    marginTop: 8,
-  },
-  submitButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  submitButtonText: {
-    color: COLORS.background,
     fontSize: 13,
     fontWeight: '600',
   },
+  documentPlaceholder: {
+    fontSize: 13,
+    fontStyle: 'italic',
+  },
+
+  /* Info Box */
+  infoBox: {
+    flexDirection: 'row',
+    padding: SPACING.md,
+    borderRadius: 12,
+    borderWidth: 1,
+    marginBottom: SPACING.lg,
+    gap: 12,
+  },
   infoText: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 16,
+    flex: 1,
+    fontSize: 13,
+    lineHeight: 19,
+  },
+
+  /* Submit Button */
+  submitButton: {
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 52,
+  },
+  submitButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
 
 export default SellerRegistrationScreen;
-
