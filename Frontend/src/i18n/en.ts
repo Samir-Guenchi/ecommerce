@@ -50,6 +50,23 @@
   buyer_shipped: 'Shipped',
   buyer_delivered: 'Delivered',
 
+  // Seller Dashboard
+  seller_welcomeBack: 'Welcome back',
+  seller_dashboard: 'Seller Dashboard',
+  seller_totalRevenue: 'Total Revenue',
+  seller_orders: 'Orders',
+  seller_stores: 'Stores',
+  seller_products: 'Products',
+  seller_active: 'Active',
+  seller_lowStock: 'Low Stock',
+  seller_outOfStock: 'Out of Stock',
+  seller_weeklyActivity: 'Weekly Activity',
+  seller_last7Days: 'Last 7 days',
+  seller_recentOrders: 'Recent Orders',
+  seller_addProduct: 'Add Product',
+  seller_viewOrders: 'View Orders',
+  seller_trackOrders: 'Track Orders',
+
   // Products
   products_subtitle: 'Manage your store products and inventory.',
   products_loading: 'Loading products...',

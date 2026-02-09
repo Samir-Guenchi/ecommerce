@@ -207,10 +207,10 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
               <Logo variant="icon" size={40} />
               <View style={{ marginLeft: 12 }}>
                 <Text style={[styles.greeting, { color: COLORS.textMuted }]}>
-                  Welcome back, {userName}
+                  {t('seller_welcomeBack')}, {userName}
                 </Text>
                 <Text style={[styles.title, { color: COLORS.text }]}>
-                  {userType === 'seller' || userType === 'both' ? 'Seller Dashboard' : 'My Orders'}
+                  {userType === 'seller' || userType === 'both' ? t('seller_dashboard') : t('buyer_myOrders')}
                 </Text>
               </View>
             </View>
@@ -236,16 +236,16 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
                   style={styles.heroGradient}
                 >
                   <View style={styles.heroContent}>
-                    <Text style={styles.heroLabel}>Total Revenue</Text>
+                    <Text style={styles.heroLabel}>{t('seller_totalRevenue')}</Text>
                     <Text style={styles.heroValue}>${stats.totalRevenue.toLocaleString()}</Text>
                     <View style={styles.heroMeta}>
                       <View style={styles.heroMetaItem}>
-                        <Text style={styles.heroMetaLabel}>Orders</Text>
+                        <Text style={styles.heroMetaLabel}>{t('seller_orders')}</Text>
                         <Text style={styles.heroMetaValue}>{stats.totalOrders}</Text>
                       </View>
                       <View style={styles.heroDivider} />
                       <View style={styles.heroMetaItem}>
-                        <Text style={styles.heroMetaLabel}>Stores</Text>
+                        <Text style={styles.heroMetaLabel}>{t('seller_stores')}</Text>
                         <Text style={styles.heroMetaValue}>{stats.totalStores}</Text>
                       </View>
                     </View>
@@ -256,7 +256,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
               {/* Metrics Grid */}
               <View style={styles.metricsGrid}>
             <MetricCard
-              title="Products"
+              title={t('seller_products')}
               value={stats.totalProducts}
               change={stats.revenueTrend}
               colors={[COLORS.primary]}
@@ -271,7 +271,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
               }
             />
             <MetricCard
-              title="Active"
+              title={t('seller_active')}
               value={stats.activeProducts}
               change={5.2}
               colors={[COLORS.success]}
@@ -284,7 +284,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
               }
             />
             <MetricCard
-              title="Low Stock"
+              title={t('seller_lowStock')}
               value={stats.lowStock || 0}
               change={-2.1}
               colors={[COLORS.warning]}
@@ -298,7 +298,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
               }
             />
             <MetricCard
-              title="Out of Stock"
+              title={t('seller_outOfStock')}
               value={stats.outOfStock}
               change={-8.3}
               colors={[COLORS.error]}
@@ -315,8 +315,8 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
           {/* Weekly Activity */}
           <View style={[styles.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
             <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: COLORS.text }]}>Weekly Activity</Text>
-              <Text style={[styles.sectionMeta, { color: COLORS.textMuted }]}>Last 7 days</Text>
+              <Text style={[styles.sectionTitle, { color: COLORS.text }]}>{t('seller_weeklyActivity')}</Text>
+              <Text style={[styles.sectionMeta, { color: COLORS.textMuted }]}>{t('seller_last7Days')}</Text>
             </View>
             <MiniChart data={stats.weeklyTrend} color={COLORS.primary} COLORS={COLORS} />
           </View>
@@ -325,9 +325,9 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
           {stats.recentOrders?.length > 0 && (
             <View style={[styles.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: COLORS.text }]}>Recent Orders</Text>
+                <Text style={[styles.sectionTitle, { color: COLORS.text }]}>{t('seller_recentOrders')}</Text>
                 <TouchableOpacity onPress={() => navigate?.('orders')} activeOpacity={0.7}>
-                  <Text style={[styles.viewAllLink, { color: COLORS.primary }]}>View All</Text>
+                  <Text style={[styles.viewAllLink, { color: COLORS.primary }]}>{t('buyer_viewAll')}</Text>
                 </TouchableOpacity>
               </View>
               {stats.recentOrders.slice(0, 5).map((order: any, i: number) => (
@@ -353,7 +353,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
                   <Path d="M12 5V19M5 12H19" stroke={COLORS.primary} strokeWidth="2.5" strokeLinecap="round" />
                 </Svg>
               </View>
-              <Text style={[styles.actionText, { color: COLORS.text }]}>Add Product</Text>
+              <Text style={[styles.actionText, { color: COLORS.text }]}>{t('seller_addProduct')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -367,7 +367,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
                   <Path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </Svg>
               </View>
-              <Text style={[styles.actionText, { color: COLORS.text }]}>View Orders</Text>
+              <Text style={[styles.actionText, { color: COLORS.text }]}>{t('seller_viewOrders')}</Text>
             </TouchableOpacity>
           </View>
             </>
@@ -383,16 +383,16 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
                   style={styles.heroGradient}
                 >
                   <View style={styles.heroContent}>
-                    <Text style={styles.heroLabel}>Your Orders</Text>
+                    <Text style={styles.heroLabel}>{t('buyer_yourOrders')}</Text>
                     <Text style={styles.heroValue}>{stats?.totalOrders || 0}</Text>
                     <View style={styles.heroMeta}>
                       <View style={styles.heroMetaItem}>
-                        <Text style={styles.heroMetaLabel}>Active</Text>
+                        <Text style={styles.heroMetaLabel}>{t('dashboard_active')}</Text>
                         <Text style={styles.heroMetaValue}>{stats?.activeOrders || 0}</Text>
                       </View>
                       <View style={styles.heroDivider} />
                       <View style={styles.heroMetaItem}>
-                        <Text style={styles.heroMetaLabel}>Delivered</Text>
+                        <Text style={styles.heroMetaLabel}>{t('buyer_delivered')}</Text>
                         <Text style={styles.heroMetaValue}>{stats?.deliveredOrders || 0}</Text>
                       </View>
                     </View>
@@ -412,7 +412,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
                     </View>
                   </View>
                   <Text style={[styles.metricValue, { color: COLORS.text }]}>{stats?.processingOrders || 0}</Text>
-                  <Text style={[styles.metricTitle, { color: COLORS.textMuted }]}>Processing</Text>
+                  <Text style={[styles.metricTitle, { color: COLORS.textMuted }]}>{t('buyer_processing')}</Text>
                 </View>
 
                 <View style={[styles.metricCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
@@ -424,7 +424,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
                     </View>
                   </View>
                   <Text style={[styles.metricValue, { color: COLORS.text }]}>{stats?.shippedOrders || 0}</Text>
-                  <Text style={[styles.metricTitle, { color: COLORS.textMuted }]}>Shipped</Text>
+                  <Text style={[styles.metricTitle, { color: COLORS.textMuted }]}>{t('buyer_shipped')}</Text>
                 </View>
               </View>
 
@@ -432,9 +432,9 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
               {stats?.recentOrders?.length > 0 && (
                 <View style={[styles.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
                   <View style={styles.sectionHeader}>
-                    <Text style={[styles.sectionTitle, { color: COLORS.text }]}>Recent Orders</Text>
+                    <Text style={[styles.sectionTitle, { color: COLORS.text }]}>{t('buyer_recentOrders')}</Text>
                     <TouchableOpacity onPress={() => navigate?.('orders')} activeOpacity={0.7}>
-                      <Text style={[styles.viewAllLink, { color: COLORS.primary }]}>View All</Text>
+                      <Text style={[styles.viewAllLink, { color: COLORS.primary }]}>{t('buyer_viewAll')}</Text>
                     </TouchableOpacity>
                   </View>
                   {stats.recentOrders.slice(0, 5).map((order: any, i: number) => (
@@ -460,7 +460,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
                       <Path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </Svg>
                   </View>
-                  <Text style={[styles.actionText, { color: COLORS.text }]}>Browse Stores</Text>
+                  <Text style={[styles.actionText, { color: COLORS.text }]}>{t('buyer_browseStores')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
@@ -474,7 +474,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
                       <Path d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                     </Svg>
                   </View>
-                  <Text style={[styles.actionText, { color: COLORS.text }]}>Track Orders</Text>
+                  <Text style={[styles.actionText, { color: COLORS.text }]}>{t('seller_trackOrders')}</Text>
                 </TouchableOpacity>
               </View>
             </>
