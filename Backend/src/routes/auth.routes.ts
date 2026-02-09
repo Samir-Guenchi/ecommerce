@@ -11,6 +11,12 @@ router.post('/login', authController.login.bind(authController));
 router.post('/verify', authController.verifyEmail.bind(authController));
 router.post('/resend-verification', authController.resendVerificationCode.bind(authController));
 
+// OAuth routes
+router.get('/google', authController.googleAuth.bind(authController));
+router.get('/google/callback', authController.googleCallback.bind(authController));
+router.get('/facebook', authController.facebookAuth.bind(authController));
+router.get('/facebook/callback', authController.facebookCallback.bind(authController));
+
 // Protected routes
 router.get('/me', authenticate, authController.getCurrentUser.bind(authController));
 

@@ -267,7 +267,16 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
 
   const handleGoogleSignIn = async () => {
     try {
-      // Open Google OAuth URL
+      // Check if OAuth is available
+      const response = await fetch(`${API_URL}/auth/google`);
+      const data = await response.json();
+      
+      if (response.status === 501) {
+        setError(data.message || 'Google sign-in not available yet');
+        return;
+      }
+      
+      // If OAuth is configured, open the URL
       const googleAuthUrl = `${API_URL}/auth/google`;
       const supported = await Linking.canOpenURL(googleAuthUrl);
       
@@ -276,14 +285,23 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
       } else {
         setError('Cannot open Google sign in');
       }
-    } catch (err) {
-      setError('Google sign in not available');
+    } catch (err: any) {
+      setError(err.message || 'Google sign in not available');
     }
   };
 
   const handleFacebookSignIn = async () => {
     try {
-      // Open Facebook OAuth URL
+      // Check if OAuth is available
+      const response = await fetch(`${API_URL}/auth/facebook`);
+      const data = await response.json();
+      
+      if (response.status === 501) {
+        setError(data.message || 'Facebook sign-in not available yet');
+        return;
+      }
+      
+      // If OAuth is configured, open the URL
       const facebookAuthUrl = `${API_URL}/auth/facebook`;
       const supported = await Linking.canOpenURL(facebookAuthUrl);
       
@@ -292,8 +310,8 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
       } else {
         setError('Cannot open Facebook sign in');
       }
-    } catch (err) {
-      setError('Facebook sign in not available');
+    } catch (err: any) {
+      setError(err.message || 'Facebook sign in not available');
     }
   };
 
