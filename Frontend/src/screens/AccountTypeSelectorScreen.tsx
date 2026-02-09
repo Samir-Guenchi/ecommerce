@@ -107,7 +107,7 @@ const AccountTypeSelectorScreen: React.FC<AccountTypeSelectorScreenProps> = ({ n
   });
 
   const handleContinue = () => {
-    // Just navigate to login - user will set account type after signup
+    // Navigate to signup with the selected account type
     navigate?.('loginSignup');
   };
 

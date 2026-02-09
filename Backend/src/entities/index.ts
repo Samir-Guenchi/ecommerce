@@ -17,6 +17,8 @@ export { TaxSetting } from './TaxSetting';
 export { DeliverySetting } from './DeliverySetting';
 export { UserPermission } from './UserPermission';
 export { Transaction, TransactionStatus, TransactionType } from './Transaction';
+export { DeliveryPerson } from './DeliveryPerson';
+export { DeliveryLocation } from './DeliveryLocation';
 
 
 

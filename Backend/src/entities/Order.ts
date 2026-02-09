@@ -14,6 +14,7 @@ import { Store } from './Store';
 import { Address } from './Address';
 import { OrderItem } from './OrderItem';
 import { Transaction } from './Transaction';
+import { DeliveryPerson } from './DeliveryPerson';
 
 export enum OrderStatus {
   PROCESSING = 'processing',
@@ -60,6 +61,9 @@ export class Order {
   @Column({ type: 'integer', nullable: true, name: 'shipping_address_id' })
   shippingAddressId: number | null;
 
+  @Column({ type: 'integer', nullable: true, name: 'delivery_person_id' })
+  deliveryPersonId: number | null;
+
   @Column({ type: 'varchar', length: 100, nullable: true, name: 'tracking_number' })
   trackingNumber: string | null;
 
@@ -93,6 +97,10 @@ export class Order {
   @ManyToOne(() => Address, (address) => address.orders, { nullable: true })
   @JoinColumn({ name: 'shipping_address_id' })
   shippingAddress: Address | null;
+
+  @ManyToOne(() => DeliveryPerson, (deliveryPerson) => deliveryPerson.orders, { nullable: true })
+  @JoinColumn({ name: 'delivery_person_id' })
+  deliveryPerson: DeliveryPerson | null;
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order)
   orderItems: OrderItem[];

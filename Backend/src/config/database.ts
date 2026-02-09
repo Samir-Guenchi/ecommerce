@@ -25,6 +25,8 @@ import {
   DeliverySetting,
   UserPermission,
   Transaction,
+  DeliveryPerson,
+  DeliveryLocation,
 } from '../entities';
 
 export const dataSourceOptions: DataSourceOptions = {
@@ -53,6 +55,8 @@ export const dataSourceOptions: DataSourceOptions = {
     DeliverySetting,
     UserPermission,
     Transaction,
+    DeliveryPerson,
+    DeliveryLocation,
   ],
   synchronize: process.env.NODE_ENV === 'development', // Only in development
   logging: process.env.NODE_ENV === 'development',
