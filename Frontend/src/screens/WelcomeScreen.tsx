@@ -1,527 +1,166 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Animated, StatusBar, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
-import Svg, { Path, Circle } from 'react-native-svg';
-import { getColors, SHADOWS } from '../theme';
+import React from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  StatusBar,
+} from 'react-native';
+import { getColors, SPACING, SHADOWS } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { Logo } from '../components/Logo';
-import { PackageIcon, ClockIcon, ShieldIcon, GlobeIcon, CheckCircleIcon } from '../components/ModernIcons';
-
-const { width } = Dimensions.get('window');
 
 interface WelcomeScreenProps {
-  navigate?: (screenId: string, params?: Record<string, any>) => void;
+  navigate?: (screenId: string) => void;
 }
 
-const WelcomeScreen = ({ navigate }: WelcomeScreenProps) => {
+const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigate }) => {
   const { mode } = useTheme();
   const COLORS = getColors(mode);
-  
-  const [currentTestimonial, setCurrentTestimonial] = useState(0);
-  const logoScale = useRef(new Animated.Value(0)).current;
-  const logoOpacity = useRef(new Animated.Value(0)).current;
-  const splashOpacity = useRef(new Animated.Value(1)).current;
-  const contentFade = useRef(new Animated.Value(0)).current;
-  const screenFade = useRef(new Animated.Value(1)).current;
-  const float = useRef(new Animated.Value(0)).current;
-  const pulse = useRef(new Animated.Value(1)).current;
-  const shimmer = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    // Floating animation
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(float, { toValue: 1, duration: 3000, useNativeDriver: true }),
-        Animated.timing(float, { toValue: 0, duration: 3000, useNativeDriver: true }),
-      ])
-    ).start();
-
-    // Pulse animation for CTA
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.05, duration: 1500, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1, duration: 1500, useNativeDriver: true }),
-      ])
-    ).start();
-
-    // Shimmer effect
-    Animated.loop(
-      Animated.timing(shimmer, { toValue: 1, duration: 2000, useNativeDriver: true })
-    ).start();
-
-    // Logo animation
-    Animated.sequence([
-      Animated.parallel([
-        Animated.spring(logoScale, { toValue: 1, tension: 40, friction: 8, useNativeDriver: true }),
-        Animated.timing(logoOpacity, { toValue: 1, duration: 600, useNativeDriver: true }),
-      ]),
-      Animated.delay(1200),
-      Animated.parallel([
-        Animated.timing(splashOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
-        Animated.timing(contentFade, { toValue: 1, duration: 600, useNativeDriver: true }),
-      ]),
-    ]).start();
-
-    // Testimonial rotation
-    const interval = setInterval(() => {
-      setCurrentTestimonial(prev => (prev + 1) % 3);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  const handleNavigation = (navMode: 'login' | 'signup') => {
-    Animated.timing(screenFade, { toValue: 0, duration: 300, useNativeDriver: true }).start(() => {
-      navigate?.('loginSignup', { initialMode: navMode });
-    });
-  };
-
-  const floatY = float.interpolate({ inputRange: [0, 1], outputRange: [0, -12] });
-
-  const testimonials = [
-    { name: 'Ahmed B.', city: 'Oran', text: 'Sales tripled in 3 months. Simple and effective.', sales: '+300%' },
-    { name: 'Fatima K.', city: 'Algiers', text: 'My customers love the fast delivery. Highly recommend.', sales: '500+ orders' },
-    { name: 'Karim M.', city: 'Constantine', text: 'Best platform for Algerian sellers. Great support team.', sales: '50K DA/mo' },
-  ];
+  const styles = StyleSheet.create({
+    container: { 
+      flex: 1, 
+      backgroundColor: COLORS.background,
+    },
+    content: { 
+      flex: 1,
+      paddingHorizontal: 24,
+      justifyContent: 'space-between',
+      paddingTop: 80,
+      paddingBottom: 48,
+    },
+    
+    top: { alignItems: 'center' },
+    logoWrap: { marginBottom: 32 },
+    
+    heading: { 
+      fontSize: 32, 
+      fontWeight: '700', 
+      color: COLORS.text, 
+      textAlign: 'center',
+      marginBottom: 12,
+      letterSpacing: -0.5,
+    },
+    subheading: { 
+      fontSize: 16, 
+      color: COLORS.textSecondary, 
+      textAlign: 'center',
+      lineHeight: 24,
+    },
+    
+    features: { 
+      marginTop: 48,
+      gap: 16,
+    },
+    feature: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    dot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: COLORS.primary,
+    },
+    featureText: {
+      fontSize: 15,
+      color: COLORS.text,
+      fontWeight: '500',
+    },
+    
+    bottom: { gap: 12 },
+    btn: {
+      paddingVertical: 16,
+      borderRadius: 12,
+      alignItems: 'center',
+    },
+    primaryBtn: {
+      backgroundColor: COLORS.primary,
+      ...SHADOWS.medium,
+    },
+    primaryBtnText: { 
+      color: '#FFFFFF', 
+      fontSize: 16, 
+      fontWeight: '600',
+    },
+    secondaryBtn: {
+      backgroundColor: 'transparent',
+      borderWidth: 1.5,
+      borderColor: COLORS.border,
+    },
+    secondaryBtnText: { 
+      color: COLORS.text, 
+      fontSize: 16, 
+      fontWeight: '600',
+    },
+    
+    footer: { 
+      marginTop: 20, 
+      alignItems: 'center',
+    },
+    footerText: { 
+      fontSize: 13, 
+      color: COLORS.textMuted,
+    },
+  });
 
   return (
-    <Animated.View style={[styles.container, { opacity: screenFade }]}>
-      <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} backgroundColor={COLORS.background} />
-
-      {/* Dynamic gradient background */}
-      <LinearGradient
-        colors={mode === 'dark' 
-          ? [COLORS.background, '#0D1420', '#1A1F35', COLORS.background]
-          : ['#EFF6FF', '#DBEAFE', '#BFDBFE', '#EFF6FF']
-        }
-        style={StyleSheet.absoluteFill}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-      />
-
-      {/* Animated background shapes */}
-      <Animated.View style={[styles.bgShape1, { transform: [{ translateY: floatY }], opacity: 0.1 }]}>
-        <Svg width={200} height={200} viewBox="0 0 200 200">
-          <Circle cx="100" cy="100" r="80" fill={COLORS.primary} />
-        </Svg>
-      </Animated.View>
-      <Animated.View style={[styles.bgShape2, { transform: [{ translateY: floatY }], opacity: 0.08 }]}>
-        <Svg width={150} height={150} viewBox="0 0 200 200">
-          <Circle cx="100" cy="100" r="60" fill={COLORS.secondary} />
-        </Svg>
-      </Animated.View>
-
-      {/* Splash Screen */}
-      <Animated.View style={[styles.splashContainer, { 
-        opacity: splashOpacity, 
-        zIndex: splashOpacity.interpolate({ inputRange: [0, 0.1, 1], outputRange: [-1, 100, 100] }) 
-      }]}>
-        <Animated.View style={{ opacity: logoOpacity, transform: [{ scale: logoScale }] }}>
-          <Logo size={140} variant="full" />
-        </Animated.View>
-      </Animated.View>
-
-      <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <Animated.View style={{ opacity: contentFade }}>
-
-          {/* Logo with floating animation */}
-          <Animated.View style={[styles.logoSection, { transform: [{ translateY: floatY }] }]}>
-            <Logo size={90} variant="full" />
-          </Animated.View>
-
-          {/* Hero Section */}
-          <View style={styles.heroSection}>
-            <View style={[styles.badge, { borderColor: COLORS.secondary, backgroundColor: COLORS.secondaryMuted }]}>
-              <Text style={[styles.badgeText, { color: COLORS.secondary }]}>🇩🇿 Algerie Poste Official</Text>
-            </View>
-            
-            <Text style={[styles.heroTitle, { color: COLORS.text }]}>
-              Your Business,{'\n'}
-              <Text style={{ color: COLORS.primary }}>All Algeria</Text>
-            </Text>
-            <Text style={[styles.heroSubtitle, { color: COLORS.textSecondary }]}>
-              Sell across 58 wilayas with Algeria's trusted postal service
-            </Text>
+    <View style={styles.container}>
+      <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} />
+      
+      <View style={styles.content}>
+        <View style={styles.top}>
+          <View style={styles.logoWrap}>
+            <Logo variant="full" size={72} />
           </View>
-
-          {/* Testimonials */}
-          <View style={[styles.testimonialCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-            <View style={styles.testimonialHeader}>
-              <View style={styles.starsContainer}>
-                {[1, 2, 3, 4, 5].map(i => (
-                  <Text key={i} style={styles.star}>⭐</Text>
-                ))}
-              </View>
-              <Text style={[styles.testimonialMeta, { color: COLORS.textMuted }]}>
-                {testimonials[currentTestimonial].city}
-              </Text>
+          
+          <Text style={styles.heading}>Sell Anywhere in Algeria</Text>
+          <Text style={styles.subheading}>
+            Create your store, manage orders, and reach customers across all 58 wilayas
+          </Text>
+          
+          <View style={styles.features}>
+            <View style={styles.feature}>
+              <View style={styles.dot} />
+              <Text style={styles.featureText}>Free to start</Text>
             </View>
-            <Text style={[styles.testimonialText, { color: COLORS.text }]}>
-              {testimonials[currentTestimonial].text}
-            </Text>
-            <View style={styles.testimonialFooter}>
-              <Text style={[styles.testimonialName, { color: COLORS.text }]}>
-                {testimonials[currentTestimonial].name}
-              </Text>
-              <View style={[styles.salesBadge, { backgroundColor: COLORS.success + '20' }]}>
-                <Text style={[styles.salesText, { color: COLORS.success }]}>
-                  {testimonials[currentTestimonial].sales}
-                </Text>
-              </View>
+            <View style={styles.feature}>
+              <View style={styles.dot} />
+              <Text style={styles.featureText}>Nationwide delivery</Text>
             </View>
-            <View style={styles.dotsContainer}>
-              {testimonials.map((_, i) => (
-                <View
-                  key={i}
-                  style={[
-                    styles.dot,
-                    { backgroundColor: i === currentTestimonial ? COLORS.primary : COLORS.border }
-                  ]}
-                />
-              ))}
+            <View style={styles.feature}>
+              <View style={styles.dot} />
+              <Text style={styles.featureText}>Secure payments</Text>
             </View>
           </View>
-
-          {/* Value Propositions */}
-          <View style={styles.valuesGrid}>
-            <View style={[styles.valueCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-              <LinearGradient
-                colors={[COLORS.primary + '20', COLORS.primary + '05']}
-                style={styles.valueGradient}
-              >
-                <View style={[styles.valueIcon, { backgroundColor: COLORS.primary }]}>
-                  <PackageIcon size={24} color="#FFFFFF" strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.valueTitle, { color: COLORS.text }]}>58 Wilayas</Text>
-                <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
-                  Complete coverage
-                </Text>
-              </LinearGradient>
-            </View>
-
-            <View style={[styles.valueCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-              <LinearGradient
-                colors={[COLORS.secondary + '20', COLORS.secondary + '05']}
-                style={styles.valueGradient}
-              >
-                <View style={[styles.valueIcon, { backgroundColor: COLORS.secondary }]}>
-                  <ClockIcon size={24} color="#FFFFFF" strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.valueTitle, { color: COLORS.text }]}>Fast Delivery</Text>
-                <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
-                  24-72 hours
-                </Text>
-              </LinearGradient>
-            </View>
-
-            <View style={[styles.valueCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-              <LinearGradient
-                colors={[COLORS.success + '20', COLORS.success + '05']}
-                style={styles.valueGradient}
-              >
-                <View style={[styles.valueIcon, { backgroundColor: COLORS.success }]}>
-                  <ShieldIcon size={24} color="#FFFFFF" strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.valueTitle, { color: COLORS.text }]}>Secure</Text>
-                <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
-                  Bank-level security
-                </Text>
-              </LinearGradient>
-            </View>
-
-            <View style={[styles.valueCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-              <LinearGradient
-                colors={[COLORS.info + '20', COLORS.info + '05']}
-                style={styles.valueGradient}
-              >
-                <View style={[styles.valueIcon, { backgroundColor: COLORS.info }]}>
-                  <GlobeIcon size={24} color="#FFFFFF" strokeWidth={2.5} />
-                </View>
-                <Text style={[styles.valueTitle, { color: COLORS.text }]}>3 Languages</Text>
-                <Text style={[styles.valueDesc, { color: COLORS.textMuted }]}>
-                  AR • FR • EN
-                </Text>
-              </LinearGradient>
-            </View>
+        </View>
+        
+        <View style={styles.bottom}>
+          <TouchableOpacity 
+            style={[styles.btn, styles.primaryBtn]} 
+            onPress={() => navigate?.('accountTypeSelector')} 
+            activeOpacity={0.8}
+          >
+            <Text style={styles.primaryBtnText}>Get Started</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.btn, styles.secondaryBtn]} 
+            onPress={() => navigate?.('loginSignUp')} 
+            activeOpacity={0.8}
+          >
+            <Text style={styles.secondaryBtnText}>Sign In</Text>
+          </TouchableOpacity>
+          
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Powered by Algerie Poste</Text>
           </View>
-
-          {/* Trust */}
-          <View style={[styles.trustSection, { backgroundColor: COLORS.surfaceHighlight, borderColor: COLORS.border }]}>
-            <View style={styles.trustRow}>
-              <CheckCircleIcon size={20} color={COLORS.success} strokeWidth={2} />
-              <Text style={[styles.trustText, { color: COLORS.textSecondary }]}>
-                10,000+ sellers
-              </Text>
-            </View>
-            <View style={styles.trustRow}>
-              <CheckCircleIcon size={20} color={COLORS.success} strokeWidth={2} />
-              <Text style={[styles.trustText, { color: COLORS.textSecondary }]}>
-                Official partner
-              </Text>
-            </View>
-            <View style={styles.trustRow}>
-              <CheckCircleIcon size={20} color={COLORS.success} strokeWidth={2} />
-              <Text style={[styles.trustText, { color: COLORS.textSecondary }]}>
-                Free setup
-              </Text>
-            </View>
-          </View>
-
-          {/* CTA */}
-          <View style={styles.ctaSection}>
-            <Animated.View style={{ transform: [{ scale: pulse }] }}>
-              <TouchableOpacity
-                style={styles.primaryButton}
-                onPress={() => handleNavigation('signup')}
-                activeOpacity={0.9}
-              >
-                <LinearGradient
-                  colors={[COLORS.primary, COLORS.primaryLight, COLORS.secondary]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.buttonGradient}
-                >
-                  <View style={styles.buttonContent}>
-                    <Text style={styles.primaryButtonText}>Start Selling</Text>
-                    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-                      <Path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="#FFFFFF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                    </Svg>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            </Animated.View>
-
-            <TouchableOpacity
-              style={[styles.secondaryButton, { borderColor: COLORS.borderLight, backgroundColor: COLORS.surface }]}
-              onPress={() => handleNavigation('login')}
-              activeOpacity={0.8}
-            >
-              <Text style={[styles.secondaryButtonText, { color: COLORS.text }]}>
-                Sign In
-              </Text>
-            </TouchableOpacity>
-
-            <Text style={[styles.footerText, { color: COLORS.textMuted }]}>
-              Made in Algeria 🇩🇿
-            </Text>
-          </View>
-
-        </Animated.View>
-      </ScrollView>
-    </Animated.View>
+        </View>
+      </View>
+    </View>
   );
 };
-
-const styles = StyleSheet.create({
-  container: { flex: 1 },
-  splashContainer: { 
-    ...StyleSheet.absoluteFillObject, 
-    justifyContent: 'center', 
-    alignItems: 'center' 
-  },
-  scrollView: { flex: 1 },
-  content: { 
-    flexGrow: 1, 
-    paddingHorizontal: 20, 
-    paddingBottom: 48, 
-    paddingTop: 50 
-  },
-  
-  // Background shapes
-  bgShape1: { position: 'absolute', top: -50, right: -50 },
-  bgShape2: { position: 'absolute', bottom: 100, left: -30 },
-  
-  // Logo
-  logoSection: { 
-    alignItems: 'center', 
-    marginBottom: 20 
-  },
-  
-  // Hero Section
-  heroSection: { 
-    alignItems: 'center', 
-    marginBottom: 28 
-  },
-  badge: { 
-    paddingHorizontal: 16, 
-    paddingVertical: 8, 
-    borderRadius: 20, 
-    borderWidth: 1, 
-    marginBottom: 16 
-  },
-  badgeText: { 
-    fontSize: 12, 
-    fontWeight: '700', 
-    letterSpacing: 0.5 
-  },
-  heroTitle: { 
-    fontSize: 32, 
-    fontWeight: '900', 
-    textAlign: 'center', 
-    lineHeight: 40, 
-    marginBottom: 12, 
-    letterSpacing: -0.5 
-  },
-  heroSubtitle: { 
-    fontSize: 16, 
-    fontWeight: '600', 
-    textAlign: 'center', 
-    lineHeight: 24,
-    marginBottom: 8
-  },
-  
-  // Testimonial
-  testimonialCard: { 
-    borderRadius: 24, 
-    padding: 24, 
-    marginBottom: 24, 
-    borderWidth: 1,
-    ...SHADOWS.medium
-  },
-  testimonialHeader: { marginBottom: 16 },
-  starsContainer: { 
-    flexDirection: 'row', 
-    marginBottom: 8, 
-    gap: 2 
-  },
-  star: { fontSize: 16 },
-  testimonialMeta: { 
-    fontSize: 12, 
-    fontWeight: '600' 
-  },
-  testimonialText: { 
-    fontSize: 16, 
-    lineHeight: 26, 
-    fontWeight: '500', 
-    marginBottom: 20,
-    fontStyle: 'italic'
-  },
-  testimonialFooter: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center',
-    marginBottom: 16
-  },
-  testimonialName: { 
-    fontSize: 15, 
-    fontWeight: '700', 
-    marginBottom: 0
-  },
-  salesBadge: { 
-    paddingHorizontal: 12, 
-    paddingVertical: 6, 
-    borderRadius: 12 
-  },
-  salesText: { 
-    fontSize: 13, 
-    fontWeight: '800' 
-  },
-  dotsContainer: { 
-    flexDirection: 'row', 
-    justifyContent: 'center', 
-    gap: 8 
-  },
-  dot: { 
-    width: 8, 
-    height: 8, 
-    borderRadius: 4 
-  },
-  
-  // Values Grid
-  valuesGrid: { 
-    flexDirection: 'row', 
-    flexWrap: 'wrap', 
-    gap: 12, 
-    marginBottom: 24 
-  },
-  valueCard: { 
-    width: '48%', 
-    borderRadius: 20, 
-    overflow: 'hidden', 
-    borderWidth: 1 
-  },
-  valueGradient: { 
-    padding: 20, 
-    alignItems: 'center' 
-  },
-  valueIcon: { 
-    width: 52, 
-    height: 52, 
-    borderRadius: 16, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    marginBottom: 12,
-    ...SHADOWS.medium
-  },
-  valueTitle: { 
-    fontSize: 16, 
-    fontWeight: '800', 
-    marginBottom: 6, 
-    textAlign: 'center' 
-  },
-  valueDesc: { 
-    fontSize: 12, 
-    lineHeight: 18, 
-    textAlign: 'center',
-    fontWeight: '600'
-  },
-  
-  // Trust Section
-  trustSection: { 
-    borderRadius: 16, 
-    padding: 18, 
-    marginBottom: 28, 
-    borderWidth: 1,
-    gap: 12
-  },
-  trustRow: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    gap: 12 
-  },
-  trustText: { 
-    fontSize: 14, 
-    fontWeight: '600', 
-    flex: 1 
-  },
-  
-  // CTA
-  ctaSection: { gap: 14 },
-  primaryButton: { 
-    borderRadius: 18, 
-    overflow: 'hidden',
-    ...SHADOWS.large
-  },
-  buttonGradient: { padding: 4 },
-  buttonContent: { 
-    flexDirection: 'row', 
-    alignItems: 'center', 
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    paddingHorizontal: 20
-  },
-  primaryButtonText: { 
-    fontSize: 18, 
-    fontWeight: '800', 
-    color: '#FFFFFF'
-  },
-  secondaryButton: { 
-    borderRadius: 18, 
-    paddingVertical: 18, 
-    alignItems: 'center', 
-    borderWidth: 2 
-  },
-  secondaryButtonText: { 
-    fontSize: 16, 
-    fontWeight: '700' 
-  },
-  footerText: { 
-    fontSize: 13, 
-    textAlign: 'center', 
-    marginTop: 16,
-    fontWeight: '600'
-  },
-});
 
 export default WelcomeScreen;
