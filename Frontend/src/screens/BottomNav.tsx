@@ -1,15 +1,18 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getColors } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 
 type BottomTabId = 'dashboard' | 'products' | 'orders' | 'stores' | 'userSettings';
+type UserRole = 'buyer' | 'seller' | 'both' | 'admin';
 
 interface BottomNavProps {
   activeTab: BottomTabId;
   onTabPress: (tab: BottomTabId) => void;
+  userRole?: UserRole;
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
@@ -54,22 +57,64 @@ const SettingsIcon = ({ color, size = 24 }: { color: string; size?: number }) =>
   </Svg>
 );
 
-const TAB_CONFIG: { 
-  id: BottomTabId; 
-  labelKey: 'nav_dashboard' | 'nav_products' | 'nav_orders' | 'nav_stores' | 'nav_settings'; 
-  Icon: React.ComponentType<{ size?: number; color: string }> 
-}[] = [
-  { id: 'dashboard', labelKey: 'nav_dashboard', Icon: HomeIcon },
-  { id: 'products', labelKey: 'nav_products', Icon: GridIcon },
-  { id: 'orders', labelKey: 'nav_orders', Icon: PackageIcon },
-  { id: 'stores', labelKey: 'nav_stores', Icon: StoreIcon },
-  { id: 'userSettings', labelKey: 'nav_settings', Icon: SettingsIcon },
+// Role-based tab configuration
+const getBuyerTabs = () => [
+  { id: 'dashboard' as BottomTabId, labelKey: 'nav_dashboard' as const, Icon: HomeIcon },
+  { id: 'stores' as BottomTabId, labelKey: 'nav_stores' as const, Icon: StoreIcon },
+  { id: 'orders' as BottomTabId, labelKey: 'nav_orders' as const, Icon: PackageIcon },
+  { id: 'userSettings' as BottomTabId, labelKey: 'nav_settings' as const, Icon: SettingsIcon },
 ];
 
-const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabPress }) => {
+const getSellerTabs = () => [
+  { id: 'dashboard' as BottomTabId, labelKey: 'nav_dashboard' as const, Icon: HomeIcon },
+  { id: 'products' as BottomTabId, labelKey: 'nav_products' as const, Icon: GridIcon },
+  { id: 'orders' as BottomTabId, labelKey: 'nav_orders' as const, Icon: PackageIcon },
+  { id: 'stores' as BottomTabId, labelKey: 'nav_stores' as const, Icon: StoreIcon },
+  { id: 'userSettings' as BottomTabId, labelKey: 'nav_settings' as const, Icon: SettingsIcon },
+];
+
+const getAdminTabs = () => [
+  { id: 'dashboard' as BottomTabId, labelKey: 'nav_dashboard' as const, Icon: HomeIcon },
+  { id: 'products' as BottomTabId, labelKey: 'nav_products' as const, Icon: GridIcon },
+  { id: 'orders' as BottomTabId, labelKey: 'nav_orders' as const, Icon: PackageIcon },
+  { id: 'stores' as BottomTabId, labelKey: 'nav_stores' as const, Icon: StoreIcon },
+  { id: 'userSettings' as BottomTabId, labelKey: 'nav_settings' as const, Icon: SettingsIcon },
+];
+
+const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabPress, userRole: propUserRole }) => {
   const { mode } = useTheme();
   const COLORS = getColors(mode);
-  const { t, isRTL } = useTranslation();
+  const { t } = useTranslation();
+  const [userRole, setUserRole] = useState<UserRole>(propUserRole || 'buyer');
+
+  useEffect(() => {
+    if (!propUserRole) {
+      loadUserRole();
+    } else {
+      setUserRole(propUserRole);
+    }
+  }, [propUserRole]);
+
+  const loadUserRole = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserRole(user.accountType || 'buyer');
+      }
+    } catch (error) {
+      console.error('Failed to load user role', error);
+    }
+  };
+
+  // Get tabs based on user role
+  const getTabs = () => {
+    if (userRole === 'admin') return getAdminTabs();
+    if (userRole === 'seller' || userRole === 'both') return getSellerTabs();
+    return getBuyerTabs();
+  };
+
+  const tabs = getTabs();
 
   return (
     <View style={[styles.container, { backgroundColor: COLORS.background }]}>
@@ -89,7 +134,7 @@ const BottomNav: React.FC<BottomNavProps> = ({ activeTab, onTabPress }) => {
           },
         }),
       }]}>
-        {TAB_CONFIG.map(({ id, labelKey, Icon }) => {
+        {tabs.map(({ id, labelKey, Icon }) => {
           const isActive = activeTab === id;
           const label = t(labelKey);
           
@@ -196,5 +241,5 @@ const styles = StyleSheet.create({
   },
 });
 
-export type { BottomTabId };
+export type { BottomTabId, UserRole };
 export default BottomNav;

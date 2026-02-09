@@ -89,6 +89,17 @@ export class User {
   @Column({ type: 'timestamp', nullable: true, name: 'last_login' })
   lastLogin: Date | null;
 
+  // Seller rating fields
+  @Column({ type: 'decimal', precision: 3, scale: 2, default: 0, name: 'average_rating' })
+  averageRating: number;
+
+  @Column({ type: 'int', default: 0, name: 'total_ratings' })
+  totalRatings: number;
+
+  // Admin role flag
+  @Column({ type: 'boolean', default: false, name: 'is_admin' })
+  isAdmin: boolean;
+
   // Relations
   @OneToOne(() => SellerRegistration, (registration) => registration.user)
   sellerRegistration: SellerRegistration;
