@@ -227,16 +227,24 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
           {(userType === 'seller' || userType === 'both') ? (
             <>
               {/* SELLER DASHBOARD */}
-              {/* Revenue Hero Card */}
+              {/* Revenue Hero Card - Professional Gradient */}
               <View style={[styles.heroCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
                 <LinearGradient
-                  colors={[COLORS.primary, COLORS.primaryLight, COLORS.secondary]}
+                  colors={[COLORS.primary, COLORS.primaryLight]}
                   start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+                  end={{ x: 1, y: 0 }}
                   style={styles.heroGradient}
                 >
                   <View style={styles.heroContent}>
-                    <Text style={styles.heroLabel}>{t('seller_totalRevenue')}</Text>
+                    <View style={styles.heroIconRow}>
+                      <View style={styles.heroIconBadge}>
+                        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                          <Path d="M12 2V6M12 18V22M6 12H2M22 12H18M19.07 4.93L16.24 7.76M7.76 16.24L4.93 19.07M19.07 19.07L16.24 16.24M7.76 7.76L4.93 4.93" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+                          <Circle cx="12" cy="12" r="3" stroke="#FFFFFF" strokeWidth="2" />
+                        </Svg>
+                      </View>
+                      <Text style={styles.heroLabel}>{t('seller_totalRevenue')}</Text>
+                    </View>
                     <Text style={styles.heroValue}>${stats.totalRevenue.toLocaleString()}</Text>
                     <View style={styles.heroMeta}>
                       <View style={styles.heroMetaItem}>
@@ -374,16 +382,25 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
           ) : (
             <>
               {/* BUYER DASHBOARD */}
-              {/* Welcome Card */}
+              {/* Welcome Card - Professional Gradient */}
               <View style={[styles.heroCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
                 <LinearGradient
-                  colors={[COLORS.primary, COLORS.primaryLight, COLORS.secondary]}
+                  colors={[COLORS.primary, COLORS.primaryLight]}
                   start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
+                  end={{ x: 1, y: 0 }}
                   style={styles.heroGradient}
                 >
                   <View style={styles.heroContent}>
-                    <Text style={styles.heroLabel}>{t('buyer_yourOrders')}</Text>
+                    <View style={styles.heroIconRow}>
+                      <View style={styles.heroIconBadge}>
+                        <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+                          <Path d="M16.5 9.4L7.5 4.21" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+                          <Path d="M21 16V8C21 6.89543 20.1046 6 19 6H5C3.89543 6 3 6.89543 3 8V16C3 17.1046 3.89543 18 5 18H19C20.1046 18 21 17.1046 21 16Z" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          <Path d="M3 10H21" stroke="#FFFFFF" strokeWidth="2" strokeLinecap="round" />
+                        </Svg>
+                      </View>
+                      <Text style={styles.heroLabel}>{t('buyer_yourOrders')}</Text>
+                    </View>
                     <Text style={styles.heroValue}>{stats?.totalOrders || 0}</Text>
                     <View style={styles.heroMeta}>
                       <View style={styles.heroMetaItem}>
@@ -501,29 +518,31 @@ const styles = StyleSheet.create({
   themeToggle: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
   
   // Hero Card
-  heroCard: { borderRadius: 24, overflow: 'hidden', marginBottom: 20, borderWidth: 1 },
+  heroCard: { borderRadius: 20, overflow: 'hidden', marginBottom: 20, borderWidth: 1 },
   heroGradient: { padding: 24 },
   heroContent: {},
-  heroLabel: { fontSize: 13, color: 'rgba(255,255,255,0.9)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 8 },
+  heroIconRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 },
+  heroIconBadge: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.2)', justifyContent: 'center', alignItems: 'center' },
+  heroLabel: { fontSize: 14, color: 'rgba(255,255,255,0.95)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1 },
   heroValue: { fontSize: 42, fontWeight: '900', color: '#FFFFFF', letterSpacing: -1, marginBottom: 20 },
-  heroMeta: { flexDirection: 'row', alignItems: 'center', paddingTop: 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.25)' },
+  heroMeta: { flexDirection: 'row', alignItems: 'center', paddingTop: 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.2)' },
   heroMetaItem: { flex: 1 },
-  heroMetaLabel: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '600', marginBottom: 4 },
+  heroMetaLabel: { fontSize: 12, color: 'rgba(255,255,255,0.85)', fontWeight: '600', marginBottom: 4 },
   heroMetaValue: { fontSize: 20, color: '#FFFFFF', fontWeight: '800' },
-  heroDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.3)', marginHorizontal: 16 },
+  heroDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.25)', marginHorizontal: 16 },
   
   // Metrics Grid
   metricsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
-  metricCard: { width: '48%', borderRadius: 20, padding: 18, borderWidth: 1 },
+  metricCard: { width: '48%', borderRadius: 16, padding: 18, borderWidth: 1 },
   metricHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
-  metricIconContainer: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  metricIconContainer: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   changeBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, gap: 4 },
   changeText: { fontSize: 11, fontWeight: '800' },
   metricValue: { fontSize: 28, fontWeight: '800', marginBottom: 4 },
   metricTitle: { fontSize: 12, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.5 },
   
   // Section
-  section: { borderRadius: 20, padding: 20, marginBottom: 16, borderWidth: 1 },
+  section: { borderRadius: 16, padding: 20, marginBottom: 16, borderWidth: 1 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   sectionTitle: { fontSize: 18, fontWeight: '800' },
   sectionMeta: { fontSize: 12, fontWeight: '600' },
