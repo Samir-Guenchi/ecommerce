@@ -3,16 +3,6 @@ import { authService } from '../services/auth.service';
 import { AppDataSource } from '../config/database';
 import { User } from '../entities';
 
-// Extend Express Request to include user
-declare global {
-  namespace Express {
-    interface Request {
-      user?: User;
-      isAdmin?: boolean;
-    }
-  }
-}
-
 export interface AuthRequest extends Request {
   user?: User;
   isAdmin?: boolean;

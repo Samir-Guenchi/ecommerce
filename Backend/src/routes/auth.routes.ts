@@ -16,18 +16,18 @@ router.post('/resend-verification', authController.resendVerificationCode.bind(a
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get('/google/callback', 
   passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}?error=oauth_failed`, session: false }),
-  authController.googleCallback.bind(authController)
+  authController.googleCallback.bind(authController) as any
 );
 
 // OAuth routes - Facebook
 router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
 router.get('/facebook/callback',
   passport.authenticate('facebook', { failureRedirect: `${process.env.FRONTEND_URL}?error=oauth_failed`, session: false }),
-  authController.facebookCallback.bind(authController)
+  authController.facebookCallback.bind(authController) as any
 );
 
 // Protected routes
-router.get('/me', authenticate, authController.getCurrentUser.bind(authController));
+router.get('/me', authenticate as any, authController.getCurrentUser.bind(authController) as any);
 
 export default router;
 
