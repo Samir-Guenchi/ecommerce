@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import passport from 'passport';
 import { authController } from '../controllers/auth.controller';
 import { authenticate } from '../middleware/auth.middleware';
 
@@ -11,11 +12,19 @@ router.post('/login', authController.login.bind(authController));
 router.post('/verify', authController.verifyEmail.bind(authController));
 router.post('/resend-verification', authController.resendVerificationCode.bind(authController));
 
-// OAuth routes
-router.get('/google', authController.googleAuth.bind(authController));
-router.get('/google/callback', authController.googleCallback.bind(authController));
-router.get('/facebook', authController.facebookAuth.bind(authController));
-router.get('/facebook/callback', authController.facebookCallback.bind(authController));
+// OAuth routes - Google
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+router.get('/google/callback', 
+  passport.authenticate('google', { failureRedirect: `${process.env.FRONTEND_URL}?error=oauth_failed`, session: false }),
+  authController.googleCallback.bind(authController)
+);
+
+// OAuth routes - Facebook
+router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
+router.get('/facebook/callback',
+  passport.authenticate('facebook', { failureRedirect: `${process.env.FRONTEND_URL}?error=oauth_failed`, session: false }),
+  authController.facebookCallback.bind(authController)
+);
 
 // Protected routes
 router.get('/me', authenticate, authController.getCurrentUser.bind(authController));

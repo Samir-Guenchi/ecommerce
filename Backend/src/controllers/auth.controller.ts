@@ -233,31 +233,32 @@ export class AuthController {
    * Google OAuth - Redirect to Google
    * GET /api/auth/google
    */
-  async googleAuth(_req: Request, res: Response): Promise<void> {
-    try {
-      // For now, return a message that OAuth is not configured
-      // In production, you would redirect to Google OAuth URL
-      res.status(501).json({ 
-        error: 'Google OAuth not configured yet',
-        message: 'Please contact administrator to enable Google sign-in'
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || 'Google OAuth failed' });
-    }
+  async googleAuth(req: Request, res: Response): Promise<void> {
+    // This will be handled by passport middleware
+    res.status(500).json({ error: 'This route should be handled by passport middleware' });
   }
 
   /**
    * Google OAuth Callback
    * GET /api/auth/google/callback
    */
-  async googleCallback(_req: Request, res: Response): Promise<void> {
+  async googleCallback(req: Request, res: Response): Promise<void> {
     try {
-      res.status(501).json({ 
-        error: 'Google OAuth not configured yet',
-        message: 'Please contact administrator to enable Google sign-in'
-      });
+      const user = (req as any).user;
+      
+      if (!user) {
+        res.redirect(`${process.env.FRONTEND_URL}?error=oauth_failed`);
+        return;
+      }
+
+      // Generate JWT token
+      const token = authService.generateToken(user);
+      
+      // Redirect to frontend with token
+      res.redirect(`${process.env.FRONTEND_URL}?token=${token}&oauth=success`);
     } catch (error: any) {
-      res.status(500).json({ error: error.message || 'Google OAuth callback failed' });
+      console.error('Google OAuth callback error:', error);
+      res.redirect(`${process.env.FRONTEND_URL}?error=oauth_failed`);
     }
   }
 
@@ -266,30 +267,31 @@ export class AuthController {
    * GET /api/auth/facebook
    */
   async facebookAuth(_req: Request, res: Response): Promise<void> {
-    try {
-      // For now, return a message that OAuth is not configured
-      // In production, you would redirect to Facebook OAuth URL
-      res.status(501).json({ 
-        error: 'Facebook OAuth not configured yet',
-        message: 'Please contact administrator to enable Facebook sign-in'
-      });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message || 'Facebook OAuth failed' });
-    }
+    // This will be handled by passport middleware
+    res.status(500).json({ error: 'This route should be handled by passport middleware' });
   }
 
   /**
    * Facebook OAuth Callback
    * GET /api/auth/facebook/callback
    */
-  async facebookCallback(_req: Request, res: Response): Promise<void> {
+  async facebookCallback(req: Request, res: Response): Promise<void> {
     try {
-      res.status(501).json({ 
-        error: 'Facebook OAuth not configured yet',
-        message: 'Please contact administrator to enable Facebook sign-in'
-      });
+      const user = (req as any).user;
+      
+      if (!user) {
+        res.redirect(`${process.env.FRONTEND_URL}?error=oauth_failed`);
+        return;
+      }
+
+      // Generate JWT token
+      const token = authService.generateToken(user);
+      
+      // Redirect to frontend with token
+      res.redirect(`${process.env.FRONTEND_URL}?token=${token}&oauth=success`);
     } catch (error: any) {
-      res.status(500).json({ error: error.message || 'Facebook OAuth callback failed' });
+      console.error('Facebook OAuth callback error:', error);
+      res.redirect(`${process.env.FRONTEND_URL}?error=oauth_failed`);
     }
   }
 }

@@ -1,6 +1,8 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
+import session from 'express-session';
 import * as dotenv from 'dotenv';
+import passport from './config/passport';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
@@ -41,6 +43,21 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Session middleware (required for passport)
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+  },
+}));
+
+// Initialize passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 // Request logging
 app.use((req: Request, _res: Response, next: NextFunction) => {
