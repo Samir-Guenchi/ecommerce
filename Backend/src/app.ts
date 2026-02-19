@@ -33,13 +33,15 @@ const app: Express = express();
 app.use(cors({
   origin: process.env.CORS_ORIGINS?.split(',') || [
     'http://localhost:5173',
-    'http://localhost:8081',
+    'http://localhost:8081',  // Expo web
     'http://localhost:8082',
     'http://localhost:19006',
     'http://localhost:19000',
-    'http://10.0.2.2:8081',
+    'http://10.0.2.2:8082',
   ],
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
