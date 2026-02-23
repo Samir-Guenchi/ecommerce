@@ -1,53 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Switch,
-  ActivityIndicator,
-} from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Switch, ActivityIndicator } from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { taxAPI } from '../services/api.service';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { getColors } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from '../i18n';
 import BackHeader from '../components/BackHeader';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 
-interface TaxesDutiesScreenProps {
-  goBack?: () => void;
-}
+interface TaxesDutiesScreenProps { goBack?: () => void; }
 
-// Tax Icon
-const TaxIcon = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 17L12 22L22 17"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 12L12 17L22 12"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const SunIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="5" stroke="#FDB913" strokeWidth="2" />
+    <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+const MoonIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
 const TaxesDutiesScreen = ({ goBack }: TaxesDutiesScreenProps) => {
+  const { mode, toggleTheme } = useTheme();
+  const COLORS = getColors(mode);
+  const { t, isRTL, language, setLanguage } = useTranslation();
   const { message, showSuccess, showError, clear } = useStatusMessage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -56,256 +35,142 @@ const TaxesDutiesScreen = ({ goBack }: TaxesDutiesScreenProps) => {
   const [dutiesEnabled, setDutiesEnabled] = useState(false);
   const [dutiesRate, setDutiesRate] = useState('');
 
-  useEffect(() => {
-    loadTaxSettings();
-  }, []);
-
-  const loadTaxSettings = async () => {
-    try {
-      setLoading(true);
-      const response = await taxAPI.getTaxSettings();
-      const settings = response.taxSetting;
-      setTaxRate(settings.taxRate?.toString() || '');
-      setDutiesRate(settings.dutyRate?.toString() || '');
-      setTaxEnabled(settings.taxRate > 0);
-      setDutiesEnabled(settings.dutyRate > 0);
-    } catch (error: any) {
-      console.error('Error loading tax settings:', error);
-    } finally {
-      setLoading(false);
-    }
+  const cycleLanguage = () => {
+    const langs: ('en' | 'ar' | 'fr')[] = ['en', 'ar', 'fr'];
+    setLanguage(langs[(langs.indexOf(language as any) + 1) % langs.length]);
   };
 
+  useEffect(() => {
+    taxAPI.getTaxSettings().then(r => {
+      const s = r.taxSetting;
+      setTaxRate(s.taxRate?.toString() || '');
+      setDutiesRate(s.dutyRate?.toString() || '');
+      setTaxEnabled(s.taxRate > 0);
+      setDutiesEnabled(s.dutyRate > 0);
+    }).catch(console.error).finally(() => setLoading(false));
+  }, []);
+
   const handleSave = async () => {
-    if (taxEnabled && !taxRate) {
-      showError('Please enter tax rate');
-      return;
-    }
-    if (dutiesEnabled && !dutiesRate) {
-      showError('Please enter duties rate');
-      return;
-    }
-    
+    if (taxEnabled && !taxRate) { showError('Please enter tax rate'); return; }
+    if (dutiesEnabled && !dutiesRate) { showError('Please enter duties rate'); return; }
     try {
       setSaving(true);
       await taxAPI.updateTaxSettings({
         taxRate: taxEnabled ? (parseFloat(taxRate) || 0) : 0,
         dutyRate: dutiesEnabled ? (parseFloat(dutiesRate) || 0) : 0,
       });
-      showSuccess('Your tax and duties settings have been saved.');
-    } catch (error: any) {
-      showError(error.message || 'Failed to save tax settings.');
-    } finally {
-      setSaving(false);
-    }
+      showSuccess('Tax and duties settings saved.');
+    } catch (e: any) { showError(e.message || 'Failed to save tax settings.'); }
+    finally { setSaving(false); }
   };
+
+  const totalRate = (taxEnabled ? parseFloat(taxRate) || 0 : 0) + (dutiesEnabled ? parseFloat(dutiesRate) || 0 : 0);
+
+  const TaxSection = ({ accent, enabled, onToggle, label, desc, rateVal, setRate }: {
+    accent: string; enabled: boolean; onToggle: (v: boolean) => void;
+    label: string; desc: string; rateVal: string; setRate: (v: string) => void;
+  }) => (
+    <View style={[s.sectionCard, { backgroundColor: COLORS.surface, borderColor: enabled ? accent + '40' : COLORS.border, borderWidth: enabled ? 2 : 1 }]}>
+      <View style={[s.toggleRow, isRTL && { flexDirection: 'row-reverse' }]}>
+        <View style={{ flex: 1, marginRight: 12 }}>
+          <Text style={[s.sectionLabel2, { color: COLORS.text }]}>{label}</Text>
+          <Text style={[s.sectionDesc, { color: COLORS.textMuted }]}>{desc}</Text>
+        </View>
+        <Switch value={enabled} onValueChange={onToggle}
+          trackColor={{ false: COLORS.border, true: accent + '70' }} thumbColor={enabled ? accent : COLORS.textMuted} />
+      </View>
+      {enabled && (
+        <View style={[s.rateRow, isRTL && { flexDirection: 'row-reverse' }]}>
+          <TextInput
+            style={[s.rateInput, { backgroundColor: COLORS.background, borderColor: accent + '50', color: COLORS.text, flex: 1 }]}
+            placeholder="e.g. 19" placeholderTextColor={COLORS.textMuted}
+            value={rateVal} onChangeText={setRate} keyboardType="decimal-pad"
+          />
+          <View style={[s.rateBadge, { backgroundColor: accent + '18' }]}>
+            <Text style={[s.rateBadgeText, { color: accent }]}>{parseFloat(rateVal) || 0}%</Text>
+          </View>
+        </View>
+      )}
+    </View>
+  );
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={COLORS.text} />
-        <Text style={{ marginTop: 12, fontSize: 14, color: COLORS.textSecondary }}>Loading tax settings...</Text>
+      <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.iconContainer}>
-        <View style={styles.iconWrapper}>
-          <TaxIcon />
-        </View>
-      </View>
-      <BackHeader title="Taxes & Duties" onBack={goBack} />
-      <Text style={styles.subheading}>
-        Manage tax settings and duty configurations.
-      </Text>
-
-      <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
-
-      <View style={styles.formSection}>
-        <View style={styles.settingRow}>
-          <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>Enable Taxes</Text>
-            <Text style={styles.settingDescription}>
-              Apply taxes to orders based on your location
-            </Text>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingTop: 54, paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={[s.header, isRTL && { flexDirection: 'row-reverse' }]}>
+          <BackHeader title={t('settings_taxes')} onBack={goBack} />
+          <View style={[s.controls, isRTL && { flexDirection: 'row-reverse' }]}>
+            <TouchableOpacity style={[s.ctrlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} onPress={cycleLanguage} activeOpacity={0.7}>
+              <Text style={{ fontSize: 10, fontWeight: '800', color: COLORS.text }}>{language.toUpperCase()}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.ctrlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} onPress={toggleTheme} activeOpacity={0.7}>
+              {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </TouchableOpacity>
           </View>
-          <Switch
-            value={taxEnabled}
-            onValueChange={setTaxEnabled}
-            trackColor={{ false: COLORS.border, true: COLORS.primary }}
-            thumbColor={taxEnabled ? COLORS.primary : COLORS.border}
-          />
         </View>
 
-        {taxEnabled && (
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Tax Rate (%)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter tax rate percentage"
-              placeholderTextColor={COLORS.textMuted}
-              value={taxRate}
-              onChangeText={setTaxRate}
-              keyboardType="decimal-pad"
-            />
+        <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
+
+        <Text style={[s.subtitle, { color: COLORS.textMuted }]}>
+          Manage tax settings and duty configurations applied to your orders.
+        </Text>
+
+        <TaxSection accent="#0984E3" enabled={taxEnabled} onToggle={setTaxEnabled}
+          label="Enable Taxes" desc="Apply taxes to orders based on your location"
+          rateVal={taxRate} setRate={setTaxRate} />
+
+        <TaxSection accent="#6C5CE7" enabled={dutiesEnabled} onToggle={setDutiesEnabled}
+          label="Enable Duties" desc="Apply customs duties for international orders"
+          rateVal={dutiesRate} setRate={setDutiesRate} />
+
+        {(taxEnabled || dutiesEnabled) && (
+          <View style={[s.previewCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+            <Text style={[s.previewTitle, { color: COLORS.textMuted }]}>Effective Total Rate</Text>
+            <Text style={[s.previewRate, { color: COLORS.primary }]}>{totalRate.toFixed(1)}%</Text>
+            <Text style={[s.previewSub, { color: COLORS.textMuted }]}>Added to all applicable orders at checkout</Text>
           </View>
         )}
 
-        <View style={styles.settingRow}>
-          <View style={styles.settingContent}>
-            <Text style={styles.settingLabel}>Enable Duties</Text>
-            <Text style={styles.settingDescription}>
-              Apply customs duties for international orders
-            </Text>
-          </View>
-          <Switch
-            value={dutiesEnabled}
-            onValueChange={setDutiesEnabled}
-            trackColor={{ false: COLORS.border, true: COLORS.primary }}
-            thumbColor={dutiesEnabled ? COLORS.primary : COLORS.border}
-          />
-        </View>
-
-        {dutiesEnabled && (
-          <View style={styles.inputContainer}>
-            <Text style={styles.label}>Duties Rate (%)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Enter duties rate percentage"
-              placeholderTextColor={COLORS.textMuted}
-              value={dutiesRate}
-              onChangeText={setDutiesRate}
-              keyboardType="decimal-pad"
-            />
-          </View>
-        )}
-      </View>
-
-      <TouchableOpacity
-        style={[styles.submitButton, saving && styles.submitButtonDisabled]}
-        onPress={handleSave}
-        disabled={saving}
-      >
-        {saving ? (
-          <ActivityIndicator color={COLORS.background} />
-        ) : (
-          <Text style={styles.submitButtonText}>Save Settings</Text>
-        )}
-      </TouchableOpacity>
-
-      <Text style={styles.infoText}>
-        Tax and duties will be automatically calculated and added to order totals at checkout.
-      </Text>
-    </ScrollView>
+        <TouchableOpacity style={[s.saveBtn, { backgroundColor: COLORS.primary, opacity: saving ? 0.7 : 1 }]} onPress={handleSave} disabled={saving} activeOpacity={0.8}>
+          {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={s.saveBtnText}>Save Settings</Text>}
+        </TouchableOpacity>
+        <Text style={[s.footerNote, { color: COLORS.textMuted }]}>
+          Tax and duties are automatically calculated and added to order totals at checkout.
+        </Text>
+      </ScrollView>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-    paddingTop: 35,
-  },
-  subheading: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 18,
-  },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  iconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  formSection: {
-    marginBottom: 8,
-  },
-  settingRow: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  settingContent: {
-    flex: 1,
-    marginRight: 12,
-  },
-  settingLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  settingDescription: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    lineHeight: 16,
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: COLORS.text,
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    fontSize: 13,
-    color: COLORS.text,
-  },
-  submitButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  submitButtonText: {
-    color: COLORS.background,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  submitButtonDisabled: {
-    opacity: 0.6,
-  },
-  infoText: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    lineHeight: 16,
-  },
+const s = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  controls: { flexDirection: 'row', gap: 8 },
+  ctrlBtn: { width: 38, height: 38, borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
+  subtitle: { fontSize: 13, marginBottom: 24, lineHeight: 20 },
+  sectionCard: { borderRadius: 18, padding: 16, marginBottom: 14 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center' },
+  sectionLabel2: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+  sectionDesc: { fontSize: 12, lineHeight: 18 },
+  rateRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 10 },
+  rateInput: { borderWidth: 1.5, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, fontWeight: '700' },
+  rateBadge: { width: 56, height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
+  rateBadgeText: { fontSize: 16, fontWeight: '900' },
+  previewCard: { borderRadius: 18, borderWidth: 1, padding: 20, alignItems: 'center', marginBottom: 20 },
+  previewTitle: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 8 },
+  previewRate: { fontSize: 48, fontWeight: '900', marginBottom: 4 },
+  previewSub: { fontSize: 12, textAlign: 'center' },
+  saveBtn: { borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 12 },
+  saveBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
+  footerNote: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
 });
 
 export default TaxesDutiesScreen;

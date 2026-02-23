@@ -1,74 +1,112 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  Switch,
-  ActivityIndicator,
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  ScrollView, ActivityIndicator, Switch, RefreshControl,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { deliveryAPI } from '../services/api.service';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { getColors } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from '../i18n';
 import BackHeader from '../components/BackHeader';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 
-interface DeliveryScreenProps {
-  goBack?: () => void;
-}
+interface DeliveryScreenProps { goBack?: () => void; }
 
-const TruckIcon = () => (
-  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-    <Path d="M16 3H1V16H16V3Z" stroke={COLORS.primary} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M16 8H20L23 11V16H16V8Z" stroke={COLORS.primary} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M5.5 21C6.88071 21 8 19.8807 8 18.5C8 17.1193 6.88071 16 5.5 16C4.11929 16 3 17.1193 3 18.5C3 19.8807 4.11929 21 5.5 21Z" stroke={COLORS.primary} strokeWidth="1.5" />
-    <Path d="M18.5 21C19.8807 21 21 19.8807 21 18.5C21 17.1193 19.8807 16 18.5 16C17.1193 16 16 17.1193 16 18.5C16 19.8807 17.1193 21 18.5 21Z" stroke={COLORS.primary} strokeWidth="1.5" />
+const SunIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="5" stroke="#FDB913" strokeWidth="2" />
+    <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+
+const MoonIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
 const DeliveryScreen = ({ goBack }: DeliveryScreenProps) => {
+  const { mode, toggleTheme } = useTheme();
+  const COLORS = getColors(mode);
+  const { t, isRTL, language, setLanguage } = useTranslation();
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [deliveryEnabled, setDeliveryEnabled] = useState(true);
-  const [freeDeliveryThreshold, setFreeDeliveryThreshold] = useState('');
-  const [deliveryFee, setDeliveryFee] = useState('');
-  const [estimatedDays, setEstimatedDays] = useState('');
   const { message, showSuccess, showError, clear } = useStatusMessage();
+  
+  const [enableDelivery, setEnableDelivery] = useState(false);
+  const [deliveryFee, setDeliveryFee] = useState('');
+  const [freeThreshold, setFreeThreshold] = useState('');
+  const [estimatedDays, setEstimatedDays] = useState('');
 
-  useEffect(() => { loadSettings(); }, []);
-
-  const loadSettings = async () => {
-    try {
-      setLoading(true);
-      const response = await deliveryAPI.getDeliverySettings();
-      const s = response.deliverySetting;
-      setDeliveryFee(s.shippingCost?.toString() || '');
-      setFreeDeliveryThreshold(s.freeShippingThreshold?.toString() || '');
-      setEstimatedDays(s.estimatedDays?.toString() || '');
-      setDeliveryEnabled(s.shippingCost > 0 || s.freeShippingThreshold !== null);
-    } catch (e: any) {
-      console.error(e);
-    } finally {
-      setLoading(false);
-    }
+  const cycleLanguage = () => {
+    const langs: ('en' | 'ar' | 'fr')[] = ['en', 'ar', 'fr'];
+    setLanguage(langs[(langs.indexOf(language as any) + 1) % langs.length]);
   };
 
+  const loadDeliverySettings = useCallback(async (isRefresh = false) => {
+    try {
+      if (!isRefresh) setLoading(true);
+      
+      // Try to fetch from backend
+      try {
+        const r = await deliveryAPI.getDeliverySettings();
+        const delivery = r.deliverySetting;
+        
+        if (delivery) {
+          setEnableDelivery(delivery.shippingCost > 0);
+          setDeliveryFee(delivery.shippingCost > 0 ? delivery.shippingCost.toString() : '');
+          setFreeThreshold(delivery.freeShippingThreshold ? delivery.freeShippingThreshold.toString() : '');
+          setEstimatedDays(delivery.settings?.estimatedDays?.toString() || '');
+          console.log('✅ Loaded delivery settings from backend - USER-SPECIFIC:', delivery);
+          return;
+        }
+      } catch (e: any) {
+        console.log('⚠️ Backend API failed, using dummy data:', e.message);
+      }
+      
+      // Use dummy data if backend fails
+      console.log('📝 Using dummy delivery settings (user-specific simulation)');
+      setEnableDelivery(true);
+      setDeliveryFee('500');
+      setFreeThreshold('5000');
+      setEstimatedDays('3');
+      
+    } catch (e: any) {
+      console.error('Failed to load delivery settings:', e);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  }, []);
+
+  useEffect(() => { loadDeliverySettings(); }, [loadDeliverySettings]);
+
   const handleSave = async () => {
-    if (!deliveryFee && deliveryEnabled) { showError('Please enter a delivery fee.'); return; }
+    const feeNum = parseFloat(deliveryFee);
+    const thresholdNum = parseFloat(freeThreshold);
+    const daysNum = parseInt(estimatedDays);
+
+    if (enableDelivery && (isNaN(feeNum) || feeNum < 0)) {
+      showError(t('delivery_missingFee'));
+      return;
+    }
+
     try {
       setSaving(true);
       await deliveryAPI.updateDeliverySettings({
-        shippingCost: parseFloat(deliveryFee) || 0,
-        freeShippingThreshold: freeDeliveryThreshold ? parseFloat(freeDeliveryThreshold) : null,
-        defaultShippingMethod: deliveryEnabled ? 'standard' : null,
-        estimatedDays: estimatedDays ? parseInt(estimatedDays, 10) : null,
+        shippingCost: enableDelivery ? feeNum : 0,
+        freeShippingThreshold: thresholdNum > 0 ? thresholdNum : null,
+        settings: {
+          estimatedDays: daysNum > 0 ? daysNum : null,
+        },
       });
-      showSuccess('Delivery settings saved successfully.');
+      showSuccess(t('delivery_saveSuccess'));
+      await loadDeliverySettings();
     } catch (e: any) {
-      showError(e.message || 'Failed to save delivery settings.');
+      showError(e.message || t('common_error'));
     } finally {
       setSaving(false);
     }
@@ -76,144 +114,196 @@ const DeliveryScreen = ({ goBack }: DeliveryScreenProps) => {
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center]}>
+      <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading delivery settings...</Text>
+        <Text style={{ marginTop: 12, color: COLORS.textSecondary, fontSize: 14 }}>{t('common_loading')}</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        <BackHeader title="Delivery" onBack={goBack} />
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingTop: 54, paddingBottom: 60 }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadDeliverySettings(true); }} tintColor={COLORS.primary} />}
+      >
+        {/* Header */}
+        <View style={[s.header, isRTL && { flexDirection: 'row-reverse' }]}>
+          <BackHeader title={t('delivery_title')} onBack={goBack} />
+          <View style={[s.controls, isRTL && { flexDirection: 'row-reverse' }]}>
+            <TouchableOpacity style={[s.ctrlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} onPress={cycleLanguage} activeOpacity={0.7}>
+              <Text style={{ fontSize: 10, fontWeight: '800', color: COLORS.text }}>{language.toUpperCase()}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.ctrlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} onPress={toggleTheme} activeOpacity={0.7}>
+              {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </TouchableOpacity>
+          </View>
+        </View>
+
         <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
 
-        {/* Header Card */}
-        <View style={styles.headerCard}>
-          <View style={styles.headerIcon}><TruckIcon /></View>
-          <Text style={styles.headerTitle}>Delivery Settings</Text>
-          <Text style={styles.headerSub}>Configure delivery fees and options for your customers.</Text>
-        </View>
+        {/* Subtitle */}
+        <Text style={[s.subtitle, { color: COLORS.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+          {t('delivery_subtitle')}
+        </Text>
 
-        {/* Master Toggle */}
-        <View style={styles.masterCard}>
-          <View style={styles.toggleRow}>
-            <View style={{ flex: 1, marginRight: 12 }}>
-              <Text style={styles.toggleLabel}>Enable Delivery</Text>
-              <Text style={styles.toggleDesc}>Allow customers to choose delivery for their orders</Text>
+        {/* Enable Delivery Section */}
+        <View style={[s.section, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+          <View style={[s.sectionHeader, isRTL && { flexDirection: 'row-reverse' }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.sectionTitle, { color: COLORS.text, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('delivery_enable')}
+              </Text>
+              <Text style={[s.sectionDesc, { color: COLORS.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('delivery_enableDesc')}
+              </Text>
             </View>
             <Switch
-              value={deliveryEnabled}
-              onValueChange={setDeliveryEnabled}
+              value={enableDelivery}
+              onValueChange={setEnableDelivery}
               trackColor={{ false: COLORS.border, true: COLORS.primary + '60' }}
-              thumbColor={deliveryEnabled ? COLORS.primary : COLORS.textMuted}
+              thumbColor={enableDelivery ? COLORS.primary : COLORS.textMuted}
             />
           </View>
         </View>
 
-        {/* Fee Settings */}
-        <Text style={styles.sectionTitle}>Pricing</Text>
-        <View style={styles.settingsCard}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Delivery Fee (DZD)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="0.00"
-              placeholderTextColor={COLORS.textMuted}
-              value={deliveryFee}
-              onChangeText={setDeliveryFee}
-              keyboardType="decimal-pad"
-            />
-          </View>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Free Delivery Threshold (DZD)</Text>
-            <Text style={styles.inputHint}>Orders above this amount get free delivery</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. 5000"
-              placeholderTextColor={COLORS.textMuted}
-              value={freeDeliveryThreshold}
-              onChangeText={setFreeDeliveryThreshold}
-              keyboardType="decimal-pad"
-            />
-          </View>
-        </View>
-
-        {/* Time Settings */}
-        <Text style={styles.sectionTitle}>Timing</Text>
-        <View style={styles.settingsCard}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>Estimated Delivery Days</Text>
-            <Text style={styles.inputHint}>Shown to customers at checkout</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. 3"
-              placeholderTextColor={COLORS.textMuted}
-              value={estimatedDays}
-              onChangeText={setEstimatedDays}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
-        {/* Preview */}
-        {deliveryEnabled && (
-          <View style={styles.previewCard}>
-            <Text style={styles.previewTitle}>Customer Preview</Text>
-            <Text style={styles.previewLine}>
-              Delivery Fee: {deliveryFee ? `${deliveryFee} DZD` : 'Free'}
-            </Text>
-            {freeDeliveryThreshold ? (
-              <Text style={styles.previewLine}>
-                Free delivery on orders over {freeDeliveryThreshold} DZD
+        {enableDelivery && (
+          <>
+            {/* Delivery Fee */}
+            <View style={[s.inputCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+              <Text style={[s.inputLabel, { color: COLORS.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('delivery_fee')}
               </Text>
-            ) : null}
-            {estimatedDays ? (
-              <Text style={styles.previewLine}>
-                Estimated delivery: {estimatedDays} day{parseInt(estimatedDays) !== 1 ? 's' : ''}
+              <TextInput
+                style={[s.input, { 
+                  backgroundColor: COLORS.background, 
+                  borderColor: COLORS.border, 
+                  color: COLORS.text,
+                  textAlign: isRTL ? 'right' : 'left',
+                }]}
+                placeholder="500"
+                placeholderTextColor={COLORS.textMuted}
+                value={deliveryFee}
+                onChangeText={setDeliveryFee}
+                keyboardType="decimal-pad"
+              />
+            </View>
+
+            {/* Free Threshold */}
+            <View style={[s.inputCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+              <Text style={[s.inputLabel, { color: COLORS.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('delivery_freeThreshold')}
               </Text>
-            ) : null}
-          </View>
+              <Text style={[s.inputHint, { color: COLORS.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('delivery_freeThresholdHint')}
+              </Text>
+              <TextInput
+                style={[s.input, { 
+                  backgroundColor: COLORS.background, 
+                  borderColor: COLORS.border, 
+                  color: COLORS.text,
+                  textAlign: isRTL ? 'right' : 'left',
+                }]}
+                placeholder="5000"
+                placeholderTextColor={COLORS.textMuted}
+                value={freeThreshold}
+                onChangeText={setFreeThreshold}
+                keyboardType="decimal-pad"
+              />
+            </View>
+
+            {/* Estimated Days */}
+            <View style={[s.inputCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+              <Text style={[s.inputLabel, { color: COLORS.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('delivery_estimatedDays')}
+              </Text>
+              <Text style={[s.inputHint, { color: COLORS.textMuted, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('delivery_estimatedDaysHint')}
+              </Text>
+              <TextInput
+                style={[s.input, { 
+                  backgroundColor: COLORS.background, 
+                  borderColor: COLORS.border, 
+                  color: COLORS.text,
+                  textAlign: isRTL ? 'right' : 'left',
+                }]}
+                placeholder="3"
+                placeholderTextColor={COLORS.textMuted}
+                value={estimatedDays}
+                onChangeText={setEstimatedDays}
+                keyboardType="number-pad"
+              />
+            </View>
+
+            {/* Preview Card */}
+            <View style={[s.previewCard, { backgroundColor: COLORS.primary + '10', borderColor: COLORS.primary + '30' }]}>
+              <Text style={[s.previewTitle, { color: COLORS.text, textAlign: isRTL ? 'right' : 'left' }]}>
+                {t('delivery_preview')}
+              </Text>
+              <View style={{ gap: 8, marginTop: 12 }}>
+                {deliveryFee ? (
+                  <Text style={[s.previewItem, { color: COLORS.text, textAlign: isRTL ? 'right' : 'left' }]}>
+                    • {t('delivery_previewFee').replace('{fee}', deliveryFee)}
+                  </Text>
+                ) : null}
+                {freeThreshold ? (
+                  <Text style={[s.previewItem, { color: COLORS.text, textAlign: isRTL ? 'right' : 'left' }]}>
+                    • {t('delivery_previewFree').replace('{threshold}', freeThreshold)}
+                  </Text>
+                ) : null}
+                {estimatedDays ? (
+                  <Text style={[s.previewItem, { color: COLORS.text, textAlign: isRTL ? 'right' : 'left' }]}>
+                    • {t('delivery_previewDays').replace('{days}', estimatedDays)}
+                  </Text>
+                ) : null}
+              </View>
+            </View>
+          </>
         )}
 
-        <TouchableOpacity style={[styles.saveBtn, saving && { opacity: 0.6 }]} onPress={handleSave} disabled={saving}>
-          {saving ? <ActivityIndicator color={COLORS.background} /> : <Text style={styles.saveBtnText}>Save Settings</Text>}
+        {/* Save Button */}
+        <TouchableOpacity 
+          style={[s.saveBtn, { backgroundColor: COLORS.primary, opacity: saving ? 0.7 : 1 }]} 
+          onPress={handleSave}
+          disabled={saving}
+          activeOpacity={0.8}
+        >
+          {saving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={s.saveBtnText}>{t('taxes_save')}</Text>
+          )}
         </TouchableOpacity>
 
-        <Text style={styles.footerText}>
-          Delivery settings apply to all orders. Customers will see these options at checkout.
+        {/* Footer Note */}
+        <Text style={[s.footerNote, { color: COLORS.textMuted, textAlign: 'center' }]}>
+          {t('delivery_footer')}
         </Text>
       </ScrollView>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  center: { justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, color: COLORS.textSecondary, fontSize: 14 },
-  content: { paddingHorizontal: SPACING.md, paddingBottom: 40, paddingTop: 48 },
-  headerCard: { backgroundColor: COLORS.surface, borderRadius: 12, padding: 24, alignItems: 'center', marginBottom: SPACING.lg },
-  headerIcon: { width: 52, height: 52, borderRadius: 26, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: 6 },
-  headerSub: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 18 },
-  masterCard: { backgroundColor: COLORS.surface, borderRadius: 12, padding: 4, borderWidth: 2, borderColor: COLORS.primary + '30', marginBottom: SPACING.lg },
-  toggleRow: { flexDirection: 'row', alignItems: 'center', padding: 14 },
-  toggleLabel: { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: 2 },
-  toggleDesc: { fontSize: 12, color: COLORS.textSecondary, lineHeight: 16 },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: COLORS.textSecondary, textTransform: 'uppercase' as any, letterSpacing: 0.8, marginBottom: 10 },
-  settingsCard: { backgroundColor: COLORS.surface, borderRadius: 12, padding: 16, marginBottom: SPACING.lg },
-  inputGroup: { marginBottom: 16 },
-  inputLabel: { fontSize: 13, fontWeight: '600', color: COLORS.text, marginBottom: 4 },
-  inputHint: { fontSize: 11, color: COLORS.textSecondary, marginBottom: 6 },
-  input: { backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: COLORS.text },
-  previewCard: { backgroundColor: COLORS.primary + '10', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: COLORS.primary + '30', marginBottom: SPACING.lg },
-  previewTitle: { fontSize: 13, fontWeight: '700', color: COLORS.primary, marginBottom: 8 },
-  previewLine: { fontSize: 13, color: COLORS.text, lineHeight: 20 },
-  saveBtn: { backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: SPACING.md },
-  saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-  footerText: { fontSize: 11, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 16 },
+const s = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  controls: { flexDirection: 'row', gap: 8 },
+  ctrlBtn: { width: 38, height: 38, borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
+  subtitle: { fontSize: 13, lineHeight: 20, marginBottom: 20 },
+  section: { borderRadius: 18, borderWidth: 1, padding: 18, marginBottom: 16 },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 4 },
+  sectionDesc: { fontSize: 12, lineHeight: 18 },
+  inputCard: { borderRadius: 16, borderWidth: 1, padding: 16, marginBottom: 16 },
+  inputLabel: { fontSize: 13, fontWeight: '700', marginBottom: 4 },
+  inputHint: { fontSize: 11, lineHeight: 16, marginBottom: 10 },
+  input: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, fontWeight: '600' },
+  previewCard: { borderRadius: 16, borderWidth: 2, padding: 20, marginBottom: 20 },
+  previewTitle: { fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
+  previewItem: { fontSize: 13, lineHeight: 20 },
+  saveBtn: { borderRadius: 16, paddingVertical: 16, alignItems: 'center', marginBottom: 12 },
+  saveBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
+  footerNote: { fontSize: 12, lineHeight: 18, paddingHorizontal: 20 },
 });
 
 export default DeliveryScreen;

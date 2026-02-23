@@ -18,8 +18,8 @@ import { useTheme } from '../theme/ThemeContext';
 import { Logo } from '../components/Logo';
 
 interface EmailVerificationScreenProps {
-  email: string;
-  user: {
+  email?: string;
+  user?: {
     id: number;
     email: string;
     fullName: string;
@@ -32,8 +32,14 @@ interface EmailVerificationScreenProps {
 }
 
 export default function EmailVerificationScreen({
-  email,
-  user,
+  email = '',
+  user = {
+    id: 0,
+    email: '',
+    fullName: '',
+    accountType: 'buyer',
+    accountStatus: 'pending'
+  },
   navigate: _navigate,
   resetTo,
   onAuthenticated,

@@ -61,6 +61,18 @@ export class Store {
   @Column({ type: 'varchar', length: 255, nullable: true, unique: true })
   domain: string | null;
 
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'carte_id' })
+  carteId: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'commercial_license' })
+  commercialLicense: string | null;
+
+  @Column({ type: 'varchar', length: 50, nullable: true, default: 'auto', name: 'storefront_theme' })
+  storefrontTheme: string | null; // 'light', 'dark', 'auto'
+
+  @Column({ type: 'varchar', length: 10, nullable: true, default: 'auto', name: 'storefront_language' })
+  storefrontLanguage: string | null; // 'en', 'fr', 'ar', 'auto'
+
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
 

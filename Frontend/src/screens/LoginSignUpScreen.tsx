@@ -12,14 +12,16 @@ import {
   Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { getColors, SPACING, SHADOWS } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from '../i18n';
 import { Logo } from '../components/Logo';
 import { API_URL } from '../config/api.config';
 
 interface LoginSignUpScreenProps {
   initialMode?: 'login' | 'signup';
+  accountType?: 'buyer' | 'seller' | 'delivery';
   navigate?: (screenId: string, params?: Record<string, any>) => void;
   resetTo?: (screenId: string) => void;
   onAuthenticated?: () => void;
@@ -43,12 +45,21 @@ const FacebookIcon = () => (
 
 const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
   initialMode = 'signup',
+  accountType = 'buyer',
   navigate,
   resetTo,
   onAuthenticated,
 }) => {
-  const { mode } = useTheme();
+  const { mode, toggleTheme } = useTheme();
+  const { t, language, setLanguage } = useTranslation();
   const COLORS = getColors(mode);
+
+  const cycleLanguage = () => {
+    const languageOrder: ('en' | 'ar' | 'fr')[] = ['en', 'ar', 'fr'];
+    const currentIndex = languageOrder.indexOf(language);
+    const nextIndex = (currentIndex + 1) % languageOrder.length;
+    setLanguage(languageOrder[nextIndex]);
+  };
   
   const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [name, setName] = useState('');
@@ -73,43 +84,43 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
     if (pwd.length >= 8) {
       score += 1;
     } else {
-      feedback.push('At least 8 characters');
+      feedback.push(t('auth_passwordLength'));
     }
 
     // Uppercase check
     if (/[A-Z]/.test(pwd)) {
       score += 1;
     } else {
-      feedback.push('One uppercase letter');
+      feedback.push(t('auth_passwordUppercase'));
     }
 
     // Lowercase check
     if (/[a-z]/.test(pwd)) {
       score += 1;
     } else {
-      feedback.push('One lowercase letter');
+      feedback.push(t('auth_passwordLowercase'));
     }
 
     // Number check
     if (/[0-9]/.test(pwd)) {
       score += 1;
     } else {
-      feedback.push('One number');
+      feedback.push(t('auth_passwordNumber'));
     }
 
     // Special character check
     if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
       score += 1;
     } else {
-      feedback.push('One special character (!@#$%...)');
+      feedback.push(t('auth_passwordSpecial'));
     }
 
-    const strengthLabels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
+    const strengthLabels = ['', t('auth_passwordWeak'), t('auth_passwordFair'), t('auth_passwordGood'), t('auth_passwordStrong'), t('auth_passwordVeryStrong')];
     const strengthLabel = strengthLabels[score] || '';
 
     return {
       score,
-      feedback: feedback.length > 0 ? `Missing: ${feedback.join(', ')}` : strengthLabel,
+      feedback: feedback.length > 0 ? `${t('auth_passwordMissing')}: ${feedback.join(', ')}` : strengthLabel,
     };
   };
 
@@ -129,24 +140,92 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
       const oauthError = urlParams.get('error');
 
       if (token && oauthSuccess === 'success') {
-        // Save token and redirect to dashboard
-        AsyncStorage.setItem('authToken', token).then(() => {
-          onAuthenticated?.();
-          resetTo?.('dashboard');
-        });
+        // Save token and fetch user data
+        (async () => {
+          try {
+            setLoading(true);
+            
+            // Save token
+            await AsyncStorage.setItem('accessToken', token);
+            
+            // Fetch user data
+            const response = await fetch(`${API_URL}/users/me`, {
+              headers: {
+                Authorization: `Bearer ${token}`,
+              },
+            });
+            
+            if (!response.ok) {
+              throw new Error('Failed to fetch user data');
+            }
+            
+            const user = await response.json();
+            
+            // Save user data
+            await AsyncStorage.setItem('user', JSON.stringify(user));
+            
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Navigate based on user's accountType
+            if (!user.accountType || user.accountType === 'buyer') {
+              navigate?.('accountType');
+            } else if (user.accountType === 'admin') {
+              resetTo?.('adminDashboard');
+            } else if (user.accountType === 'seller' || user.accountType === 'delivery') {
+              // Check if documents are uploaded/verified
+              if (user.accountStatus === 'pending') {
+                navigate?.('documentUpload');
+              } else if (user.accountStatus === 'active') {
+                resetTo?.(user.accountType === 'seller' ? 'dashboard' : 'deliveryDashboard');
+              } else {
+                navigate?.('documentUpload');
+              }
+            } else {
+              resetTo?.('buyerDashboard');
+            }
+          } catch (err) {
+            console.error('OAuth callback error:', err);
+            setError(t('auth_oauthFailed'));
+            // Clear URL parameters even on error
+            window.history.replaceState({}, document.title, window.location.pathname);
+          } finally {
+            setLoading(false);
+          }
+        })();
       } else if (oauthError) {
-        setError('OAuth authentication failed. Please try again.');
+        setError(t('auth_oauthFailed'));
+        // Clear URL parameters
+        window.history.replaceState({}, document.title, window.location.pathname);
       }
     }
-  }, [onAuthenticated, resetTo]);
+  }, []);
 
   const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: COLORS.background },
     scroll: { flex: 1 },
+    headerControls: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 24,
+      paddingTop: 16,
+    },
+    controlBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     content: { 
       flexGrow: 1,
       paddingHorizontal: 24,
-      paddingTop: 60,
+      paddingTop: 20,
       paddingBottom: 40,
     },
     
@@ -332,27 +411,27 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
     setError('');
     
     if (!email || !password || (!isLogin && !name)) {
-      setError('Please fill in all fields');
+      setError(t('auth_fillAllFields'));
       return;
     }
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
-      setError('Please enter a valid email address');
+      setError(t('auth_validEmail'));
       return;
     }
     
     if (!isLogin) {
       // Password strength validation for sign up
       if (passwordStrength.score < 3) {
-        setError('Password is too weak. ' + passwordStrength.feedback);
+        setError(t('auth_passwordTooWeak') + ' ' + passwordStrength.feedback);
         setShowPasswordHints(true);
         return;
       }
 
       if (password !== confirmPassword) {
-        setError('Passwords do not match');
+        setError(t('auth_passwordsNoMatch'));
         return;
       }
     }
@@ -373,7 +452,23 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data?.error || 'Authentication failed');
+        // Check for suspension or deletion
+        if (data?.error && (data.error.includes('Account Suspended') || data.error.includes('Account Deleted'))) {
+          // Extract reason from error message
+          const reason = data.reason || data.error.split(': ')[1] || data.error;
+          const accountStatus = data.accountStatus || (data.error.includes('Suspended') ? 'suspended' : 'deleted');
+          
+          // Navigate to account blocked screen with reason
+          navigate?.('accountBlocked', {
+            status: accountStatus,
+            reason: reason,
+            email: payload.email,
+            suspendedAt: data.suspendedAt || new Date().toISOString(),
+          });
+          return;
+        }
+        
+        throw new Error(data?.error || t('auth_failed'));
       }
       
       if (data?.needsVerification) {
@@ -386,11 +481,58 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
       
       if (data?.token) {
         await AsyncStorage.setItem('authToken', data.token);
-        onAuthenticated?.();
-        resetTo?.('dashboard');
+        await AsyncStorage.setItem('accessToken', data.token);
+        
+        // Save user data for later use
+        if (data.user) {
+          await AsyncStorage.setItem('userData', JSON.stringify(data.user));
+        }
+        
+        // After signup - ALWAYS go to role selection first
+        if (!isLogin) {
+          navigate?.('accountType');
+          return;
+        }
+        
+        // Login flow - route based on existing account type and status
+        const user = data.user;
+        
+        // No account type yet? Go to role selector
+        if (!user?.accountType) {
+          navigate?.('accountType');
+          return;
+        }
+        
+        // Admin goes to admin dashboard
+        if (user.accountType === 'admin') {
+          console.log('🔐 Admin user detected, navigating to adminDashboard');
+          // Ensure user data is saved before navigation
+          await AsyncStorage.setItem('userData', JSON.stringify(user));
+          resetTo?.('adminDashboard');
+          return;
+        }
+        
+        // Buyer goes straight to buyer dashboard
+        if (user.accountType === 'buyer') {
+          resetTo?.('buyerDashboard');
+          return;
+        }
+        
+        // Seller and delivery: check document status
+        if (user.accountType === 'seller' || user.accountType === 'delivery') {
+          if (user.accountStatus === 'active' || user.accountStatus === 'verified') {
+            resetTo?.(user.accountType === 'seller' ? 'dashboard' : 'deliveryDashboard');
+          } else {
+            navigate?.('documentUpload', { accountType: user.accountType });
+          }
+          return;
+        }
+        
+        // Fallback
+        resetTo?.('buyerDashboard');
       }
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      setError(err.message || t('auth_somethingWrong'));
     } finally {
       setLoading(false);
     }
@@ -398,32 +540,32 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
 
   const handleGoogleSignIn = async () => {
     try {
-      // Open Google OAuth directly in browser
+      // Redirect to Google OAuth in same window
       const googleAuthUrl = `${API_URL}/auth/google`;
       
-      // For web, use window.open
+      // For web, redirect in same window
       if (Platform.OS === 'web') {
-        window.open(googleAuthUrl, '_blank');
+        window.location.href = googleAuthUrl;
       } else {
         // For mobile, use Linking
         const supported = await Linking.canOpenURL(googleAuthUrl);
         if (supported) {
           await Linking.openURL(googleAuthUrl);
         } else {
-          setError('Cannot open Google sign in');
+          setError(t('auth_googleUnavailable'));
         }
       }
     } catch (err: any) {
-      setError(err.message || 'Google sign in not available');
+      setError(err.message || t('auth_googleUnavailable'));
     }
   };
 
   const handleFacebookSignIn = async () => {
     try {
       // Facebook OAuth coming soon
-      setError('Facebook sign-in will be available soon. Please use Google or email sign up.');
+      setError(t('auth_facebookSoon'));
     } catch (err: any) {
-      setError(err.message || 'Facebook sign in not available');
+      setError(err.message || t('auth_facebookUnavailable'));
     }
   };
 
@@ -432,6 +574,28 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      {/* Theme & Language Controls */}
+      <View style={styles.headerControls}>
+        <TouchableOpacity onPress={cycleLanguage} style={styles.controlBtn} activeOpacity={0.7}>
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+            <Circle cx="12" cy="12" r="10" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" />
+            <Path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" />
+          </Svg>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={toggleTheme} style={styles.controlBtn} activeOpacity={0.7}>
+          {mode === 'light' ? (
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Circle cx="12" cy="12" r="5" stroke={COLORS.text} strokeWidth="2" />
+              <Path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" />
+            </Svg>
+          ) : (
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          )}
+        </TouchableOpacity>
+      </View>
+
       <ScrollView 
         style={styles.scroll}
         contentContainerStyle={styles.content}
@@ -443,10 +607,10 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
         </View>
         
         <Text style={styles.heading}>
-          {isLogin ? 'Welcome back' : 'Create account'}
+          {isLogin ? t('auth_welcomeBack') : t('auth_createAccount')}
         </Text>
         <Text style={styles.subheading}>
-          {isLogin ? 'Sign in to continue' : 'Start selling across Algeria'}
+          {isLogin ? t('auth_signInContinue') : t('auth_startSelling')}
         </Text>
         
         <View style={styles.tabs}>
@@ -456,7 +620,7 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
             activeOpacity={0.8}
           >
             <Text style={[styles.tabText, isLogin && styles.tabTextActive]}>
-              Sign In
+              {t('auth_signIn')}
             </Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -465,7 +629,7 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
             activeOpacity={0.8}
           >
             <Text style={[styles.tabText, !isLogin && styles.tabTextActive]}>
-              Sign Up
+              {t('auth_signUp')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -479,10 +643,10 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
         <View style={styles.form}>
           {!isLogin && (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Full Name</Text>
+              <Text style={styles.label}>{t('auth_fullName')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Enter your name"
+                placeholder={t('auth_fullNamePlaceholder')}
                 placeholderTextColor={COLORS.textMuted}
                 value={name}
                 onChangeText={setName}
@@ -493,10 +657,10 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
           )}
           
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
+            <Text style={styles.label}>{t('auth_email')}</Text>
             <TextInput
               style={styles.input}
-              placeholder="your@email.com"
+              placeholder={t('auth_emailPlaceholder')}
               placeholderTextColor={COLORS.textMuted}
               value={email}
               onChangeText={setEmail}
@@ -507,10 +671,10 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
           </View>
           
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Password</Text>
+            <Text style={styles.label}>{t('auth_password')}</Text>
             <TextInput
               style={styles.input}
-              placeholder={isLogin ? "Enter password" : "Create strong password"}
+              placeholder={isLogin ? t('auth_passwordPlaceholder') : t('auth_createPasswordPlaceholder')}
               placeholderTextColor={COLORS.textMuted}
               value={password}
               onChangeText={(text) => {
@@ -559,22 +723,22 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
             )}
             {!isLogin && showPasswordHints && passwordStrength.score < 3 && (
               <View style={styles.passwordHints}>
-                <Text style={styles.hintsTitle}>Password must include:</Text>
-                <Text style={styles.hintItem}>• At least 8 characters</Text>
-                <Text style={styles.hintItem}>• One uppercase letter (A-Z)</Text>
-                <Text style={styles.hintItem}>• One lowercase letter (a-z)</Text>
-                <Text style={styles.hintItem}>• One number (0-9)</Text>
-                <Text style={styles.hintItem}>• One special character (!@#$%...)</Text>
+                <Text style={styles.hintsTitle}>{t('auth_passwordMustInclude')}</Text>
+                <Text style={styles.hintItem}>• {t('auth_passwordLength')}</Text>
+                <Text style={styles.hintItem}>• {t('auth_passwordUppercase')}</Text>
+                <Text style={styles.hintItem}>• {t('auth_passwordLowercase')}</Text>
+                <Text style={styles.hintItem}>• {t('auth_passwordNumber')}</Text>
+                <Text style={styles.hintItem}>• {t('auth_passwordSpecial')}</Text>
               </View>
             )}
           </View>
           
           {!isLogin && (
             <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm Password</Text>
+              <Text style={styles.label}>{t('auth_confirmPassword')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="Re-enter password"
+                placeholder={t('auth_confirmPasswordPlaceholder')}
                 placeholderTextColor={COLORS.textMuted}
                 value={confirmPassword}
                 onChangeText={setConfirmPassword}
@@ -594,7 +758,7 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
               <ActivityIndicator color="#FFFFFF" />
             ) : (
               <Text style={styles.btnText}>
-                {isLogin ? 'Sign In' : 'Create Account'}
+                {isLogin ? t('auth_signIn') : t('auth_createAccount')}
               </Text>
             )}
           </TouchableOpacity>
@@ -602,7 +766,7 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
         
         <View style={styles.divider}>
           <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or continue with</Text>
+          <Text style={styles.dividerText}>{t('auth_orContinueWith')}</Text>
           <View style={styles.dividerLine} />
         </View>
         
@@ -614,7 +778,7 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
             disabled={loading}
           >
             <GoogleIcon />
-            <Text style={styles.socialBtnText}>Continue with Google</Text>
+            <Text style={styles.socialBtnText}>{t('auth_continueGoogle')}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -624,18 +788,18 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
             disabled={loading}
           >
             <FacebookIcon />
-            <Text style={styles.socialBtnText}>Continue with Facebook</Text>
+            <Text style={styles.socialBtnText}>{t('auth_continueFacebook')}</Text>
           </TouchableOpacity>
         </View>
         
         <View style={styles.footer}>
           <Text style={styles.footerText}>
-            {isLogin ? "Don't have an account? " : 'Already have an account? '}
+            {isLogin ? t('auth_noAccount') : t('auth_haveAccount')}
             <Text 
               style={styles.link}
               onPress={() => setIsLogin(!isLogin)}
             >
-              {isLogin ? 'Sign Up' : 'Sign In'}
+              {isLogin ? t('auth_signUp') : t('auth_signIn')}
             </Text>
           </Text>
         </View>

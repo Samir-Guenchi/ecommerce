@@ -22,7 +22,7 @@ export const NeonButton: React.FC<NeonButtonProps> = ({
     textStyle,
     accessibilityLabel
 }) => {
-    const getGradientColors = () => {
+    const getGradientColors = (): [string, string] => {
         switch (variant) {
             case 'secondary': return [COLORS.secondary, COLORS.secondaryLight];
             case 'glass': return [COLORS.glass, COLORS.surfaceHighlight];

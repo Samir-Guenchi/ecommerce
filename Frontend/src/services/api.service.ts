@@ -22,7 +22,7 @@ const apiRequest = async (
   options: RequestInit = {}
 ): Promise<Response> => {
   const token = await getAuthToken();
-  
+
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -124,15 +124,17 @@ export const userAPI = {
   /**
    * Get all users
    */
-  getAllUsers: async (): Promise<{ users: Array<{
-    id: number;
-    email: string;
-    fullName: string | null;
-    accountType: string;
-    accountStatus: string;
-    createdAt: string;
-    lastLogin: string | null;
-  }> }> => {
+  getAllUsers: async (): Promise<{
+    users: Array<{
+      id: number;
+      email: string;
+      fullName: string | null;
+      accountType: string;
+      accountStatus: string;
+      createdAt: string;
+      lastLogin: string | null;
+    }>
+  }> => {
     const response = await apiRequest('/users', {
       method: 'GET',
     });
@@ -171,6 +173,26 @@ export const userAPI = {
   },
 
   /**
+   * Update user details
+   */
+  updateUser: async (
+    userId: number,
+    data: {
+      fullName?: string;
+      accountType?: string;
+    }
+  ): Promise<{
+    message: string;
+    user: any;
+  }> => {
+    const response = await apiRequest(`/users/${userId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    return handleResponse(response);
+  },
+
+  /**
    * Delete user
    */
   deleteUser: async (userId: number): Promise<{ message: string }> => {
@@ -188,19 +210,21 @@ export const productAPI = {
   /**
    * Get all products
    */
-  getAllProducts: async (): Promise<{ products: Array<{
-    id: number;
-    storeId: number;
-    name: string;
-    description: string | null;
-    price: number;
-    stock: number;
-    status: string;
-    category: string | null;
-    imagePath: string | null;
-    createdAt: string;
-    updatedAt: string;
-  }> }> => {
+  getAllProducts: async (): Promise<{
+    products: Array<{
+      id: number;
+      storeId: number;
+      name: string;
+      description: string | null;
+      price: number;
+      stock: number;
+      status: string;
+      category: string | null;
+      imagePath: string | null;
+      createdAt: string;
+      updatedAt: string;
+    }>
+  }> => {
     const response = await apiRequest('/products', {
       method: 'GET',
     });
@@ -277,18 +301,22 @@ export const storeAPI = {
   /**
    * Get all stores
    */
-  getAllStores: async (): Promise<{ stores: Array<{
-    id: number;
-    userId: number;
-    name: string;
-    status: string;
-    location: string | null;
-    description: string | null;
-    themeId: number | null;
-    domain: string | null;
-    createdAt: string;
-    updatedAt: string;
-  }> }> => {
+  getAllStores: async (): Promise<{
+    stores: Array<{
+      id: number;
+      userId: number;
+      name: string;
+      status: string;
+      location: string | null;
+      description: string | null;
+      themeId: number | null;
+      domain: string | null;
+      storefrontTheme: string | null;
+      storefrontLanguage: string | null;
+      createdAt: string;
+      updatedAt: string;
+    }>
+  }> => {
     const response = await apiRequest('/stores', {
       method: 'GET',
     });
@@ -316,6 +344,8 @@ export const storeAPI = {
     themeId?: number;
     domain?: string;
     status?: string;
+    storefrontTheme?: string;
+    storefrontLanguage?: string;
   }): Promise<{ message: string; store: any }> => {
     const response = await apiRequest('/stores', {
       method: 'POST',
@@ -337,6 +367,8 @@ export const storeAPI = {
       themeId?: number;
       domain?: string;
       status?: string;
+      storefrontTheme?: string;
+      storefrontLanguage?: string;
     }
   ): Promise<{ message: string; store: any }> => {
     const response = await apiRequest(`/stores/${storeId}`, {
@@ -364,18 +396,20 @@ export const orderAPI = {
   /**
    * Get all orders
    */
-  getAllOrders: async (): Promise<{ orders: Array<{
-    id: number;
-    orderNumber: string;
-    userId: number;
-    storeId: number;
-    totalAmount: number;
-    status: string;
-    trackingNumber: string | null;
-    orderDate: string;
-    shippedDate: string | null;
-    deliveredDate: string | null;
-  }> }> => {
+  getAllOrders: async (): Promise<{
+    orders: Array<{
+      id: number;
+      orderNumber: string;
+      userId: number;
+      storeId: number;
+      totalAmount: number;
+      status: string;
+      trackingNumber: string | null;
+      orderDate: string;
+      shippedDate: string | null;
+      deliveredDate: string | null;
+    }>
+  }> => {
     const response = await apiRequest('/orders', {
       method: 'GET',
     });
@@ -437,13 +471,15 @@ export const eventAPI = {
       endDate?: string;
       limit?: number;
     }
-  ): Promise<{ events: Array<{
-    id: number;
-    eventType: string;
-    eventData: any;
-    status: string;
-    createdAt: string;
-  }> }> => {
+  ): Promise<{
+    events: Array<{
+      id: number;
+      eventType: string;
+      eventData: any;
+      status: string;
+      createdAt: string;
+    }>
+  }> => {
     const queryParams = new URLSearchParams();
     if (filters?.eventType) queryParams.append('eventType', filters.eventType);
     if (filters?.status) queryParams.append('status', filters.status);
@@ -464,17 +500,19 @@ export const eventAPI = {
     storeId: number,
     startDate?: string,
     endDate?: string
-  ): Promise<{ stats: {
-    total: number;
-    byType: Record<string, number>;
-    recent: Array<{
-      id: number;
-      eventType: string;
-      eventData: any;
-      status: string;
-      createdAt: string;
-    }>;
-  } }> => {
+  ): Promise<{
+    stats: {
+      total: number;
+      byType: Record<string, number>;
+      recent: Array<{
+        id: number;
+        eventType: string;
+        eventData: any;
+        status: string;
+        createdAt: string;
+      }>;
+    }
+  }> => {
     const queryParams = new URLSearchParams();
     if (startDate) queryParams.append('startDate', startDate);
     if (endDate) queryParams.append('endDate', endDate);
@@ -493,18 +531,20 @@ export const profileAPI = {
   /**
    * Get current user profile
    */
-  getProfile: async (): Promise<{ user: {
-    id: number;
-    email: string;
-    fullName: string | null;
-    phone: string | null;
-    bio: string | null;
-    accountType: string;
-    accountStatus: string;
-    languagePreference: string;
-    createdAt: string;
-    lastLogin: string | null;
-  } }> => {
+  getProfile: async (): Promise<{
+    user: {
+      id: number;
+      email: string;
+      fullName: string | null;
+      phone: string | null;
+      bio: string | null;
+      accountType: string;
+      accountStatus: string;
+      languagePreference: string;
+      createdAt: string;
+      lastLogin: string | null;
+    }
+  }> => {
     const response = await apiRequest('/profile', {
       method: 'GET',
     });
@@ -548,6 +588,14 @@ export const deliveryAPI = {
 };
 
 /**
+ * Delivery Person API
+ */
+export const deliveryPersonAPI = {
+  register: async (data: { vehicleType: string; licensePlate?: string; phone: string }): Promise<{ message: string; deliveryPerson: any }> =>
+    handleResponse(await apiRequest('/delivery-person/register', { method: 'POST', body: JSON.stringify(data) })),
+};
+
+/**
  * Tax API
  */
 export const taxAPI = {
@@ -571,28 +619,74 @@ export const addressAPI = {
 export const subscriptionAPI = {
   getCurrentSubscription: async (): Promise<{ subscription: any; plan: any }> => handleResponse(await apiRequest('/subscriptions/current')),
   getPlans: async (): Promise<{ plans: any[] }> => handleResponse(await apiRequest('/subscriptions/plans')),
+  updateSubscription: async (data: { planId: number }): Promise<{ subscription: any }> => handleResponse(await apiRequest('/subscriptions/update', { method: 'PUT', body: JSON.stringify(data) })),
 };
 
 /**
  * Dashboard API
  */
 export const dashboardAPI = {
-  getStats: async (): Promise<{ stats: {
-    totalRevenue: number;
-    totalOrders: number;
-    totalProducts: number;
-    totalStores: number;
-    activeProducts: number;
-    lowStock: number;
-    outOfStock: number;
-    weeklyTrend: number[];
-    dayLabels: string[];
-    revenueTrend: number;
-    previousWeekOrders: number;
-    thisWeekOrders: number;
-    recentOrders: any[];
-    statusCounts: Record<string, number>;
-    eventsCount: number;
-  } }> => handleResponse(await apiRequest('/dashboard/stats')),
+  getStats: async (): Promise<{
+    stats: {
+      totalRevenue: number;
+      totalOrders: number;
+      totalProducts: number;
+      totalStores: number;
+      activeProducts: number;
+      lowStock: number;
+      outOfStock: number;
+      weeklyTrend: number[];
+      dayLabels: string[];
+      revenueTrend: number;
+      previousWeekOrders: number;
+      thisWeekOrders: number;
+      recentOrders: any[];
+      statusCounts: Record<string, number>;
+      eventsCount: number;
+    }
+  }> => handleResponse(await apiRequest('/dashboard/stats')),
+};
+
+/**
+ * Admin API
+ */
+export const adminAPI = {
+  // Get admin dashboard statistics
+  getStats: async (): Promise<{
+    totalUsers: number;
+    totalSellers: number;
+    totalBuyers: number;
+    totalDelivery: number;
+    pendingVerifications: number;
+    activeSellers: number;
+    activeDelivery: number;
+  }> => handleResponse(await apiRequest('/admin/stats')),
+
+  // Get all users
+  getUsers: async (): Promise<{ users: any[] }> =>
+    handleResponse(await apiRequest('/admin/users')),
+
+  // User actions
+  approveUser: async (userId: number): Promise<{ message: string }> =>
+    handleResponse(await apiRequest(`/admin/users/${userId}/approve`, { method: 'PATCH' })),
+
+  rejectUser: async (userId: number): Promise<{ message: string }> =>
+    handleResponse(await apiRequest(`/admin/users/${userId}/reject`, { method: 'PATCH' })),
+
+  suspendUser: async (userId: number): Promise<{ message: string }> =>
+    handleResponse(await apiRequest(`/admin/users/${userId}/suspend`, { method: 'PATCH' })),
+
+  activateUser: async (userId: number): Promise<{ message: string }> =>
+    handleResponse(await apiRequest(`/admin/users/${userId}/activate`, { method: 'PATCH' })),
+
+  banUser: async (userId: number): Promise<{ message: string }> =>
+    handleResponse(await apiRequest(`/admin/users/${userId}/ban`, { method: 'PATCH' })),
+
+  unbanUser: async (userId: number): Promise<{ message: string }> =>
+    handleResponse(await apiRequest(`/admin/users/${userId}/unban`, { method: 'PATCH' })),
+
+  // Get user documents
+  getUserDocuments: async (userId: number): Promise<{ documents: any[] }> =>
+    handleResponse(await apiRequest(`/admin/users/${userId}/documents`)),
 };
 

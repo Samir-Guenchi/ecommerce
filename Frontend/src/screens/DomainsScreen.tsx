@@ -1,4 +1,12 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * DomainsScreen — 2026 Premium Redesign
+ *
+ * ✦ Bento-style domain cards with gradient accents
+ * ✦ Modern input fields with glassmorphism
+ * ✦ DNS configuration guide
+ * ✦ Full i18n and dark mode support
+ */
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,21 +15,48 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
+  Animated,
+  Dimensions,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { storeAPI } from '../services/api.service';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
-import BackHeader from '../components/BackHeader';
+import { getColors, SPACING } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from '../i18n';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 
-// Domain Icon
-const DomainIcon = () => (
+const { width: W } = Dimensions.get('window');
+const CARD_R = 18;
+
+/* ══════ ICONS ══════ */
+const SunIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"
-      fill={COLORS.textSecondary}
-    />
+    <Circle cx="12" cy="12" r="5" stroke="#FDB913" strokeWidth="2" />
+    <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+const MoonIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const BackArrowIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M19 12H5M12 19L5 12L12 5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const GlobeIcon = ({ color }: { color: string }) => (
+  <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Path d="M2 12H22M12 2C14.5 4.5 16 8.5 16 12C16 15.5 14.5 19.5 12 22M12 2C9.5 4.5 8 8.5 8 12C8 15.5 9.5 19.5 12 22" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+const CheckCircleIcon = ({ color }: { color: string }) => (
+  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Path d="M9 12L11 14L15 10" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
@@ -32,11 +67,20 @@ interface DomainsScreenProps {
 }
 
 const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId }) => {
+  const { mode, toggleTheme } = useTheme();
+  const COLORS = getColors(mode);
+  const { t, language, setLanguage, isRTL } = useTranslation();
   const { message, showSuccess, showError, clear } = useStatusMessage();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [customDomain, setCustomDomain] = useState('');
   const [currentDomain, setCurrentDomain] = useState('');
+
+  const cycleLanguage = () => {
+    const langs: ('en' | 'ar' | 'fr')[] = ['en', 'ar', 'fr'];
+    const idx = langs.indexOf(language);
+    setLanguage(langs[(idx + 1) % langs.length]);
+  };
 
   useEffect(() => {
     const loadStoreDomain = async () => {
@@ -64,7 +108,7 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
         setCurrentDomain(store.domain || '');
         setCustomDomain(store.domain || '');
       } catch (error: any) {
-        showError(error.message || 'Failed to load domain.');
+        showError(error.message || t('domains_loadError') || 'Failed to load domain.');
       } finally {
         setLoading(false);
       }
@@ -75,12 +119,12 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
 
   const handleSave = async () => {
     if (!storeId) {
-      showError('Store ID is required');
+      showError(t('domains_storeIdError') || 'Store ID is required');
       return;
     }
 
     if (!customDomain) {
-      showError('Please enter a domain');
+      showError(t('domains_enterError') || 'Please enter a domain');
       return;
     }
 
@@ -90,9 +134,9 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
         domain: customDomain,
       });
       setCurrentDomain(customDomain);
-      showSuccess('Your domain settings have been saved. DNS configuration may take up to 48 hours.');
+      showSuccess(t('domains_saveSuccess') || 'Your domain settings have been saved. DNS configuration may take up to 48 hours.');
     } catch (error: any) {
-      showError(error.message || 'Failed to save domain.');
+      showError(error.message || t('domains_saveFail') || 'Failed to save domain.');
     } finally {
       setSaving(false);
     }
@@ -100,226 +144,213 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
 
   if (loading) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={COLORS.text} />
-        <Text style={{ marginTop: 12, fontSize: 14, color: COLORS.textSecondary }}>Loading domain...</Text>
+      <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color={COLORS.primary} />
+        <Text style={{ marginTop: 12, color: COLORS.textMuted, fontWeight: '600' }}>
+          {t('domains_loading') || 'Loading domain...'}
+        </Text>
       </View>
     );
   }
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.content}
-      showsVerticalScrollIndicator={false}
-    >
-      <View style={styles.iconContainer}>
-        <View style={styles.iconWrapper}>
-          <DomainIcon />
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingTop: 54, paddingBottom: 40 }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* ── Header ── */}
+        <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
+          <View style={[styles.headerLeft, isRTL && { flexDirection: 'row-reverse' }]}>
+            <TouchableOpacity 
+              style={[styles.backBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} 
+              onPress={goBack} 
+              activeOpacity={0.7}
+            >
+              <BackArrowIcon color={COLORS.text} />
+            </TouchableOpacity>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.title, { color: COLORS.text }]}>{t('settings_domains') || 'Domains'}</Text>
+              <Text style={[styles.subtitle, { color: COLORS.textMuted }]}>{t('domains_subtitle') || 'Custom domain settings'}</Text>
+            </View>
+          </View>
+          <View style={[styles.controls, isRTL && { flexDirection: 'row-reverse' }]}>
+            <TouchableOpacity 
+              style={[styles.ctrlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} 
+              onPress={cycleLanguage} 
+              activeOpacity={0.7}
+            >
+              <Text style={{ fontSize: 10, fontWeight: '800', color: COLORS.text }}>{language.toUpperCase()}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.ctrlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} 
+              onPress={toggleTheme} 
+              activeOpacity={0.7}
+            >
+              {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-      <BackHeader title="Domains" onBack={goBack} />
-      <Text style={styles.subheading}>
-        Manage your domain settings and configurations.
-      </Text>
 
-      <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
+        <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
 
-      <View style={styles.formSection}>
-        <View style={styles.domainCard}>
-          <Text style={styles.domainLabel}>Current Domain</Text>
-          <Text style={styles.domainValue}>{currentDomain}</Text>
-          <Text style={styles.domainStatus}>Active</Text>
+        {/* ── Hero Icon ── */}
+        <View style={[styles.heroIcon, { backgroundColor: COLORS.primary + '15' }]}>
+          <GlobeIcon color={COLORS.primary} />
         </View>
 
-        <View style={styles.inputContainer}>
-          <Text style={styles.label}>Custom Domain</Text>
+        <Text style={[styles.description, { color: COLORS.textSecondary }]}>
+          {t('domains_description') || 'Manage your domain settings and configurations. Connect a custom domain to your store.'}
+        </Text>
+
+        {/* ── Current Domain Card ── */}
+        {currentDomain && (
+          <View style={[styles.domainCard, { backgroundColor: COLORS.surface, borderColor: COLORS.success + '30' }]}>
+            <LinearGradient
+              colors={[COLORS.success + '15', COLORS.success + '05']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.domainGradient}
+            />
+            <View style={[styles.domainIconBadge, { backgroundColor: COLORS.success + '15' }]}>
+              <CheckCircleIcon color={COLORS.success} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.domainLabel, { color: COLORS.textMuted }]}>
+                {t('domains_current') || 'Current Domain'}
+              </Text>
+              <Text style={[styles.domainValue, { color: COLORS.text }]}>{currentDomain}</Text>
+              <Text style={[styles.domainStatus, { color: COLORS.success }]}>
+                {t('domains_active') || 'Active'}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* ── Custom Domain Input ── */}
+        <View style={[styles.inputCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+          <Text style={[styles.inputLabel, { color: COLORS.text }]}>
+            {t('domains_customDomain') || 'Custom Domain'}
+          </Text>
           <TextInput
-            style={styles.input}
-            placeholder="example.com"
+            style={[styles.input, { backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }]}
+            placeholder={t('domains_placeholder') || 'example.com'}
             placeholderTextColor={COLORS.textMuted}
             value={customDomain}
             onChangeText={setCustomDomain}
             autoCapitalize="none"
             keyboardType="default"
           />
-          <Text style={styles.helpText}>
-            Enter your custom domain name. Make sure to configure your DNS settings.
+          <Text style={[styles.helpText, { color: COLORS.textMuted }]}>
+            {t('domains_help') || 'Enter your custom domain name. Make sure to configure your DNS settings.'}
           </Text>
         </View>
-      </View>
 
-      <TouchableOpacity
-        style={[styles.submitButton, saving && styles.submitButtonDisabled]}
-        onPress={handleSave}
-        disabled={saving || !storeId}
-      >
-        {saving ? (
-          <ActivityIndicator color={COLORS.background} />
-        ) : (
-          <Text style={styles.submitButtonText}>Save Domain</Text>
-        )}
-      </TouchableOpacity>
+        {/* ── Save Button ── */}
+        <TouchableOpacity
+          style={[styles.saveBtn, { backgroundColor: COLORS.primary }, (saving || !storeId) && { opacity: 0.6 }]}
+          onPress={handleSave}
+          disabled={saving || !storeId}
+          activeOpacity={0.8}
+        >
+          {saving ? (
+            <ActivityIndicator color="#FFFFFF" />
+          ) : (
+            <Text style={styles.saveBtnText}>{t('common_save') || 'Save Domain'}</Text>
+          )}
+        </TouchableOpacity>
 
-      <View style={styles.infoCard}>
-        <Text style={styles.infoTitle}>DNS Configuration</Text>
-        <Text style={styles.infoText}>
-          To use a custom domain, you need to add the following DNS records:
-        </Text>
-        <View style={styles.dnsRecord}>
-          <Text style={styles.dnsType}>A Record:</Text>
-          <Text style={styles.dnsValue}>@ → 192.0.2.1</Text>
+        {/* ── DNS Configuration Guide ── */}
+        <View style={[styles.dnsCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+          <LinearGradient
+            colors={[COLORS.primary + '10', COLORS.primary + '03']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.dnsGradient}
+          />
+          <Text style={[styles.dnsTitle, { color: COLORS.text }]}>
+            {t('domains_dnsConfig') || 'DNS Configuration'}
+          </Text>
+          <Text style={[styles.dnsDesc, { color: COLORS.textSecondary }]}>
+            {t('domains_dnsDesc') || 'To use a custom domain, you need to add the following DNS records:'}
+          </Text>
+          <View style={[styles.dnsRecord, { backgroundColor: COLORS.background }]}>
+            <Text style={[styles.dnsType, { color: COLORS.primary }]}>A Record:</Text>
+            <Text style={[styles.dnsValue, { color: COLORS.textSecondary }]}>@ → 192.0.2.1</Text>
+          </View>
+          <View style={[styles.dnsRecord, { backgroundColor: COLORS.background }]}>
+            <Text style={[styles.dnsType, { color: COLORS.primary }]}>CNAME:</Text>
+            <Text style={[styles.dnsValue, { color: COLORS.textSecondary }]}>www → yourstore.example.com</Text>
+          </View>
         </View>
-        <View style={styles.dnsRecord}>
-          <Text style={styles.dnsType}>CNAME:</Text>
-          <Text style={styles.dnsValue}>www → yourstore.example.com</Text>
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-    paddingTop: 35,
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subheading: {
-    fontSize: 13,
-    color: COLORS.textSecondary,
-    textAlign: 'center',
-    marginBottom: 32,
-    lineHeight: 18,
-  },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  iconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  formSection: {
-    marginBottom: 8,
-  },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  backBtn: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1, marginRight: 12 },
+  title: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  subtitle: { fontSize: 12, fontWeight: '500', marginTop: 2 },
+  controls: { flexDirection: 'row', gap: 8 },
+  ctrlBtn: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
+
+  heroIcon: { width: 80, height: 80, borderRadius: 20, justifyContent: 'center', alignItems: 'center', alignSelf: 'center', marginBottom: 20 },
+  description: { fontSize: 14, lineHeight: 20, textAlign: 'center', marginBottom: 24 },
+
   domainCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-  },
-  domainLabel: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    marginBottom: 4,
-  },
-  domainValue: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  domainStatus: {
-    fontSize: 10,
-    color: COLORS.success,
-    fontWeight: '600',
-  },
-  inputContainer: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: COLORS.text,
-    marginBottom: 6,
-  },
-  input: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    fontSize: 13,
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  helpText: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    lineHeight: 16,
-  },
-  submitButton: {
-    backgroundColor: COLORS.primary,
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 16,
-  },
-  submitButtonText: {
-    color: COLORS.background,
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  infoCard: {
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 8,
-  },
-  infoTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.text,
-    marginBottom: 8,
-  },
-  infoText: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    lineHeight: 16,
-    marginBottom: 12,
-  },
-  dnsRecord: {
+    borderRadius: CARD_R,
+    borderWidth: 2,
+    padding: 16,
     flexDirection: 'row',
-    marginBottom: 8,
-    paddingLeft: 8,
+    alignItems: 'center',
+    marginBottom: 20,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  dnsType: {
-    fontSize: 12,
+  domainGradient: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  domainIconBadge: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 14, zIndex: 1 },
+  domainLabel: { fontSize: 12, fontWeight: '600', marginBottom: 4, zIndex: 1 },
+  domainValue: { fontSize: 15, fontWeight: '800', marginBottom: 6, zIndex: 1 },
+  domainStatus: { fontSize: 11, fontWeight: '700', zIndex: 1 },
+
+  inputCard: { borderRadius: CARD_R, borderWidth: 1, padding: 16, marginBottom: 20 },
+  inputLabel: { fontSize: 14, fontWeight: '700', marginBottom: 10 },
+  input: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 14,
     fontWeight: '600',
-    color: COLORS.text,
-    width: 80,
+    marginBottom: 10,
   },
-  dnsValue: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    flex: 1,
+  helpText: { fontSize: 12, lineHeight: 16 },
+
+  saveBtn: { borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 20 },
+  saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+
+  dnsCard: {
+    borderRadius: CARD_R,
+    borderWidth: 1,
+    padding: 16,
+    position: 'relative',
+    overflow: 'hidden',
   },
-  submitButtonDisabled: {
-    opacity: 0.6,
+  dnsGradient: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 },
+  dnsTitle: { fontSize: 16, fontWeight: '800', marginBottom: 8, zIndex: 1 },
+  dnsDesc: { fontSize: 13, lineHeight: 18, marginBottom: 14, zIndex: 1 },
+  dnsRecord: {
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 8,
+    flexDirection: 'row',
+    zIndex: 1,
   },
+  dnsType: { fontSize: 13, fontWeight: '700', width: 90 },
+  dnsValue: { fontSize: 13, fontWeight: '600', flex: 1 },
 });
 
 export default DomainsScreen;

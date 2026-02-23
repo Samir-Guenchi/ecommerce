@@ -6,28 +6,78 @@ import {
   StyleSheet,
   StatusBar,
 } from 'react-native';
+import Svg, { Path, Circle } from 'react-native-svg';
 import { getColors, SPACING, SHADOWS } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from '../i18n';
 import { Logo } from '../components/Logo';
 
 interface WelcomeScreenProps {
-  navigate?: (screenId: string) => void;
+  navigate?: (screenId: string, params?: Record<string, any>) => void;
 }
 
 const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigate }) => {
-  const { mode } = useTheme();
+  const { mode, toggleTheme } = useTheme();
   const COLORS = getColors(mode);
+  const { t, language, setLanguage } = useTranslation();
+
+  console.log('WelcomeScreen rendered, navigate function:', typeof navigate, navigate);
+
+  const cycleLanguage = () => {
+    const languageOrder: ('en' | 'ar' | 'fr')[] = ['en', 'ar', 'fr'];
+    const currentIndex = languageOrder.indexOf(language);
+    const nextIndex = (currentIndex + 1) % languageOrder.length;
+    setLanguage(languageOrder[nextIndex]);
+  };
+
+  const handleGetStarted = () => {
+    console.log('🔵 Get Started button clicked - going to SIGNUP');
+    if (navigate) {
+      navigate('loginSignup', { initialMode: 'signup' });
+      console.log('🔵 navigate called with signup mode');
+    } else {
+      console.error('❌ navigate function is undefined!');
+    }
+  };
+
+  const handleSignIn = () => {
+    console.log('🟢 Sign In button clicked - going to LOGIN');
+    if (navigate) {
+      navigate('loginSignup', { initialMode: 'login' });
+      console.log('🟢 navigate called with login mode');
+    } else {
+      console.error('❌ navigate function is undefined!');
+    }
+  };
 
   const styles = StyleSheet.create({
     container: { 
       flex: 1, 
       backgroundColor: COLORS.background,
     },
+    headerControls: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 24,
+      paddingTop: 16,
+    },
+    controlBtn: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: COLORS.surface,
+      borderWidth: 1,
+      borderColor: COLORS.border,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
     content: { 
       flex: 1,
       paddingHorizontal: 24,
       justifyContent: 'space-between',
-      paddingTop: 80,
+      paddingTop: 32,
       paddingBottom: 48,
     },
     
@@ -110,29 +160,51 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigate }) => {
     <View style={styles.container}>
       <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} />
       
+      {/* Theme & Language Controls */}
+      <View style={styles.headerControls}>
+        <TouchableOpacity onPress={cycleLanguage} style={styles.controlBtn} activeOpacity={0.7}>
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+            <Circle cx="12" cy="12" r="10" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" />
+            <Path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" />
+          </Svg>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={toggleTheme} style={styles.controlBtn} activeOpacity={0.7}>
+          {mode === 'light' ? (
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Circle cx="12" cy="12" r="5" stroke={COLORS.text} strokeWidth="2" />
+              <Path d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72l1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" />
+            </Svg>
+          ) : (
+            <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+              <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          )}
+        </TouchableOpacity>
+      </View>
+      
       <View style={styles.content}>
         <View style={styles.top}>
           <View style={styles.logoWrap}>
             <Logo variant="full" size={72} />
           </View>
           
-          <Text style={styles.heading}>Sell Anywhere in Algeria</Text>
+          <Text style={styles.heading}>{t('welcome_heading')}</Text>
           <Text style={styles.subheading}>
-            Create your store, manage orders, and reach customers across all 58 wilayas
+            {t('welcome_subheading')}
           </Text>
           
           <View style={styles.features}>
             <View style={styles.feature}>
               <View style={styles.dot} />
-              <Text style={styles.featureText}>Free to start</Text>
+              <Text style={styles.featureText}>{t('welcome_feature1')}</Text>
             </View>
             <View style={styles.feature}>
               <View style={styles.dot} />
-              <Text style={styles.featureText}>Nationwide delivery</Text>
+              <Text style={styles.featureText}>{t('welcome_feature2')}</Text>
             </View>
             <View style={styles.feature}>
               <View style={styles.dot} />
-              <Text style={styles.featureText}>Secure payments</Text>
+              <Text style={styles.featureText}>{t('welcome_feature3')}</Text>
             </View>
           </View>
         </View>
@@ -140,22 +212,22 @@ const WelcomeScreen: React.FC<WelcomeScreenProps> = ({ navigate }) => {
         <View style={styles.bottom}>
           <TouchableOpacity 
             style={[styles.btn, styles.primaryBtn]} 
-            onPress={() => navigate?.('accountType')} 
+            onPress={handleGetStarted} 
             activeOpacity={0.8}
           >
-            <Text style={styles.primaryBtnText}>Get Started</Text>
+            <Text style={styles.primaryBtnText}>{t('welcome_getStarted')}</Text>
           </TouchableOpacity>
           
           <TouchableOpacity 
             style={[styles.btn, styles.secondaryBtn]} 
-            onPress={() => navigate?.('loginSignup')} 
+            onPress={handleSignIn} 
             activeOpacity={0.8}
           >
-            <Text style={styles.secondaryBtnText}>Sign In</Text>
+            <Text style={styles.secondaryBtnText}>{t('welcome_signIn')}</Text>
           </TouchableOpacity>
           
           <View style={styles.footer}>
-            <Text style={styles.footerText}>Powered by Algerie Poste</Text>
+            <Text style={styles.footerText}>{t('welcome_poweredBy')}</Text>
           </View>
         </View>
       </View>

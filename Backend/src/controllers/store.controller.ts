@@ -79,7 +79,7 @@ export class StoreController {
         return;
       }
 
-      const { name, location, description, themeId, domain, status, metapixleid, tiktokpixleid } = req.body;
+      const { name, location, description, themeId, domain, status, metapixleid, tiktokpixleid, carteId, commercialLicense, storefrontTheme, storefrontLanguage } = req.body;
 
       if (!name) {
         res.status(400).json({ error: 'Store name is required' });
@@ -119,9 +119,13 @@ export class StoreController {
         description: description || null,
         metapixleid: metapixleid || null,
         tiktokpixleid: tiktokpixleid || null,
+        carteId: carteId || null,
+        commercialLicense: commercialLicense || null,
         themeId: themeId || null,
         domain: finalDomain,
         status: status || StoreStatus.DRAFT,
+        storefrontTheme: storefrontTheme || 'auto',
+        storefrontLanguage: storefrontLanguage || 'auto',
       });
 
       const savedStore = await this.storeRepository.save(store);
@@ -185,9 +189,30 @@ export class StoreController {
       if (req.body.description !== undefined) store.description = req.body.description;
       if (req.body.metapixleid !== undefined) store.metapixleid = req.body.metapixleid;
       if (req.body.tiktokpixleid !== undefined) store.tiktokpixleid = req.body.tiktokpixleid;
+      if (req.body.carteId !== undefined) store.carteId = req.body.carteId;
+      if (req.body.commercialLicense !== undefined) store.commercialLicense = req.body.commercialLicense;
       if (req.body.themeId !== undefined) store.themeId = req.body.themeId;
       if (req.body.domain !== undefined) store.domain = req.body.domain;
-      if (req.body.status !== undefined) store.status = req.body.status;
+      if (req.body.storefrontTheme !== undefined) store.storefrontTheme = req.body.storefrontTheme;
+      if (req.body.storefrontLanguage !== undefined) store.storefrontLanguage = req.body.storefrontLanguage;
+      
+      // Status update with restriction: sellers cannot activate suspended stores
+      if (req.body.status !== undefined) {
+        // If store is currently suspended and seller tries to activate it, deny
+        if (store.status === StoreStatus.SUSPENDED && req.body.status === StoreStatus.ACTIVE) {
+          res.status(403).json({ 
+            error: 'Cannot activate suspended store. Please contact admin.',
+            reason: 'store_suspended_by_admin'
+          });
+          return;
+        }
+        
+        // Allow sellers to change between draft and active
+        // Allow sellers to suspend their own stores
+        if ([StoreStatus.DRAFT, StoreStatus.ACTIVE, StoreStatus.SUSPENDED].includes(req.body.status)) {
+          store.status = req.body.status;
+        }
+      }
 
       const updatedStore = await this.storeRepository.save(store);
 

@@ -56,6 +56,13 @@ export class AuthService {
     // Return first 6 digits of hash
     return hash.substring(0, 6).toUpperCase();
   }
+  /**
+   * Hash password
+   */
+  async hashPassword(password: string): Promise<string> {
+    return bcrypt.hash(password, 10);
+  }
+
 
   /**
    * Sign up a new user
@@ -270,6 +277,18 @@ export class AuthService {
       throw new Error('Invalid email or password');
     }
 
+    // Check if account is deleted
+    if (user.deletedAt) {
+      const reason = user.deletionReason || 'Your account has been deleted by an administrator.';
+      throw new Error(`Account Deleted: ${reason}`);
+    }
+
+    // Check if account is suspended
+    if (user.accountStatus === AccountStatus.SUSPENDED) {
+      const reason = user.suspensionReason || 'Your account has been suspended by an administrator.';
+      throw new Error(`Account Suspended: ${reason}`);
+    }
+
     // Check if user has a password (OAuth users don't have passwords)
     if (!user.passwordHash) {
       throw new Error('This account uses OAuth sign-in. Please use Google sign-in instead.');
@@ -309,7 +328,7 @@ export class AuthService {
   }
 
   /**
-   * Check if user is admin (first user)
+   * Check if user is admin
    */
   async isAdmin(userId: number): Promise<boolean> {
     const user = await this.userRepository.findOne({
@@ -320,13 +339,8 @@ export class AuthService {
       return false;
     }
 
-    // Check if this is the first user
-    const firstUser = await this.userRepository.findOne({
-      where: {},
-      order: { id: 'ASC' },
-    });
-
-    return firstUser?.id === user.id;
+    // Check the is_admin field in database
+    return user.isAdmin === true;
   }
 
   /**

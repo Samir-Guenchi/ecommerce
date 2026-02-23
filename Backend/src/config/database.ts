@@ -58,7 +58,7 @@ export const dataSourceOptions: DataSourceOptions = {
     DeliveryPerson,
     DeliveryLocation,
   ],
-  synchronize: process.env.NODE_ENV === 'development', // Only in development
+  synchronize: false, // DISABLED - Use migrations instead to avoid data loss
   logging: process.env.NODE_ENV === 'development',
   migrations: [path.join(__dirname, '../migrations/*.ts')],
   migrationsTableName: 'migrations',

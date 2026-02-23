@@ -25,26 +25,40 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
         clientID: process.env.GOOGLE_CLIENT_ID,
         clientSecret: process.env.GOOGLE_CLIENT_SECRET,
         callbackURL: process.env.GOOGLE_CALLBACK_URL || 'http://localhost:3000/api/auth/google/callback',
+        passReqToCallback: true, // Pass request to callback
       },
-      async (_accessToken, _refreshToken, profile, done) => {
+      async (req, _accessToken, _refreshToken, profile, done) => {
         try {
           const userRepository = AppDataSource.getRepository(User);
+          const email = profile.emails?.[0]?.value;
+          
+          if (!email) {
+            return done(new Error('No email provided by Google'), undefined);
+          }
+
+          // Check if user already exists
           let user = await userRepository.findOne({
-            where: { email: profile.emails?.[0]?.value },
+            where: { email },
           });
 
           if (user) {
+            // User exists - check if they have a password set
+            if (!user.passwordHash) {
+              // First time OAuth user needs to complete setup
+              return done(null, { ...user, needsPasswordSetup: true } as any);
+            }
+            // User exists with password - allow login
             return done(null, user);
           }
 
-          const newUser = new User();
-          newUser.email = profile.emails?.[0]?.value || '';
-          newUser.fullName = profile.displayName || '';
-          newUser.accountType = AccountType.BUYER;
-          newUser.accountStatus = AccountStatus.ACTIVE;
-
-          user = await userRepository.save(newUser);
-          return done(null, user);
+          // New user - needs to complete registration with password and account type
+          // Store temporary OAuth data in session
+          return done(null, { 
+            isNewOAuthUser: true,
+            email,
+            fullName: profile.displayName || '',
+            googleId: profile.id,
+          } as any);
         } catch (error) {
           return done(error as Error, undefined);
         }

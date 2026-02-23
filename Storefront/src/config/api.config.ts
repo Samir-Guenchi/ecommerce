@@ -35,8 +35,28 @@ const getApiUrl = (): string => {
 
 export const API_URL = getApiUrl();
 
+// Get the base URL (without /api) for serving static files like images
+export const BASE_URL = API_URL.replace('/api', '');
+
+/**
+ * Helper function to get full image URL
+ * Converts relative paths like '/uploads/image.jpg' to full URLs
+ */
+export const getImageUrl = (imagePath: string | null): string | null => {
+  if (!imagePath) return null;
+  
+  // If already a full URL, return as is
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  
+  // Convert relative path to full URL
+  return `${BASE_URL}${imagePath}`;
+};
+
 // Log the API URL in development for debugging
 if (import.meta.env.DEV) {
   console.log('[Storefront API Config] Using API URL:', API_URL);
+  console.log('[Storefront API Config] Using Base URL:', BASE_URL);
 }
 

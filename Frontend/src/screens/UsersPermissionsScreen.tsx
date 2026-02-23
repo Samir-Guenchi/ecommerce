@@ -1,54 +1,52 @@
 ﻿import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
-  ActivityIndicator,
-  RefreshControl,
-  Modal,
+  View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
+  ActivityIndicator, RefreshControl, Modal,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, Circle } from 'react-native-svg';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 import { confirmAction } from '../components/confirmAction';
 import { userAPI } from '../services/api.service';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
-import BackHeader from '../components/BackHeader';
+import { getColors } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from '../i18n';
 
-interface UsersPermissionsScreenProps {
-  goBack?: () => void;
-}
-
-const UsersIcon = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path d="M17 21V19C17 17.9391 16.5786 16.9217 15.8284 16.1716C15.0783 15.4214 14.0609 15 13 15H5C3.93913 15 2.92172 15.4214 2.17157 16.1716C1.42143 16.9217 1 17.9391 1 19V21" stroke={COLORS.primary} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M9 11C11.2091 11 13 9.20914 13 7C13 4.79086 11.2091 3 9 3C6.79086 3 5 4.79086 5 7C5 9.20914 6.79086 11 9 11Z" stroke={COLORS.primary} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M23 21V19C22.9993 18.1137 22.7044 17.2528 22.1614 16.5523C21.6184 15.8519 20.8581 15.3516 20 15.13" stroke={COLORS.primary} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M16 3.13C16.8604 3.35031 17.623 3.85071 18.1676 4.55232C18.7122 5.25392 19.0078 6.11683 19.0078 7.005C19.0078 7.89318 18.7122 8.75608 18.1676 9.45769C17.623 10.1593 16.8604 10.6597 16 10.88" stroke={COLORS.primary} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </Svg>
-);
-
-const CloseIcon = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path d="M18 6L6 18" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" />
-    <Path d="M6 6L18 18" stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" />
-  </Svg>
-);
-
+interface UsersPermissionsScreenProps { goBack?: () => void; }
 interface User {
-  id: number;
-  email: string;
-  fullName: string | null;
-  accountType: string;
-  accountStatus: string;
-  createdAt: string;
-  lastLogin: string | null;
+  id: number; email: string; fullName: string | null;
+  accountType: string; accountStatus: string; createdAt: string; lastLogin: string | null;
 }
+
+const SunIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="5" stroke="#FDB913" strokeWidth="2" />
+    <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+const MoonIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const CloseIcon = ({ color }: { color: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M18 6L6 18M6 6L18 18" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+const EmptyUsersIcon = ({ color }: { color: string }) => (
+  <Svg width={56} height={56} viewBox="0 0 24 24" fill="none">
+    <Path d="M17 21V19C17 17.94 16.58 16.92 15.83 16.17C15.08 15.42 14.06 15 13 15H5C3.94 15 2.92 15.42 2.17 16.17C1.42 16.92 1 17.94 1 19V21" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <Circle cx="9" cy="7" r="4" stroke={color} strokeWidth="1.5" />
+    <Path d="M23 21V19C23 18.11 22.7 17.25 22.16 16.55C21.62 15.85 20.86 15.35 20 15.13" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M16 3.13C16.86 3.35 17.62 3.85 18.17 4.55C18.71 5.26 19.01 6.12 19.01 7C19.01 7.89 18.71 8.76 18.17 9.46C17.62 10.16 16.86 10.66 16 10.88" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
 
 const UsersPermissionsScreen = ({ goBack }: UsersPermissionsScreenProps) => {
+  const { mode, toggleTheme } = useTheme();
+  const COLORS = getColors(mode);
+  const { t, isRTL, language, setLanguage } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -56,173 +54,165 @@ const UsersPermissionsScreen = ({ goBack }: UsersPermissionsScreenProps) => {
   const [editName, setEditName] = useState('');
   const [editRole, setEditRole] = useState('');
   const [editSaving, setEditSaving] = useState(false);
-  const { message, showSuccess, showError, showInfo, clear } = useStatusMessage();
+  const { message, showSuccess, showError, clear } = useStatusMessage();
+
+  const cycleLanguage = () => {
+    const langs: ('en' | 'ar' | 'fr')[] = ['en', 'ar', 'fr'];
+    setLanguage(langs[(langs.indexOf(language as any) + 1) % langs.length]);
+  };
 
   const fetchUsers = useCallback(async (isRefresh = false) => {
     try {
       if (!isRefresh) setLoading(true);
-      const response = await userAPI.getAllUsers();
-      setUsers(response.users || []);
-    } catch (error: any) {
-      showError(error.message || 'Failed to load users.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
+      const r = await userAPI.getAllUsers();
+      setUsers(r.users || []);
+    } catch (e: any) { showError(e.message || t('users_updateFailed')); }
+    finally { setLoading(false); setRefreshing(false); }
   }, []);
 
   useEffect(() => { fetchUsers(); }, []);
-
-  const handleEditUser = (user: User) => {
-    setEditUser(user);
-    setEditName(user.fullName || '');
-    setEditRole(user.accountType || 'buyer');
-  };
 
   const handleSaveEdit = async () => {
     if (!editUser) return;
     try {
       setEditSaving(true);
-      await userAPI.updateUser(editUser.id, {
-        fullName: editName.trim() || undefined,
-        accountType: editRole as any,
-      });
-      showSuccess('User updated successfully.');
+      await userAPI.updateUser(editUser.id, { fullName: editName.trim() || undefined, accountType: editRole as any });
+      showSuccess(t('users_updated'));
       setEditUser(null);
       await fetchUsers();
-    } catch (error: any) {
-      showError(error.message || 'Failed to update user.');
-    } finally {
-      setEditSaving(false);
-    }
+    } catch (e: any) { showError(e.message || t('users_updateFailed')); }
+    finally { setEditSaving(false); }
   };
 
   const handleUpdateStatus = async (userId: number, currentStatus: string) => {
-    const statusMap: Record<string, string> = {
-      'pending': 'active', 'active': 'suspended', 'suspended': 'inactive', 'inactive': 'pending',
-    };
-    const newStatus = statusMap[currentStatus.toLowerCase()] || 'active';
-    const confirmed = await confirmAction('Update Status', `Change status to "${newStatus}"?`);
-    if (!confirmed) return;
-    try {
-      await userAPI.updateUserStatus(userId, newStatus as any);
-      showSuccess('Status updated.');
-      await fetchUsers();
-    } catch (error: any) {
-      showError(error.message || 'Failed to update status.');
-    }
+    const next: Record<string, string> = { pending: 'active', active: 'suspended', suspended: 'inactive', inactive: 'pending' };
+    const newStatus = next[currentStatus?.toLowerCase()] || 'active';
+    const ok = await confirmAction(t('users_updateStatus'), t('users_changeStatusTo').replace('{status}', newStatus));
+    if (!ok) return;
+    try { await userAPI.updateUserStatus(userId, newStatus as any); showSuccess(t('users_statusUpdated')); await fetchUsers(); }
+    catch (e: any) { showError(e.message || t('users_statusFailed')); }
   };
 
-  const handleRemoveUser = async (userId: number, userName: string) => {
-    const confirmed = await confirmAction('Remove User', `Remove ${userName || 'this user'}? This cannot be undone.`);
-    if (!confirmed) return;
-    try {
-      await userAPI.deleteUser(userId);
-      showSuccess('User removed.');
-      await fetchUsers();
-    } catch (error: any) {
-      showError(error.message || 'Failed to remove user.');
-    }
+  const handleRemove = async (userId: number, name: string) => {
+    const ok = await confirmAction(t('users_remove'), t('users_removeConfirm').replace('{name}', name));
+    if (!ok) return;
+    try { await userAPI.deleteUser(userId); showSuccess(t('users_removed')); await fetchUsers(); }
+    catch (e: any) { showError(e.message || t('users_removeFailed')); }
   };
 
-  const getRoleBadge = (type: string) => {
-    const map: Record<string, { bg: string; color: string }> = {
-      admin: { bg: COLORS.error + '15', color: COLORS.error },
-      seller: { bg: '#60A5FA15', color: '#60A5FA' },
-      buyer: { bg: '#C084FC15', color: '#C084FC' },
-    };
-    return map[type?.toLowerCase()] || { bg: COLORS.surface, color: COLORS.textSecondary };
+  const roleColors: Record<string, { bg: string; text: string }> = {
+    admin: { bg: '#EF444418', text: '#EF4444' },
+    seller: { bg: '#3B82F618', text: '#3B82F6' },
+    buyer: { bg: '#8B5CF618', text: '#8B5CF6' },
+  };
+  const statusColors: Record<string, { bg: string; text: string }> = {
+    active: { bg: COLORS.success + '18', text: COLORS.success },
+    pending: { bg: COLORS.warning + '18', text: COLORS.warning },
+    suspended: { bg: COLORS.error + '18', text: COLORS.error },
+    inactive: { bg: COLORS.textMuted + '18', text: COLORS.textMuted },
   };
 
-  const getStatusBadge = (status: string) => {
-    const map: Record<string, { bg: string; color: string }> = {
-      active: { bg: COLORS.success + '15', color: COLORS.success },
-      pending: { bg: COLORS.warning + '15', color: COLORS.warning },
-      suspended: { bg: COLORS.error + '15', color: COLORS.error },
-      inactive: { bg: COLORS.textMuted + '15', color: COLORS.textMuted },
-    };
-    return map[status?.toLowerCase()] || { bg: COLORS.warning + '15', color: COLORS.warning };
-  };
+  const getRoleColor = (type: string) => roleColors[type?.toLowerCase()] || { bg: COLORS.border, text: COLORS.textMuted };
+  const getStatusColor = (s: string) => statusColors[s?.toLowerCase()] || { bg: COLORS.warning + '18', text: COLORS.warning };
 
   const roles = ['admin', 'seller', 'buyer'];
 
   if (loading) {
     return (
-      <View style={[styles.container, styles.center]}>
+      <View style={{ flex: 1, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={styles.loadingText}>Loading users...</Text>
       </View>
     );
   }
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <ScrollView
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ padding: 20, paddingTop: 54, paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchUsers(true); }} tintColor={COLORS.primary} />}
       >
-        <BackHeader title="Users & Permissions" onBack={goBack} />
-        <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
-
-        {/* Summary */}
-        <View style={styles.summaryRow}>
-          <View style={styles.summaryCard}>
-            <Text style={styles.summaryValue}>{users.length}</Text>
-            <Text style={styles.summaryLabel}>Total</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Text style={[styles.summaryValue, { color: COLORS.success }]}>{users.filter(u => u.accountStatus === 'active').length}</Text>
-            <Text style={styles.summaryLabel}>Active</Text>
-          </View>
-          <View style={styles.summaryCard}>
-            <Text style={[styles.summaryValue, { color: COLORS.warning }]}>{users.filter(u => u.accountStatus === 'pending').length}</Text>
-            <Text style={styles.summaryLabel}>Pending</Text>
+        {/* Header — back + title + controls in one row */}
+        <View style={[s.header, isRTL && { flexDirection: 'row-reverse' }]}>
+          <TouchableOpacity style={[s.iconBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} onPress={goBack} activeOpacity={0.7}>
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path d={isRTL ? 'M5 12H19M19 12L12 19M19 12L12 5' : 'M19 12H5M5 12L12 19M5 12L12 5'} stroke={COLORS.text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            </Svg>
+          </TouchableOpacity>
+          <Text style={[s.headerTitle, { color: COLORS.text }]} numberOfLines={1}>{t('settings_usersPermissions')}</Text>
+          <View style={[s.controls, isRTL && { flexDirection: 'row-reverse' }]}>
+            <TouchableOpacity style={[s.iconBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} onPress={cycleLanguage} activeOpacity={0.7}>
+              <Text style={{ fontSize: 10, fontWeight: '800', color: COLORS.text }}>{language.toUpperCase()}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[s.iconBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} onPress={toggleTheme} activeOpacity={0.7}>
+              {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </TouchableOpacity>
           </View>
         </View>
 
+        <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
+
+        {/* Stats row */}
+        <View style={[s.statsRow, isRTL && { flexDirection: 'row-reverse' }]}>
+          {[
+            { val: users.length, label: t('users_total'), color: COLORS.text },
+            { val: users.filter(u => u.accountStatus === 'active').length, label: t('users_active'), color: COLORS.success },
+            { val: users.filter(u => u.accountStatus === 'pending').length, label: t('users_pending'), color: COLORS.warning },
+          ].map((item, i) => (
+            <View key={i} style={[s.statCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+              <Text style={[s.statVal, { color: item.color }]}>{item.val}</Text>
+              <Text style={[s.statLabel, { color: COLORS.textMuted }]}>{item.label}</Text>
+            </View>
+          ))}
+        </View>
+
+        {/* User list */}
         {users.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <View style={styles.emptyIcon}><UsersIcon /></View>
-            <Text style={styles.emptyTitle}>No Users</Text>
-            <Text style={styles.emptySubtitle}>Users will appear here once they register.</Text>
+          <View style={{ alignItems: 'center', paddingVertical: 48 }}>
+            <EmptyUsersIcon color={COLORS.textMuted} />
+            <Text style={[s.emptyTitle, { color: COLORS.text, marginTop: 16 }]}>{t('users_noUsers')}</Text>
+            <Text style={[s.emptyDesc, { color: COLORS.textMuted }]}>{t('users_noUsersDesc')}</Text>
           </View>
         ) : (
-          <View style={{ gap: 10 }}>
+          <View style={{ gap: 12 }}>
             {users.map((user) => {
-              const role = getRoleBadge(user.accountType);
-              const status = getStatusBadge(user.accountStatus);
+              const rc = getRoleColor(user.accountType);
+              const sc = getStatusColor(user.accountStatus);
+              const initials = (user.fullName || user.email).charAt(0).toUpperCase();
               return (
-                <View key={user.id} style={styles.userCard}>
-                  <View style={styles.userHeader}>
-                    <View style={styles.avatar}>
-                      <Text style={styles.avatarText}>{(user.fullName || user.email).charAt(0).toUpperCase()}</Text>
+                <View key={user.id} style={[s.userCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                  <View style={[s.cardTop, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <View style={[s.avatar, { backgroundColor: COLORS.primary + '20' }]}>
+                      <Text style={[s.avatarText, { color: COLORS.primary }]}>{initials}</Text>
                     </View>
-                    <View style={{ flex: 1, marginLeft: 12 }}>
-                      <Text style={styles.userName}>{user.fullName || 'No name'}</Text>
-                      <Text style={styles.userEmail}>{user.email}</Text>
+                    <View style={{ flex: 1, marginHorizontal: 12 }}>
+                      <Text style={[s.userName, { color: COLORS.text }]}>{user.fullName || t('users_noName')}</Text>
+                      <Text style={[s.userEmail, { color: COLORS.textMuted }]}>{user.email}</Text>
                     </View>
                   </View>
-                  <View style={styles.badgeRow}>
-                    <View style={[styles.badge, { backgroundColor: role.bg }]}>
-                      <Text style={[styles.badgeText, { color: role.color }]}>{user.accountType || 'N/A'}</Text>
+                  <View style={[s.badgeRow, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <View style={[s.badge, { backgroundColor: rc.bg }]}>
+                      <Text style={[s.badgeText, { color: rc.text }]}>{user.accountType || 'N/A'}</Text>
                     </View>
-                    <View style={[styles.badge, { backgroundColor: status.bg }]}>
-                      <Text style={[styles.badgeText, { color: status.color }]}>{user.accountStatus || 'pending'}</Text>
+                    <View style={[s.badge, { backgroundColor: sc.bg }]}>
+                      <Text style={[s.badgeText, { color: sc.text }]}>{user.accountStatus || 'pending'}</Text>
                     </View>
                     {user.lastLogin && (
-                      <Text style={styles.lastLogin}>Last: {new Date(user.lastLogin).toLocaleDateString()}</Text>
+                      <Text style={[s.lastLogin, { color: COLORS.textMuted }]}>{t('users_lastLogin')} {new Date(user.lastLogin).toLocaleDateString()}</Text>
                     )}
                   </View>
-                  <View style={styles.userActions}>
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleEditUser(user)}>
-                      <Text style={styles.actionBtnText}>Edit</Text>
+                  <View style={[s.actionsRow, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <TouchableOpacity style={[s.actionBtn, { backgroundColor: COLORS.primary + '12', borderColor: COLORS.primary + '30' }]}
+                      onPress={() => { setEditUser(user); setEditName(user.fullName || ''); setEditRole(user.accountType); }} activeOpacity={0.7}>
+                      <Text style={[s.actionBtnText, { color: COLORS.primary }]}>{t('common_edit')}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleUpdateStatus(user.id, user.accountStatus)}>
-                      <Text style={styles.actionBtnText}>Toggle Status</Text>
+                    <TouchableOpacity style={[s.actionBtn, { backgroundColor: COLORS.warning + '12', borderColor: COLORS.warning + '30' }]}
+                      onPress={() => handleUpdateStatus(user.id, user.accountStatus)} activeOpacity={0.7}>
+                      <Text style={[s.actionBtnText, { color: COLORS.warning }]}>{t('users_toggleStatus')}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionBtn, styles.removeBtn]} onPress={() => handleRemoveUser(user.id, user.fullName || user.email)}>
-                      <Text style={[styles.actionBtnText, styles.removeBtnText]}>Remove</Text>
+                    <TouchableOpacity style={[s.actionBtn, { backgroundColor: COLORS.error + '12', borderColor: COLORS.error + '30' }]}
+                      onPress={() => handleRemove(user.id, user.fullName || user.email)} activeOpacity={0.7}>
+                      <Text style={[s.actionBtnText, { color: COLORS.error }]}>{t('users_remove')}</Text>
                     </TouchableOpacity>
                   </View>
                 </View>
@@ -231,54 +221,56 @@ const UsersPermissionsScreen = ({ goBack }: UsersPermissionsScreenProps) => {
           </View>
         )}
 
-        <TouchableOpacity style={styles.addBtn} onPress={() => showInfo('New users register through the sign-up screen.')}>
-          <Text style={styles.addBtnText}>+ Invite User</Text>
-        </TouchableOpacity>
-
-        {/* Role Info */}
-        <View style={styles.rolesCard}>
-          <Text style={styles.rolesTitle}>Role Permissions</Text>
-          <View style={styles.roleRow}><Text style={styles.roleLabel}>Admin</Text><Text style={styles.roleDesc}>Full access to all features and settings</Text></View>
-          <View style={styles.roleRow}><Text style={styles.roleLabel}>Seller</Text><Text style={styles.roleDesc}>Manage products, orders, and store settings</Text></View>
-          <View style={styles.roleRow}><Text style={styles.roleLabel}>Buyer</Text><Text style={styles.roleDesc}>Browse and purchase products</Text></View>
+        {/* Role permissions card */}
+        <View style={[s.rolesCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+          <Text style={[s.rolesTitle, { color: COLORS.text }]}>{t('users_rolePermissions')}</Text>
+          {[
+            { roleKey: 'users_roleAdmin' as const, descKey: 'users_roleAdminDesc' as const, color: '#EF4444' },
+            { roleKey: 'users_roleSeller' as const, descKey: 'users_roleSellerDesc' as const, color: '#3B82F6' },
+            { roleKey: 'users_roleBuyer' as const, descKey: 'users_roleBuyerDesc' as const, color: '#8B5CF6' },
+          ].map(item => (
+            <View key={item.roleKey} style={[s.roleRow, { borderBottomColor: COLORS.border }]}>
+              <View style={[s.roleDot, { backgroundColor: item.color }]} />
+              <View>
+                <Text style={[s.roleLabel, { color: COLORS.text }]}>{t(item.roleKey)}</Text>
+                <Text style={[s.roleDesc, { color: COLORS.textMuted }]}>{t(item.descKey)}</Text>
+              </View>
+            </View>
+          ))}
         </View>
       </ScrollView>
 
-      {/* Edit User Modal */}
+      {/* Edit Modal */}
       <Modal visible={!!editUser} animationType="slide" transparent>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Edit User</Text>
-              <TouchableOpacity style={styles.modalClose} onPress={() => setEditUser(null)}>
-                <CloseIcon />
+        <View style={s.modalOverlay}>
+          <View style={[s.modalContent, { backgroundColor: COLORS.surface }]}>
+            <View style={[s.modalHeader, isRTL && { flexDirection: 'row-reverse' }]}>
+              <Text style={[s.modalTitle, { color: COLORS.text }]}>{t('users_editUser')}</Text>
+              <TouchableOpacity style={[s.closeBtn, { backgroundColor: COLORS.background }]} onPress={() => setEditUser(null)}>
+                <CloseIcon color={COLORS.text} />
               </TouchableOpacity>
             </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Full Name</Text>
-              <TextInput style={styles.formInput} placeholder="Enter full name" placeholderTextColor={COLORS.textMuted} value={editName} onChangeText={setEditName} />
+            <View style={{ marginBottom: 16 }}>
+              <Text style={[s.fieldLabel, { color: COLORS.textMuted }]}>{t('users_fullName')}</Text>
+              <TextInput style={[s.fieldInput, { backgroundColor: COLORS.background, borderColor: COLORS.border, color: COLORS.text }]}
+                placeholder={t('users_enterFullName')} placeholderTextColor={COLORS.textMuted} value={editName} onChangeText={setEditName} />
             </View>
-
-            <View style={styles.formGroup}>
-              <Text style={styles.formLabel}>Role</Text>
-              <View style={styles.roleSelector}>
+            <View style={{ marginBottom: 20 }}>
+              <Text style={[s.fieldLabel, { color: COLORS.textMuted }]}>{t('users_role')}</Text>
+              <View style={[s.roleSelector, isRTL && { flexDirection: 'row-reverse' }]}>
                 {roles.map(r => (
-                  <TouchableOpacity
-                    key={r}
-                    style={[styles.roleChip, editRole === r && styles.roleChipActive]}
-                    onPress={() => setEditRole(r)}
-                  >
-                    <Text style={[styles.roleChipText, editRole === r && styles.roleChipTextActive]}>
+                  <TouchableOpacity key={r}
+                    style={[s.roleChip, { backgroundColor: editRole === r ? COLORS.primary + '15' : COLORS.background, borderColor: editRole === r ? COLORS.primary : COLORS.border }]}
+                    onPress={() => setEditRole(r)}>
+                    <Text style={[s.roleChipText, { color: editRole === r ? COLORS.primary : COLORS.textMuted }]}>
                       {r.charAt(0).toUpperCase() + r.slice(1)}
                     </Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
-
-            <TouchableOpacity style={[styles.saveBtn, editSaving && { opacity: 0.6 }]} onPress={handleSaveEdit} disabled={editSaving}>
-              {editSaving ? <ActivityIndicator color={COLORS.background} /> : <Text style={styles.saveBtnText}>Save Changes</Text>}
+            <TouchableOpacity style={[s.saveBtn, { backgroundColor: COLORS.primary, opacity: editSaving ? 0.7 : 1 }]} onPress={handleSaveEdit} disabled={editSaving}>
+              {editSaving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={s.saveBtnText}>{t('common_save')}</Text>}
             </TouchableOpacity>
           </View>
         </View>
@@ -287,56 +279,48 @@ const UsersPermissionsScreen = ({ goBack }: UsersPermissionsScreenProps) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  center: { justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, color: COLORS.textSecondary, fontSize: 14 },
-  content: { paddingHorizontal: SPACING.md, paddingBottom: 40, paddingTop: 48 },
-  summaryRow: { flexDirection: 'row', gap: 8, marginBottom: SPACING.md },
-  summaryCard: { flex: 1, backgroundColor: COLORS.surface, borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
-  summaryValue: { fontSize: 20, fontWeight: '700', color: COLORS.text },
-  summaryLabel: { fontSize: 10, color: COLORS.textSecondary, marginTop: 2, fontWeight: '500', textTransform: 'uppercase' as any },
-  emptyContainer: { alignItems: 'center', marginTop: 48 },
-  emptyIcon: { width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.surface, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
-  emptyTitle: { fontSize: 18, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
-  emptySubtitle: { fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', paddingHorizontal: 32 },
-  userCard: { backgroundColor: COLORS.surface, borderRadius: 12, padding: 16 },
-  userHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 10 },
-  avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: COLORS.primary + '20', justifyContent: 'center', alignItems: 'center' },
-  avatarText: { fontSize: 16, fontWeight: '700', color: COLORS.primary },
-  userName: { fontSize: 14, fontWeight: '600', color: COLORS.text },
-  userEmail: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+const s = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
+  headerTitle: { flex: 1, fontSize: 17, fontWeight: '700', textAlign: 'center' },
+  controls: { flexDirection: 'row', gap: 8 },
+  iconBtn: { width: 38, height: 38, borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
+  statsRow: { flexDirection: 'row', gap: 10, marginBottom: 20 },
+  statCard: { flex: 1, borderRadius: 14, borderWidth: 1, padding: 14, alignItems: 'center' },
+  statVal: { fontSize: 22, fontWeight: '900' },
+  statLabel: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', marginTop: 2 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', marginBottom: 8 },
+  emptyDesc: { fontSize: 13, textAlign: 'center' },
+  userCard: { borderRadius: 18, borderWidth: 1, padding: 16, gap: 12 },
+  cardTop: { flexDirection: 'row', alignItems: 'center' },
+  avatar: { width: 42, height: 42, borderRadius: 21, justifyContent: 'center', alignItems: 'center' },
+  avatarText: { fontSize: 16, fontWeight: '800' },
+  userName: { fontSize: 14, fontWeight: '700', marginBottom: 2 },
+  userEmail: { fontSize: 12 },
+  badgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10 },
-  badgeText: { fontSize: 10, fontWeight: '700', textTransform: 'capitalize' as any },
-  lastLogin: { fontSize: 10, color: COLORS.textMuted, marginLeft: 'auto' as any },
-  userActions: { flexDirection: 'row', gap: 6 },
-  actionBtn: { flex: 1, borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, paddingVertical: 9, alignItems: 'center' },
-  actionBtnText: { fontSize: 11, fontWeight: '600', color: COLORS.text },
-  removeBtn: { borderColor: COLORS.error + '30' },
-  removeBtnText: { color: COLORS.error },
-  addBtn: { backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: SPACING.lg, marginBottom: SPACING.md },
-  addBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-  rolesCard: { backgroundColor: COLORS.surface, borderRadius: 12, padding: 16 },
-  rolesTitle: { fontSize: 14, fontWeight: '600', color: COLORS.text, marginBottom: 12 },
-  roleRow: { marginBottom: 10 },
-  roleLabel: { fontSize: 13, fontWeight: '600', color: COLORS.text, marginBottom: 2 },
-  roleDesc: { fontSize: 12, color: COLORS.textSecondary, lineHeight: 16 },
+  badgeText: { fontSize: 11, fontWeight: '700', textTransform: 'capitalize' },
+  lastLogin: { fontSize: 10, marginLeft: 'auto' as any },
+  actionsRow: { flexDirection: 'row', gap: 8 },
+  actionBtn: { flex: 1, borderWidth: 1, borderRadius: 10, paddingVertical: 10, alignItems: 'center' },
+  actionBtnText: { fontSize: 11, fontWeight: '700' },
+  rolesCard: { borderRadius: 18, borderWidth: 1, padding: 18, marginTop: 20 },
+  rolesTitle: { fontSize: 15, fontWeight: '700', marginBottom: 14 },
+  roleRow: { flexDirection: 'row', alignItems: 'flex-start', paddingVertical: 10, borderBottomWidth: 1, gap: 12 },
+  roleDot: { width: 8, height: 8, borderRadius: 4, marginTop: 5, flexShrink: 0 },
+  roleLabel: { fontSize: 13, fontWeight: '700', marginBottom: 2 },
+  roleDesc: { fontSize: 12, lineHeight: 18 },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: COLORS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: SPACING.lg },
-  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
-  modalTitle: { fontSize: 20, fontWeight: '700', color: COLORS.text },
-  modalClose: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.background, justifyContent: 'center', alignItems: 'center' },
-  formGroup: { marginBottom: 16 },
-  formLabel: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary, marginBottom: 6 },
-  formInput: { backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14, color: COLORS.text },
+  modalContent: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24 },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  modalTitle: { fontSize: 20, fontWeight: '800' },
+  closeBtn: { width: 36, height: 36, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },
+  fieldLabel: { fontSize: 11, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 6 },
+  fieldInput: { borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 14 },
   roleSelector: { flexDirection: 'row', gap: 10 },
-  roleChip: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: 'center', backgroundColor: COLORS.background, borderWidth: 1, borderColor: COLORS.border },
-  roleChipActive: { backgroundColor: COLORS.primary + '15', borderColor: COLORS.primary },
-  roleChipText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
-  roleChipTextActive: { color: COLORS.primary },
-  saveBtn: { backgroundColor: COLORS.primary, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 8 },
-  saveBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  roleChip: { flex: 1, paddingVertical: 10, borderRadius: 12, alignItems: 'center', borderWidth: 1 },
+  roleChipText: { fontSize: 13, fontWeight: '700' },
+  saveBtn: { borderRadius: 16, paddingVertical: 16, alignItems: 'center' },
+  saveBtnText: { color: '#FFFFFF', fontWeight: '800', fontSize: 15 },
 });
 
 export default UsersPermissionsScreen;

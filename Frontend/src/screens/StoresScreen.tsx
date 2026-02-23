@@ -1,4 +1,14 @@
-﻿import React, { useState, useEffect } from 'react';
+﻿/**
+ * StoresScreen — 2026 Premium Redesign
+ *
+ * ✦ Bento-style store cards with gradient accent bar
+ * ✦ Animated status dots
+ * ✦ Hero stats summary card
+ * ✦ Language switcher + theme toggle
+ * ✦ Buyer restriction & seller verification states
+ * ✦ Full dark mode support
+ */
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -7,65 +17,266 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  Animated,
+  Dimensions,
+  Alert,
+  Platform,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import Svg, { Path, Circle } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path, Circle, Rect } from 'react-native-svg';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 import { confirmAction } from '../components/confirmAction';
 import { storeAPI, orderAPI } from '../services/api.service';
-import { getColors, SPACING, SHADOWS } from '../theme';
+import { getColors, SPACING } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import { Logo } from '../components/Logo';
 import BottomNav, { BottomTabId } from './BottomNav';
+import { API_URL } from '../config/api.config';
 
-/* Icons */
-const PlusIcon = ({ color }: { color: string }) => (
-  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
-    <Path d="M12 5V19" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
-    <Path d="M5 12H19" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
-  </Svg>
-);
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_R = 22;
 
-const MapPinIcon = ({ color }: { color: string }) => (
-  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-    <Path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <Path d="M12 13C13.6569 13 15 11.6569 15 10C15 8.34315 13.6569 7 12 7C10.3431 7 9 8.34315 9 10C9 11.6569 10.3431 13 12 13Z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </Svg>
-);
-
-const SettingsGearIcon = ({ color }: { color: string }) => (
-  <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
-    <Path d="M12 15C13.6569 15 15 13.6569 15 12C15 10.3431 13.6569 9 12 9C10.3431 9 9 10.3431 9 12C9 13.6569 10.3431 15 12 15Z" stroke={color} strokeWidth="1.5" />
-    <Path d="M19.4 15C19.27 15.3 19.23 15.64 19.29 15.96C19.34 16.29 19.5 16.58 19.73 16.82L19.79 16.88C19.98 17.07 20.12 17.29 20.22 17.53C20.32 17.77 20.38 18.03 20.38 18.3C20.38 18.56 20.32 18.82 20.22 19.06C20.12 19.3 19.98 19.52 19.79 19.71C19.6 19.9 19.38 20.04 19.14 20.14C18.9 20.24 18.64 20.3 18.38 20.3C18.11 20.3 17.85 20.24 17.61 20.14C17.37 20.04 17.15 19.9 16.96 19.71L16.9 19.65C16.66 19.42 16.37 19.26 16.04 19.21C15.72 19.15 15.38 19.19 15.08 19.32C14.78 19.45 14.53 19.66 14.35 19.93C14.18 20.19 14.08 20.51 14.08 20.83V21C14.08 21.53 13.87 22.04 13.49 22.41C13.12 22.79 12.61 23 12.08 23C11.55 23 11.04 22.79 10.67 22.41C10.29 22.04 10.08 21.53 10.08 21V20.91C10.07 20.58 9.97 20.26 9.77 19.99C9.58 19.72 9.31 19.51 9 19.4C8.7 19.27 8.36 19.23 8.04 19.29C7.72 19.34 7.42 19.5 7.18 19.73L7.12 19.79C6.93 19.98 6.71 20.12 6.47 20.22C6.23 20.32 5.97 20.38 5.71 20.38C5.44 20.38 5.18 20.32 4.94 20.22C4.7 20.12 4.48 19.98 4.29 19.79C4.1 19.6 3.96 19.38 3.86 19.14C3.76 18.9 3.7 18.64 3.7 18.38C3.7 18.11 3.76 17.85 3.86 17.61C3.96 17.37 4.1 17.15 4.29 16.96L4.35 16.9C4.58 16.66 4.74 16.37 4.79 16.04C4.85 15.72 4.81 15.38 4.68 15.08C4.55 14.78 4.34 14.53 4.07 14.35C3.81 14.18 3.49 14.08 3.17 14.08H3C2.47 14.08 1.96 13.87 1.59 13.49C1.21 13.12 1 12.61 1 12.08C1 11.55 1.21 11.04 1.59 10.67C1.96 10.29 2.47 10.08 3 10.08H3.09C3.42 10.07 3.74 9.97 4.01 9.77C4.28 9.58 4.49 9.31 4.6 9C4.73 8.7 4.77 8.36 4.71 8.04C4.66 7.72 4.5 7.42 4.27 7.18L4.21 7.12C4.02 6.93 3.88 6.71 3.78 6.47C3.68 6.23 3.62 5.97 3.62 5.71C3.62 5.44 3.68 5.18 3.78 4.94C3.88 4.7 4.02 4.48 4.21 4.29C4.4 4.1 4.62 3.96 4.86 3.86C5.1 3.76 5.36 3.7 5.63 3.7C5.89 3.7 6.15 3.76 6.39 3.86C6.63 3.96 6.85 4.1 7.04 4.29L7.1 4.35C7.34 4.58 7.64 4.74 7.96 4.79C8.28 4.85 8.62 4.81 8.92 4.68H9C9.3 4.55 9.55 4.34 9.73 4.07C9.9 3.81 10 3.49 10 3.17V3C10 2.47 10.21 1.96 10.59 1.59C10.96 1.21 11.47 1 12 1C12.53 1 13.04 1.21 13.41 1.59C13.79 1.96 14 2.47 14 3V3.09C14 3.41 14.1 3.73 14.27 3.99C14.45 4.26 14.7 4.47 15 4.6C15.3 4.73 15.64 4.77 15.96 4.71C16.29 4.66 16.58 4.5 16.82 4.27L16.88 4.21C17.07 4.02 17.29 3.88 17.53 3.78C17.77 3.68 18.03 3.62 18.3 3.62C18.56 3.62 18.82 3.68 19.06 3.78C19.3 3.88 19.52 4.02 19.71 4.21C19.9 4.4 20.04 4.62 20.14 4.86C20.24 5.1 20.3 5.36 20.3 5.63C20.3 5.89 20.24 6.15 20.14 6.39C20.04 6.63 19.9 6.85 19.71 7.04L19.65 7.1C19.42 7.34 19.26 7.64 19.21 7.96C19.15 8.28 19.19 8.62 19.32 8.92V9C19.45 9.3 19.66 9.55 19.93 9.73C20.19 9.9 20.51 10 20.83 10H21C21.53 10 22.04 10.21 22.41 10.59C22.79 10.96 23 11.47 23 12C23 12.53 22.79 13.04 22.41 13.41C22.04 13.79 21.53 14 21 14H20.91C20.59 14 20.27 14.1 20.01 14.27C19.74 14.45 19.53 14.7 19.4 15Z" stroke={color} strokeWidth="1.5" />
-  </Svg>
-);
-
+/* ═══════════════ ICONS ═══════════════ */
 const SunIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-      <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
-      <Path d="M12 17C14.7614 17 17 14.7614 17 12C17 9.23858 14.7614 7 12 7C9.23858 7 7 9.23858 7 12C7 14.7614 9.23858 17 12 17Z" stroke="#FDB913" strokeWidth="2" />
-    </Svg>
+    <Circle cx="12" cy="12" r="5" stroke="#FDB913" strokeWidth="2" />
+    <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
   </Svg>
 );
-
 const MoonIcon = () => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
     <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
+const PlusIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M12 5V19M5 12H19" stroke={color} strokeWidth="2.5" strokeLinecap="round" />
+  </Svg>
+);
+const MapPinIcon = ({ color }: { color: string }) => (
+  <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61 3.95 5.32 5.64 3.64C7.32 1.95 9.61 1 12 1C14.39 1 16.68 1.95 18.36 3.64C20.05 5.32 21 7.61 21 10Z" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <Circle cx="12" cy="10" r="3" stroke={color} strokeWidth="1.5" />
+  </Svg>
+);
+const GlobeIcon = ({ color }: { color: string }) => (
+  <Svg width={13} height={13} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.5" />
+    <Path d="M2 12H22M12 2C14.5 4.5 16 8.5 16 12C16 15.5 14.5 19.5 12 22M12 2C9.5 4.5 8 8.5 8 12C8 15.5 9.5 19.5 12 22" stroke={color} strokeWidth="1.5" />
+  </Svg>
+);
+const ExternalLinkIcon = ({ color }: { color: string }) => (
+  <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
+    <Path d="M18 13V19C18 19.53 17.79 20.04 17.41 20.41C17.04 20.79 16.53 21 16 21H5C4.47 21 3.96 20.79 3.59 20.41C3.21 20.04 3 19.53 3 19V8C3 7.47 3.21 6.96 3.59 6.59C3.96 6.21 4.47 6 5 6H11" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M15 3H21V9M10 14L21 3" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const EditIcon = ({ color }: { color: string }) => (
+  <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
+    <Path d="M11 4H4C3.47 4 2.96 4.21 2.59 4.59C2.21 4.96 2 5.47 2 6V20C2 20.53 2.21 21.04 2.59 21.41C2.96 21.79 3.47 22 4 22H18C18.53 22 19.04 21.79 19.41 21.41C19.79 21.04 20 20.53 20 20V13" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M18.5 2.5C18.89 2.11 19.41 1.9 19.95 1.9C20.49 1.9 21.01 2.11 21.4 2.5C21.79 2.89 22 3.41 22 3.95C22 4.49 21.79 5.01 21.4 5.4L12 15L8 16L9 12L18.5 2.5Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const SettingsIcon = ({ color }: { color: string }) => (
+  <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="3" stroke={color} strokeWidth="2" />
+    <Path d="M19.4 15C19.27 15.3 19.23 15.64 19.29 15.96C19.34 16.29 19.5 16.58 19.73 16.82L19.79 16.88C20.16 17.25 20.37 17.75 20.37 18.27C20.37 18.79 20.16 19.29 19.79 19.66C19.42 20.03 18.92 20.24 18.4 20.24C17.88 20.24 17.38 20.03 17.01 19.66L16.95 19.6C16.71 19.37 16.42 19.21 16.09 19.16C15.77 19.1 15.43 19.14 15.13 19.27C14.83 19.4 14.58 19.61 14.4 19.88C14.23 20.14 14.13 20.46 14.13 20.78V21C14.13 21.52 13.92 22.02 13.55 22.39C13.18 22.76 12.68 22.97 12.16 22.97C11.64 22.97 11.14 22.76 10.77 22.39C10.4 22.02 10.19 21.52 10.19 21V20.91C10.18 20.58 10.07 20.25 9.86 19.98C9.66 19.71 9.38 19.51 9.07 19.4C8.77 19.27 8.43 19.23 8.11 19.29C7.79 19.34 7.49 19.5 7.25 19.73L7.19 19.79C6.82 20.16 6.32 20.37 5.8 20.37C5.28 20.37 4.78 20.16 4.41 19.79C4.04 19.42 3.83 18.92 3.83 18.4C3.83 17.88 4.04 17.38 4.41 17.01L4.47 16.95C4.7 16.71 4.86 16.42 4.91 16.09C4.97 15.77 4.93 15.43 4.8 15.13C4.67 14.83 4.46 14.58 4.19 14.4C3.93 14.23 3.61 14.13 3.29 14.13H3C2.48 14.13 1.98 13.92 1.61 13.55C1.24 13.18 1.03 12.68 1.03 12.16C1.03 11.64 1.24 11.14 1.61 10.77C1.98 10.4 2.48 10.19 3 10.19H3.09C3.42 10.18 3.75 10.07 4.02 9.86C4.29 9.66 4.49 9.38 4.6 9.07C4.73 8.77 4.77 8.43 4.71 8.11C4.66 7.79 4.5 7.49 4.27 7.25L4.21 7.19C3.84 6.82 3.63 6.32 3.63 5.8C3.63 5.28 3.84 4.78 4.21 4.41C4.58 4.04 5.08 3.83 5.6 3.83C6.12 3.83 6.62 4.04 6.99 4.41L7.05 4.47C7.29 4.7 7.58 4.86 7.91 4.91C8.23 4.97 8.57 4.93 8.87 4.8H8.93C9.23 4.67 9.48 4.46 9.66 4.19C9.84 3.93 9.94 3.61 9.94 3.29V3C9.94 2.48 10.15 1.98 10.52 1.61C10.89 1.24 11.39 1.03 11.91 1.03C12.43 1.03 12.93 1.24 13.3 1.61C13.67 1.98 13.88 2.48 13.88 3V3.09C13.88 3.41 13.98 3.74 14.16 4.01C14.34 4.28 14.59 4.49 14.9 4.6C15.2 4.73 15.54 4.77 15.86 4.71C16.19 4.66 16.49 4.5 16.73 4.27L16.79 4.21C17.16 3.84 17.66 3.63 18.18 3.63C18.7 3.63 19.2 3.84 19.57 4.21C19.94 4.58 20.15 5.08 20.15 5.6C20.15 6.12 19.94 6.62 19.57 6.99L19.51 7.05C19.28 7.29 19.12 7.58 19.07 7.91C19.01 8.23 19.05 8.57 19.18 8.87V8.93C19.31 9.23 19.52 9.48 19.79 9.66C20.06 9.84 20.38 9.94 20.7 9.94H21C21.52 9.94 22.02 10.15 22.39 10.52C22.76 10.89 22.97 11.39 22.97 11.91C22.97 12.43 22.76 12.93 22.39 13.3C22.02 13.67 21.52 13.88 21 13.88H20.91C20.59 13.88 20.26 13.98 19.99 14.16C19.72 14.34 19.51 14.59 19.4 14.9C19.27 15.2 19.23 15.54 19.4 15Z" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+const TrashIcon = ({ color }: { color: string }) => (
+  <Svg width={15} height={15} viewBox="0 0 24 24" fill="none">
+    <Path d="M3 6H5H21M19 6L18.09 19.13C18.04 19.67 17.79 20.17 17.38 20.53C16.98 20.89 16.46 21.09 15.91 21.09H8.09C7.54 21.09 7.02 20.89 6.62 20.53C6.21 20.17 5.96 19.67 5.91 19.13L5 6M10 11V17M14 11V17M15 6V4C15 3.73 14.89 3.48 14.71 3.29C14.53 3.11 14.28 3 14 3H10C9.73 3 9.47 3.11 9.29 3.29C9.11 3.47 9 3.73 9 4V6" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
 
-interface Store {
-  id: number;
-  name: string;
-  status: string;
-  location: string | null;
-  description?: string;
-  domain?: string;
-}
+/* ═══════════════ PULSE DOT ═══════════════ */
+const PulseDot = ({ color }: { color: string }) => {
+  const anim = useRef(new Animated.Value(0.5)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 1, duration: 700, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0.5, duration: 700, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+  return <Animated.View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, opacity: anim }} />;
+};
 
+/* ═══════════════ STORE CARD ═══════════════ */
+interface Store { id: number; name: string; status: string; location: string | null; description?: string; domain?: string; }
+
+const accentColors = [
+  ['#6C5CE7', '#A29BFE'],
+  ['#00B894', '#55EFC4'],
+  ['#E17055', '#FDCB6E'],
+  ['#0984E3', '#74B9FF'],
+  ['#FD79A8', '#E84393'],
+  ['#00CEC9', '#81ECEC'],
+];
+
+const StoreCard = ({ store, index, orderCount, COLORS, onEdit, onSettings, onDelete, onOpenStorefront, onToggleStatus, t }: any) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(24)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, delay: index * 80, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 400, delay: index * 80, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  const accent = accentColors[index % accentColors.length];
+  const isActive = store.status?.toLowerCase() === 'active';
+  const isDraft = store.status?.toLowerCase() === 'draft';
+  const isSuspended = store.status?.toLowerCase() === 'suspended';
+
+  return (
+    <Animated.View style={[
+      styles.storeCard,
+      { backgroundColor: COLORS.surface, borderColor: COLORS.border, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
+    ]}>
+      {/* Gradient Accent Bar */}
+      <LinearGradient colors={accent as [string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.accentBar} />
+
+      <View style={styles.cardBody}>
+        {/* Top Row */}
+        <View style={styles.cardTopRow}>
+          <View style={[styles.storeInitial, { backgroundColor: accent[0] + '20' }]}>
+            <Text style={{ fontSize: 18, fontWeight: '900', color: accent[0] }}>
+              {store.name?.charAt(0)?.toUpperCase() || 'S'}
+            </Text>
+          </View>
+          <View style={{ flex: 1, marginLeft: 12 }}>
+            <Text style={[styles.storeName, { color: COLORS.text }]} numberOfLines={1}>{store.name}</Text>
+            {store.location ? (
+              <View style={styles.locationRow}>
+                <MapPinIcon color={COLORS.textMuted} />
+                <Text style={[styles.locationText, { color: COLORS.textMuted }]} numberOfLines={1}>{store.location}</Text>
+              </View>
+            ) : null}
+          </View>
+          {/* Status Badge */}
+          <View style={[
+            styles.statusBadge, 
+            { 
+              backgroundColor: isActive ? COLORS.success + '15' : isSuspended ? COLORS.error + '15' : COLORS.warning + '15', 
+              flexDirection: 'row', 
+              alignItems: 'center', 
+              gap: 6 
+            }
+          ]}>
+            <PulseDot color={isActive ? COLORS.success : isSuspended ? COLORS.error : COLORS.warning} />
+            <Text style={[styles.statusText, { color: isActive ? COLORS.success : isSuspended ? COLORS.error : COLORS.warning }]}>
+              {store.status?.charAt(0).toUpperCase() + store.status?.slice(1)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Suspended Warning */}
+        {isSuspended && (
+          <View style={[styles.suspendedWarning, { backgroundColor: COLORS.error + '10', borderColor: COLORS.error + '30' }]}>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.error }}>
+              {t('stores_suspendedByAdmin') || '⚠️ Suspended by Admin'}
+            </Text>
+            <Text style={{ fontSize: 11, color: COLORS.textSecondary, marginTop: 2 }}>
+              {t('stores_contactAdmin') || 'Contact admin to reactivate this store'}
+            </Text>
+          </View>
+        )}
+
+        {/* Description */}
+        {store.description ? (
+          <Text style={[styles.storeDesc, { color: COLORS.textSecondary }]} numberOfLines={2}>{store.description}</Text>
+        ) : null}
+
+        {/* Meta Row */}
+        <View style={styles.metaRow}>
+          <View style={[styles.metaChip, { backgroundColor: COLORS.background }]}>
+            <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+              <Path d="M9 11L12 14L22 4" stroke={COLORS.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+              <Path d="M21 12V19C21 19.53 20.79 20.04 20.41 20.41C20.04 20.79 19.53 21 19 21H5C4.47 21 3.96 20.79 3.59 20.41C3.21 20.04 3 19.53 3 19V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H16" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" />
+            </Svg>
+            <Text style={[styles.metaText, { color: COLORS.textSecondary }]}>{orderCount || 0} {t('dashboard_orders').toLowerCase()}</Text>
+          </View>
+          {store.domain ? (
+            <TouchableOpacity 
+              style={[styles.metaChip, { backgroundColor: accent[0] + '15' }]}
+              onPress={onOpenStorefront}
+              activeOpacity={0.7}
+            >
+              <GlobeIcon color={accent[0]} />
+              <Text style={[styles.metaText, { color: accent[0] }]} numberOfLines={1}>{store.domain}</Text>
+              <ExternalLinkIcon color={accent[0]} />
+            </TouchableOpacity>
+          ) : null}
+        </View>
+
+        {/* Status Control Row */}
+        {!isSuspended && (
+          <View style={[styles.statusControlRow, { borderTopColor: COLORS.border, borderBottomColor: COLORS.border }]}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: COLORS.textSecondary }}>
+              {t('stores_storeStatus') || 'Store Status:'}
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TouchableOpacity
+                style={[
+                  styles.statusToggleBtn,
+                  { 
+                    backgroundColor: isDraft ? COLORS.warning + '15' : COLORS.background,
+                    borderColor: isDraft ? COLORS.warning : COLORS.border
+                  }
+                ]}
+                onPress={() => onToggleStatus(store.id, 'draft')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.statusToggleText, { color: isDraft ? COLORS.warning : COLORS.textMuted }]}>
+                  {t('stores_draft') || 'Draft'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[
+                  styles.statusToggleBtn,
+                  { 
+                    backgroundColor: isActive ? COLORS.success + '15' : COLORS.background,
+                    borderColor: isActive ? COLORS.success : COLORS.border
+                  }
+                ]}
+                onPress={() => onToggleStatus(store.id, 'active')}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.statusToggleText, { color: isActive ? COLORS.success : COLORS.textMuted }]}>
+                  {t('stores_active') || 'Active'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Action Buttons */}
+        <View style={[styles.actionRow, { borderTopColor: COLORS.border }]}>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.primary + '10' }]} onPress={onEdit} activeOpacity={0.7}>
+            <EditIcon color={COLORS.primary} />
+            <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>{t('common_edit')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: accent[0] + '10' }]} onPress={onSettings} activeOpacity={0.7}>
+            <SettingsIcon color={accent[0]} />
+            <Text style={[styles.actionBtnText, { color: accent[0] }]}>{t('common_settings')}</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.error + '10' }]} onPress={onDelete} activeOpacity={0.7}>
+            <TrashIcon color={COLORS.error} />
+            <Text style={[styles.actionBtnText, { color: COLORS.error }]}>{t('common_delete')}</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Animated.View>
+  );
+};
+
+/* ═══════════════ MAIN ═══════════════ */
 interface StoresScreenProps {
   navigate?: (screenId: string, params?: Record<string, any>) => void;
   resetTo?: (screenId: string) => void;
@@ -75,14 +286,80 @@ interface StoresScreenProps {
 const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }) => {
   const { mode, toggleTheme } = useTheme();
   const COLORS = getColors(mode);
-  const { t, isRTL } = useTranslation();
+  const { t, isRTL, language, setLanguage } = useTranslation();
   const [stores, setStores] = useState<Store[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [orderCounts, setOrderCounts] = useState<Record<number, number>>({});
   const [userType, setUserType] = useState<'buyer' | 'seller' | 'both'>('buyer');
   const [sellerStatus, setSellerStatus] = useState<'not_submitted' | 'pending' | 'approved' | 'rejected'>('not_submitted');
+  const [rejectionReason, setRejectionReason] = useState('');
+  const fadeAnim = useRef(new Animated.Value(0)).current;
   const { message, showSuccess, showError, showInfo, clear } = useStatusMessage();
+
+  const cycleLanguage = () => {
+    const langs: ('en' | 'ar' | 'fr')[] = ['en', 'ar', 'fr'];
+    const idx = langs.indexOf(language);
+    setLanguage(langs[(idx + 1) % langs.length]);
+  };
+
+  const loadUserData = async () => {
+    try {
+      const userData = await AsyncStorage.getItem('userData');
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUserType(user.accountType || 'buyer');
+      }
+      const token = await AsyncStorage.getItem('accessToken') || await AsyncStorage.getItem('authToken');
+      if (token) {
+        try {
+          const res = await fetch(`${API_URL}/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+          if (res.ok) {
+            const user = await res.json();
+            
+            setUserType(user.accountType || 'buyer');
+            
+            // Determine seller status
+            let status: 'not_submitted' | 'pending' | 'approved' | 'rejected' = 'not_submitted';
+            
+            // Priority 1: Check sellerRegistration if it exists
+            if (user.sellerRegistration) {
+              const vs = user.sellerRegistration.verificationStatus;
+              if (vs === 'approved') {
+                status = 'approved';
+              } else if (vs === 'rejected') {
+                status = 'rejected';
+                setRejectionReason(user.sellerRegistration.rejectionReason || '');
+              } else if (vs === 'pending') {
+                status = 'pending';
+              } else {
+                // sellerRegistration exists but status is not set - treat as not_submitted
+                status = 'not_submitted';
+              }
+            }
+            // Priority 2: Check documentsUploaded flag
+            else if (user.documentsUploaded === true) {
+              status = 'pending';
+            }
+            // Priority 3: If accountStatus is explicitly 'pending', treat as pending
+            else if (user.accountStatus === 'pending') {
+              status = 'pending';
+            }
+            // Default: not_submitted (don't auto-approve based on accountStatus alone)
+            else {
+              status = 'not_submitted';
+            }
+            
+            setSellerStatus(status);
+          }
+        } catch (err) { 
+          // Silent error handling
+        }
+      }
+    } catch (e) { 
+      // Silent error handling
+    }
+  };
 
   const fetchStores = async () => {
     try {
@@ -102,27 +379,11 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
     } finally {
       setLoading(false);
       setRefreshing(false);
+      Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start();
     }
   };
 
   useEffect(() => {
-    const loadUserData = async () => {
-      try {
-        const userData = await AsyncStorage.getItem('userData');
-        if (userData) {
-          const user = JSON.parse(userData);
-          setUserType(user.accountType || 'buyer');
-          // TODO: Fetch seller registration status from API
-          // For now, simulate based on account type
-          if (user.accountType === 'seller' || user.accountType === 'both') {
-            // In production, fetch from: /api/seller-registrations/my-status
-            setSellerStatus('approved'); // Change this based on API response
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load user data', error);
-      }
-    };
     loadUserData();
     fetchStores();
   }, []);
@@ -139,67 +400,113 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
     }
   };
 
+  const handleToggleStatus = async (storeId: number, newStatus: 'draft' | 'active') => {
+    try {
+      const response = await storeAPI.updateStore(storeId, { status: newStatus });
+      showSuccess(t('stores_statusUpdated') || `Store status changed to ${newStatus}`);
+      await fetchStores();
+    } catch (error: any) {
+      // Check if it's a suspended store error
+      if (error.message?.includes('suspended') || error.message?.includes('admin')) {
+        showError(t('stores_cannotActivateSuspended') || 'Cannot activate suspended store. Please contact admin.');
+      } else {
+        showError(error.message || t('stores_statusUpdateFailed') || 'Failed to update store status');
+      }
+    }
+  };
+
+  const handleOpenStorefront = (domain: string) => {
+    const storefrontUrl = `http://localhost:5173/store/${domain}`;
+    // For web, open in new tab
+    if (typeof window !== 'undefined') {
+      window.open(storefrontUrl, '_blank');
+    }
+    // For mobile, you would use Linking.openURL(storefrontUrl)
+  };
+
+  const handleCreateStore = () => {
+    if (sellerStatus === 'not_submitted') {
+      // Navigate directly to document upload
+      navigate?.('documentUpload', { accountType: 'seller' });
+    } else if (sellerStatus === 'pending') {
+      // Documents under review - show info message
+      showInfo(t('stores_pendingMessage') || 'Your documents are under review. This typically takes 2-3 business days. You\'ll be notified once approved.');
+      return;
+    } else if (sellerStatus === 'approved') {
+      // Approved - allow store creation
+      navigate?.('addEditStore');
+    } else {
+      // Fallback for any other status
+      navigate?.('addEditStore');
+    }
+  };
+
   const handleTabPress = (tab: BottomTabId) => {
     if (tab === 'stores') return;
     resetTo ? resetTo(tab) : navigate?.(tab);
   };
 
-  const getStatusStyle = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'active': case 'published': return { bg: COLORS.success + '20', color: COLORS.success };
-      case 'draft': return { bg: COLORS.warning + '20', color: COLORS.warning };
-      default: return { bg: COLORS.textMuted + '20', color: COLORS.textMuted };
-    }
-  };
+  const activeCount = stores.filter(s => s.status?.toLowerCase() === 'active' || s.status?.toLowerCase() === 'published').length;
+  const totalOrders = Object.values(orderCounts).reduce((a, b) => a + b, 0);
+
+  /* ─── Header (shared) ─────────────────────── */
+  const Header = () => (
+    <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
+      <View style={[styles.headerLeft, isRTL && { flexDirection: 'row-reverse' }]}>
+        <Logo variant="icon" size={38} />
+        <View style={{ marginLeft: 10 }}>
+          <Text style={[styles.headerTitle, { color: COLORS.text }]}>{t('nav_stores') || 'My Stores'}</Text>
+          <Text style={{ fontSize: 12, color: COLORS.textMuted, fontWeight: '500' }}>{stores.length} {t('stores_total') || 'stores'}</Text>
+        </View>
+      </View>
+      <View style={[styles.headerControls, isRTL && { flexDirection: 'row-reverse' }]}>
+        <TouchableOpacity
+          style={[styles.controlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+          onPress={cycleLanguage} activeOpacity={0.7}
+        >
+          <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.text }}>{language.toUpperCase()}</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.controlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+          onPress={toggleTheme} activeOpacity={0.7}
+        >
+          {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
 
   if (loading) {
     return (
-      <View style={[{ flex: 1, backgroundColor: COLORS.background }, styles.loadingContainer]}>
-        <ActivityIndicator size="large" color={COLORS.primary} />
-        <Text style={[styles.loadingText, { color: COLORS.textSecondary }]}>{t('stores_loading')}</Text>
+      <View style={[{ flex: 1, backgroundColor: COLORS.background }, styles.center]}>
+        <View style={{ backgroundColor: COLORS.surface, padding: 40, borderRadius: CARD_R, borderWidth: 1, borderColor: COLORS.border, alignItems: 'center' }}>
+          <ActivityIndicator size="large" color={COLORS.primary} />
+          <Text style={{ marginTop: 16, color: COLORS.textMuted, fontWeight: '600' }}>{t('stores_loading') || 'Loading stores...'}</Text>
+        </View>
       </View>
     );
   }
 
-  // Buyer Access Restriction
+  /* ─── BUYER RESTRICTION ───────────────────── */
   if (userType === 'buyer') {
     return (
-      <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <View style={[styles.outer, { backgroundColor: COLORS.background }]}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Header with Logo and Theme Toggle */}
-          <View style={[styles.topHeader, isRTL && styles.rowReverse]}>
-            <Logo variant="icon" size={40} />
-            <TouchableOpacity
-              style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-              onPress={toggleTheme}
-              activeOpacity={0.7}
-            >
-              {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
-            </TouchableOpacity>
-          </View>
-
-          {/* Restricted Access Message */}
-          <View style={[styles.restrictedContainer, { backgroundColor: COLORS.surface }]}>
-            <View style={[styles.restrictedIcon, { backgroundColor: COLORS.warning + '15' }]}>
-              <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                <Path d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z" stroke={COLORS.warning} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <Header />
+          <View style={[styles.stateCard, { backgroundColor: COLORS.surface, borderColor: COLORS.warning + '30' }]}>
+            <View style={[styles.stateIconBadge, { backgroundColor: COLORS.warning + '15' }]}>
+              <Svg width={36} height={36} viewBox="0 0 24 24" fill="none">
+                <Path d="M3 9L12 2L21 9V20C21 20.53 20.79 21.04 20.41 21.41C20.04 21.79 19.53 22 19 22H5C4.47 22 3.96 21.79 3.59 21.41C3.21 21.04 3 20.53 3 20V9Z" stroke={COLORS.warning} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 <Path d="M9 22V12H15V22" stroke={COLORS.warning} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </Svg>
             </View>
-            <Text style={[styles.restrictedTitle, { color: COLORS.text }]}>Seller Account Required</Text>
-            <Text style={[styles.restrictedMessage, { color: COLORS.textSecondary }]}>
-              This section is only available for seller accounts. To create and manage stores, you need to upgrade your account to a seller account.
+            <Text style={[styles.stateTitle, { color: COLORS.warning }]}>{t('stores_sellerRequired')}</Text>
+            <Text style={[styles.stateDesc, { color: COLORS.textSecondary }]}>
+              {t('stores_sellerRequiredDesc')}
             </Text>
-            <TouchableOpacity
-              style={[styles.upgradeButton, { backgroundColor: COLORS.primary }]}
-              onPress={() => navigate?.('userSettings')}
-              activeOpacity={0.8}
-            >
-              <Text style={styles.upgradeButtonText}>Go to Settings</Text>
+            <TouchableOpacity style={[styles.stateBtn, { backgroundColor: COLORS.primary }]} onPress={() => navigate?.('documentUpload', { accountType: 'seller' })} activeOpacity={0.8}>
+              <Text style={styles.stateBtnText}>{t('stores_goToSettings')}</Text>
             </TouchableOpacity>
-            <Text style={[styles.restrictedFooter, { color: COLORS.textMuted }]}>
-              You can upgrade to a seller account in your account settings. You'll need to submit required documents for verification.
-            </Text>
           </View>
         </ScrollView>
         <BottomNav activeTab="stores" onTabPress={handleTabPress} />
@@ -207,92 +514,39 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
     );
   }
 
-  // Seller Verification Status Check
-  if (sellerStatus !== 'approved') {
+  /* ─── SELLER VERIFICATION STATES ─────────── */
+  // Only block if rejected - allow not_submitted and pending to see stores list
+  if (sellerStatus === 'rejected') {
+    const cfg = { 
+      color: COLORS.error, 
+      icon: '❌', 
+      title: t('stores_rejected'), 
+      desc: t('stores_rejectedDesc'), 
+      btnText: t('stores_resubmit'), 
+      btnNav: 'documentUpload' 
+    };
+
     return (
-      <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+      <View style={[styles.outer, { backgroundColor: COLORS.background }]}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          {/* Header with Logo and Theme Toggle */}
-          <View style={[styles.topHeader, isRTL && styles.rowReverse]}>
-            <Logo variant="icon" size={40} />
-            <TouchableOpacity
-              style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-              onPress={toggleTheme}
-              activeOpacity={0.7}
-            >
-              {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+          <Header />
+          <View style={[styles.stateCard, { backgroundColor: COLORS.surface, borderColor: cfg.color + '30' }]}>
+            <View style={[styles.stateIconBadge, { backgroundColor: cfg.color + '15' }]}>
+              <Text style={{ fontSize: 36 }}>{cfg.icon}</Text>
+            </View>
+            <Text style={[styles.stateTitle, { color: cfg.color }]}>{cfg.title}</Text>
+            <Text style={[styles.stateDesc, { color: COLORS.textSecondary }]}>{cfg.desc}</Text>
+
+            {rejectionReason ? (
+              <View style={[styles.rejectionBox, { backgroundColor: COLORS.error + '10', borderColor: COLORS.error + '30' }]}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.error, marginBottom: 4 }}>{t('stores_rejectionReason')}</Text>
+                <Text style={{ fontSize: 13, color: COLORS.textSecondary, lineHeight: 18 }}>{rejectionReason}</Text>
+              </View>
+            ) : null}
+
+            <TouchableOpacity style={[styles.stateBtn, { backgroundColor: COLORS.primary }]} onPress={() => navigate?.(cfg.btnNav, { accountType: 'seller' })} activeOpacity={0.8}>
+              <Text style={styles.stateBtnText}>{cfg.btnText}</Text>
             </TouchableOpacity>
-          </View>
-
-          {/* Verification Status Card */}
-          <View style={[styles.verificationCard, { backgroundColor: COLORS.surface }]}>
-            {sellerStatus === 'not_submitted' && (
-              <>
-                <View style={[styles.statusIcon, { backgroundColor: COLORS.info + '15' }]}>
-                  <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                    <Path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke={COLORS.info} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    <Path d="M14 2V8H20" stroke={COLORS.info} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  </Svg>
-                </View>
-                <Text style={[styles.statusTitle, { color: COLORS.text }]}>Complete Seller Registration</Text>
-                <Text style={[styles.statusMessage, { color: COLORS.textSecondary }]}>
-                  To start selling and create stores, you need to complete your seller registration by submitting required documents according to Algerian regulations.
-                </Text>
-                <TouchableOpacity
-                  style={[styles.statusButton, { backgroundColor: COLORS.primary }]}
-                  onPress={() => navigate?.('sellerRegistration')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.statusButtonText}>Start Registration</Text>
-                </TouchableOpacity>
-              </>
-            )}
-
-            {sellerStatus === 'pending' && (
-              <>
-                <View style={[styles.statusIcon, { backgroundColor: COLORS.warning + '15' }]}>
-                  <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                    <Circle cx="12" cy="12" r="10" stroke={COLORS.warning} strokeWidth="2" />
-                    <Path d="M12 6V12L16 14" stroke={COLORS.warning} strokeWidth="2" strokeLinecap="round" />
-                  </Svg>
-                </View>
-                <Text style={[styles.statusTitle, { color: COLORS.text }]}>Registration Under Review</Text>
-                <Text style={[styles.statusMessage, { color: COLORS.textSecondary }]}>
-                  Your seller registration documents have been submitted and are currently being reviewed by our admin team. This process typically takes 2-3 business days.
-                </Text>
-                <View style={[styles.statusBadge, { backgroundColor: COLORS.warning + '15' }]}>
-                  <Text style={[styles.statusBadgeText, { color: COLORS.warning }]}>⏱ Pending Review</Text>
-                </View>
-              </>
-            )}
-
-            {sellerStatus === 'rejected' && (
-              <>
-                <View style={[styles.statusIcon, { backgroundColor: COLORS.error + '15' }]}>
-                  <Svg width={48} height={48} viewBox="0 0 24 24" fill="none">
-                    <Circle cx="12" cy="12" r="10" stroke={COLORS.error} strokeWidth="2" />
-                    <Path d="M15 9L9 15M9 9L15 15" stroke={COLORS.error} strokeWidth="2" strokeLinecap="round" />
-                  </Svg>
-                </View>
-                <Text style={[styles.statusTitle, { color: COLORS.text }]}>Registration Rejected</Text>
-                <Text style={[styles.statusMessage, { color: COLORS.textSecondary }]}>
-                  Unfortunately, your seller registration was not approved. Please review the feedback below and resubmit with corrected documents.
-                </Text>
-                <View style={[styles.rejectionBox, { backgroundColor: COLORS.error + '10', borderColor: COLORS.error + '30' }]}>
-                  <Text style={[styles.rejectionLabel, { color: COLORS.error }]}>Rejection Reason:</Text>
-                  <Text style={[styles.rejectionText, { color: COLORS.text }]}>
-                    Documents were unclear or incomplete. Please ensure all documents are legible and match the required format.
-                  </Text>
-                </View>
-                <TouchableOpacity
-                  style={[styles.statusButton, { backgroundColor: COLORS.primary }]}
-                  onPress={() => navigate?.('sellerRegistration')}
-                  activeOpacity={0.8}
-                >
-                  <Text style={styles.statusButtonText}>Resubmit Documents</Text>
-                </TouchableOpacity>
-              </>
-            )}
           </View>
         </ScrollView>
         <BottomNav activeTab="stores" onTabPress={handleTabPress} />
@@ -300,106 +554,98 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
     );
   }
 
-  // Approved Seller - Show Stores
+  /* ─── ALL SELLERS — STORES LIST ────────── */
+  // Show stores list for all sellers (not_submitted, pending, approved)
+  // But only approved sellers can actually create stores (checked in handleCreateStore)
   return (
-    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
+    <View style={[styles.outer, { backgroundColor: COLORS.background }]}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={fetchStores} tintColor={COLORS.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); loadUserData(); fetchStores(); }} tintColor={COLORS.primary} />}
       >
-        {/* Header with Logo and Theme Toggle */}
-        <View style={[styles.topHeader, isRTL && styles.rowReverse]}>
-          <Logo variant="icon" size={40} />
+        <Animated.View style={{ opacity: fadeAnim }}>
+          <Header />
+          <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
+
+          {/* ── Pending Review Banner ── */}
+          {sellerStatus === 'pending' && (
+            <View style={[styles.pendingBanner, { backgroundColor: COLORS.warning + '12', borderColor: COLORS.warning + '30' }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <PulseDot color={COLORS.warning} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: COLORS.warning, marginBottom: 4 }}>
+                    {t('stores_underReview')}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: COLORS.textSecondary, lineHeight: 18 }}>
+                    {t('stores_underReviewDesc')}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+
+          {/* ── Hero Stats ── */}
+          <View style={[styles.heroCard, { borderColor: COLORS.border }]}>
+            <LinearGradient colors={[COLORS.primary, COLORS.primaryLight]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroGrad}>
+              <View style={styles.heroRow}>
+                <View style={styles.heroStat}>
+                  <Text style={styles.heroStatValue}>{stores.length}</Text>
+                  <Text style={styles.heroStatLabel}>{t('stores_total') || 'Total'}</Text>
+                </View>
+                <View style={styles.heroDivider} />
+                <View style={styles.heroStat}>
+                  <Text style={styles.heroStatValue}>{activeCount}</Text>
+                  <Text style={styles.heroStatLabel}>{t('dashboard_active') || 'Active'}</Text>
+                </View>
+                <View style={styles.heroDivider} />
+                <View style={styles.heroStat}>
+                  <Text style={styles.heroStatValue}>{totalOrders}</Text>
+                  <Text style={styles.heroStatLabel}>{t('dashboard_orders') || 'Orders'}</Text>
+                </View>
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* ── Add Store Button ── */}
           <TouchableOpacity
-            style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-            onPress={toggleTheme}
+            style={[styles.addStoreBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.primary + '40', borderStyle: 'dashed' }]}
+            onPress={handleCreateStore}
             activeOpacity={0.7}
           >
-            {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            <View style={[styles.addStoreBtnIcon, { backgroundColor: COLORS.primary + '15' }]}>
+              <PlusIcon color={COLORS.primary} />
+            </View>
+            <Text style={[styles.addStoreBtnText, { color: COLORS.primary }]}>{t('stores_createStore') || 'Create New Store'}</Text>
           </TouchableOpacity>
-        </View>
 
-        {/* Page Title */}
-        <View style={[styles.header, isRTL && styles.rowReverse]}>
-          <View style={{ flex: 1 }}>
-            <Text style={[styles.title, { color: COLORS.text }, isRTL && styles.textRight]}>{t('nav_stores')}</Text>
-            <Text style={[styles.subtitle, { color: COLORS.textSecondary }, isRTL && styles.textRight]}>{t('stores_subtitle')}</Text>
-          </View>
-          <TouchableOpacity style={[styles.addBtn, { backgroundColor: COLORS.primary + '15' }]} onPress={() => navigate?.('addEditStore')}>
-            <PlusIcon color={COLORS.primary} />
-          </TouchableOpacity>
-        </View>
-
-        <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
-
-        {/* Summary */}
-        <View style={[styles.summaryRow, { backgroundColor: COLORS.surface }, isRTL && styles.rowReverse]}>
-          <View style={styles.summaryItem}>
-            <Text style={[styles.summaryValue, { color: COLORS.text }]}>{stores.length}</Text>
-            <Text style={[styles.summaryLabel, { color: COLORS.textSecondary }]}>{t('stores_total')}</Text>
-          </View>
-          <View style={[styles.summaryItem, styles.summaryBorder, { borderLeftColor: COLORS.borderLight }]}>
-            <Text style={[styles.summaryValue, { color: COLORS.success }]}>{stores.filter(s => s.status?.toLowerCase() === 'active' || s.status?.toLowerCase() === 'published').length}</Text>
-            <Text style={[styles.summaryLabel, { color: COLORS.textSecondary }]}>{t('dashboard_active')}</Text>
-          </View>
-        </View>
-
-        {stores.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={[styles.emptyTitle, { color: COLORS.text }]}>{t('stores_noStores')}</Text>
-            <Text style={[styles.emptySubtitle, { color: COLORS.textSecondary }]}>{t('stores_noStoresDesc')}</Text>
-            <TouchableOpacity style={[styles.createBtn, { backgroundColor: COLORS.primary }]} onPress={() => navigate?.('addEditStore')}>
-              <Text style={styles.createBtnText}>{t('stores_createStore')}</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View>
-            {stores.map((store) => {
-              const ss = getStatusStyle(store.status);
-              return (
-                <View key={store.id} style={[styles.storeCard, { backgroundColor: COLORS.surface }]}>
-                  <View style={[styles.cardTop, isRTL && styles.rowReverse]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.storeName, { color: COLORS.text }, isRTL && styles.textRight]}>{store.name}</Text>
-                      {store.location && (
-                        <View style={[styles.locationRow, isRTL && styles.rowReverse]}>
-                          <MapPinIcon color={COLORS.textSecondary} />
-                          <Text style={[styles.locationText, { color: COLORS.textSecondary }]}>{store.location}</Text>
-                        </View>
-                      )}
-                    </View>
-                    <View style={[styles.badge, { backgroundColor: ss.bg }]}>
-                      <Text style={[styles.badgeText, { color: ss.color }]}>
-                        {store.status?.charAt(0).toUpperCase() + store.status?.slice(1)}
-                      </Text>
-                    </View>
-                  </View>
-
-                  {/* Stats row */}
-                  <View style={[styles.statsRow, isRTL && styles.rowReverse]}>
-                    <Text style={[styles.statChip, { color: COLORS.textSecondary }]}>{t('dashboard_orders')}: {orderCounts[store.id] || 0}</Text>
-                    {store.domain && <Text style={[styles.domainText, { color: COLORS.primary }]}>{store.domain}</Text>}
-                  </View>
-
-                  {/* Actions */}
-                  <View style={[styles.cardActions, { borderTopColor: COLORS.borderLight }, isRTL && styles.rowReverse]}>
-                    <TouchableOpacity style={[styles.actionBtn, { borderRightColor: COLORS.borderLight }]} onPress={() => navigate?.('addEditStore', { storeId: store.id.toString() })}>
-                      <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>{t('stores_modify')}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionBtn, { borderRightColor: COLORS.borderLight }]} onPress={() => navigate?.('storeSettings', { storeId: store.id.toString() })}>
-                      <SettingsGearIcon color={COLORS.textSecondary} />
-                      <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>{t('stores_settings')}</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.deleteActionBtn} onPress={() => handleDeleteStore(store.id, store.name)}>
-                      <Text style={[styles.deleteActionBtnText, { color: COLORS.error }]}>{t('common_delete')}</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-        )}
+          {/* ── Stores List ── */}
+          {stores.length === 0 ? (
+            <View style={[styles.emptyCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+              <Text style={{ fontSize: 48, marginBottom: 12 }}>🏪</Text>
+              <Text style={[styles.emptyTitle, { color: COLORS.text }]}>{t('stores_noStores') || "You don't have any stores yet"}</Text>
+              <Text style={[styles.emptyDesc, { color: COLORS.textSecondary }]}>{t('stores_noStoresDesc') || 'Get started by creating your first store above.'}</Text>
+            </View>
+          ) : (
+            <View style={{ gap: 14 }}>
+              {stores.map((store, index) => (
+                <StoreCard
+                  key={store.id}
+                  store={store}
+                  index={index}
+                  orderCount={orderCounts[store.id] || 0}
+                  COLORS={COLORS}
+                  t={t}
+                  onEdit={() => navigate?.('addEditStore', { storeId: store.id.toString() })}
+                  onSettings={() => navigate?.('storeSettings', { storeId: store.id.toString() })}
+                  onDelete={() => handleDeleteStore(store.id, store.name)}
+                  onOpenStorefront={() => handleOpenStorefront(store.domain || '')}
+                  onToggleStatus={handleToggleStatus}
+                />
+              ))}
+            </View>
+          )}
+        </Animated.View>
       </ScrollView>
       <BottomNav activeTab="stores" onTabPress={handleTabPress} />
     </View>
@@ -407,78 +653,63 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
 };
 
 const styles = StyleSheet.create({
-  loadingContainer: { justifyContent: 'center', alignItems: 'center' },
-  loadingText: { marginTop: 12, fontSize: 14 },
-  rowReverse: { flexDirection: 'row-reverse' as any },
-  textRight: { textAlign: 'right' as any },
-  content: { padding: SPACING.md, paddingTop: 48, paddingBottom: 110 },
+  outer: { flex: 1 },
+  center: { justifyContent: 'center', alignItems: 'center' },
+  content: { padding: 20, paddingTop: 54, paddingBottom: 110 },
 
-  /* Top Header with Logo and Theme Toggle */
-  topHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.md },
-  themeToggle: { width: 48, height: 48, borderRadius: 24, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
+  headerTitle: { fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  headerControls: { flexDirection: 'row', gap: 8 },
+  controlBtn: { width: 42, height: 42, borderRadius: 11, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
 
-  /* Page Header */
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: SPACING.lg },
-  title: { fontSize: 26, fontWeight: '600' },
-  subtitle: { fontSize: 13, marginTop: 2 },
-  addBtn: { width: 46, height: 46, borderRadius: 23, justifyContent: 'center', alignItems: 'center' },
+  heroCard: { borderRadius: CARD_R, overflow: 'hidden', marginBottom: 14, borderWidth: 1 },
+  heroGrad: { padding: 22 },
+  heroRow: { flexDirection: 'row', alignItems: 'center' },
+  heroStat: { flex: 1, alignItems: 'center' },
+  heroStatValue: { fontSize: 32, fontWeight: '900', color: '#FFFFFF', letterSpacing: -1 },
+  heroStatLabel: { fontSize: 11, color: 'rgba(255,255,255,0.85)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },
+  heroDivider: { width: 1, height: 44, backgroundColor: 'rgba(255,255,255,0.25)', marginHorizontal: 10 },
 
-  /* Restricted Access */
-  restrictedContainer: { borderRadius: 20, padding: 32, alignItems: 'center', marginTop: 40 },
-  restrictedIcon: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  restrictedTitle: { fontSize: 22, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
-  restrictedMessage: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
-  upgradeButton: { paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12, marginBottom: 16 },
-  upgradeButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-  restrictedFooter: { fontSize: 12, textAlign: 'center', lineHeight: 18 },
+  addStoreBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderRadius: CARD_R, paddingVertical: 16, borderWidth: 1.5, marginBottom: 14, gap: 12 },
+  addStoreBtnIcon: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  addStoreBtnText: { fontSize: 15, fontWeight: '700' },
 
-  /* Verification Status */
-  verificationCard: { borderRadius: 20, padding: 32, alignItems: 'center', marginTop: 20 },
-  statusIcon: { width: 80, height: 80, borderRadius: 40, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
-  statusTitle: { fontSize: 22, fontWeight: '700', marginBottom: 12, textAlign: 'center' },
-  statusMessage: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
-  statusButton: { paddingHorizontal: 32, paddingVertical: 14, borderRadius: 12, marginTop: 8 },
-  statusButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
-  statusBadge: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, marginTop: 8 },
-  statusBadgeText: { fontSize: 14, fontWeight: '700' },
-  rejectionBox: { width: '100%', padding: 16, borderRadius: 12, borderWidth: 1, marginBottom: 16 },
-  rejectionLabel: { fontSize: 13, fontWeight: '700', marginBottom: 8 },
-  rejectionText: { fontSize: 13, lineHeight: 20 },
+  emptyCard: { borderRadius: CARD_R, padding: 40, borderWidth: 1, alignItems: 'center' },
+  emptyTitle: { fontSize: 18, fontWeight: '700', marginBottom: 8, textAlign: 'center' },
+  emptyDesc: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
 
-  /* Summary */
-  summaryRow: { flexDirection: 'row', borderRadius: 12, marginBottom: SPACING.md, overflow: 'hidden' },
-  summaryItem: { flex: 1, alignItems: 'center', paddingVertical: 14 },
-  summaryBorder: { borderLeftWidth: 1 },
-  summaryValue: { fontSize: 20, fontWeight: '600' },
-  summaryLabel: { fontSize: 11, marginTop: 2 },
-
-  /* Empty */
-  emptyState: { padding: 40, alignItems: 'center' },
-  emptyTitle: { fontSize: 17, fontWeight: '700', marginBottom: 8 },
-  emptySubtitle: { fontSize: 13, textAlign: 'center', lineHeight: 20, marginBottom: 20 },
-  createBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 10 },
-  createBtnText: { color: '#FFFFFF', fontWeight: '600', fontSize: 14 },
-
-  /* Store card */
-  storeCard: { borderRadius: 12, marginBottom: 12, overflow: 'hidden' },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', padding: 14, paddingBottom: 10 },
-  storeName: { fontSize: 16, fontWeight: '700', marginBottom: 4 },
+  storeCard: { borderRadius: CARD_R, borderWidth: 1, overflow: 'hidden' },
+  accentBar: { height: 4 },
+  cardBody: { padding: 18 },
+  cardTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  storeInitial: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+  storeName: { fontSize: 16, fontWeight: '800', marginBottom: 4 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  locationText: { fontSize: 12 },
-  badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 10, marginLeft: 10 },
-  badgeText: { fontSize: 11, fontWeight: '600' },
+  locationText: { fontSize: 12, fontWeight: '500' },
+  statusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, flexShrink: 0 },
+  statusText: { fontSize: 11, fontWeight: '700' },
+  storeDesc: { fontSize: 13, lineHeight: 18, marginBottom: 12 },
+  metaRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 16 },
+  metaChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  metaText: { fontSize: 12, fontWeight: '600' },
+  suspendedWarning: { padding: 10, borderRadius: 8, borderWidth: 1, marginTop: 10 },
+  statusControlRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, marginTop: 10 },
+  statusToggleBtn: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 8, borderWidth: 1.5 },
+  statusToggleText: { fontSize: 12, fontWeight: '700' },
+  actionRow: { flexDirection: 'row', gap: 8, paddingTop: 14, borderTopWidth: 1 },
+  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 10 },
+  actionBtnText: { fontSize: 12, fontWeight: '700' },
 
-  /* Stats */
-  statsRow: { flexDirection: 'row', paddingHorizontal: 14, paddingBottom: 10, gap: 12 },
-  statChip: { fontSize: 12, fontWeight: '500' },
-  domainText: { fontSize: 12, fontWeight: '500' },
-
-  /* Actions */
-  cardActions: { flexDirection: 'row', borderTopWidth: 1 },
-  actionBtn: { flex: 1, flexDirection: 'row', paddingVertical: 10, alignItems: 'center', justifyContent: 'center', gap: 4, borderRightWidth: 1 },
-  actionBtnText: { fontSize: 13, fontWeight: '600' },
-  deleteActionBtn: { paddingHorizontal: 16, paddingVertical: 10, alignItems: 'center', justifyContent: 'center' },
-  deleteActionBtnText: { fontSize: 13, fontWeight: '600' },
+  stateCard: { borderRadius: CARD_R, padding: 32, alignItems: 'center', borderWidth: 1, marginTop: 8 },
+  stateIconBadge: { width: 72, height: 72, borderRadius: 36, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+  stateTitle: { fontSize: 20, fontWeight: '800', marginBottom: 10, textAlign: 'center' },
+  stateDesc: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 20 },
+  stateBtn: { paddingHorizontal: 32, paddingVertical: 14, borderRadius: 14 },
+  stateBtnText: { color: '#FFFFFF', fontSize: 15, fontWeight: '700' },
+  pendingBadge: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 20, paddingVertical: 12, borderRadius: 12 },
+  pendingBanner: { borderRadius: 16, padding: 16, marginBottom: 14, borderWidth: 1 },
+  rejectionBox: { width: '100%', padding: 14, borderRadius: 12, borderWidth: 1, marginBottom: 16 },
 });
 
 export default StoresScreen;

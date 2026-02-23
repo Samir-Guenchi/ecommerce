@@ -17,6 +17,12 @@ export const authenticate = async (
   next: NextFunction
 ): Promise<void> => {
   try {
+    // Skip authentication for OPTIONS preflight requests
+    if (req.method === 'OPTIONS') {
+      next();
+      return;
+    }
+
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -40,8 +46,29 @@ export const authenticate = async (
       return;
     }
 
-    // Check if user is admin
+    // Check if account is deleted
+    if (user.deletedAt) {
+      const reason = user.deletionReason || 'Your account has been deleted by an administrator.';
+      res.status(403).json({ 
+        error: 'Account Deleted',
+        reason: reason,
+        accountStatus: 'deleted'
+      });
+      return;
+    }
+
+    // Check if account is suspended (admins are exempt)
     const isAdmin = await authService.isAdmin(user.id);
+    if (!isAdmin && user.accountStatus === 'suspended') {
+      const reason = user.suspensionReason || 'Your account has been suspended by an administrator.';
+      res.status(403).json({ 
+        error: 'Account Suspended',
+        reason: reason,
+        accountStatus: 'suspended',
+        suspendedAt: user.suspendedAt
+      });
+      return;
+    }
 
     // Attach user to request
     req.user = user;

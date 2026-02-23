@@ -7,6 +7,8 @@ export type StorefrontStore = {
   description: string | null;
   location: string | null;
   domain: string | null;
+  storefrontTheme?: string | null;
+  storefrontLanguage?: string | null;
 };
 
 type StoreHeaderProps = {

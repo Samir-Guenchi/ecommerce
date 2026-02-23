@@ -1,30 +1,24 @@
-import React, { useState, useEffect } from 'react';
+/**
+ * OrderTrackingScreen — 2026 Redesign
+ * ✦ Full i18n EN/AR/FR
+ * ✦ RTL layout support
+ * ✦ Dynamic dark / light theme
+ * ✦ Backend: orderAPI.getOrderByOrderNumber() for live data
+ */
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  ScrollView,
+  View, Text, TouchableOpacity, StyleSheet,
+  ScrollView, ActivityIndicator, RefreshControl, TextInput,
 } from 'react-native';
 import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { orderAPI } from '../services/api.service';
 import algeriaCities from '../data/algeria_cities.json';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { getColors } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from '../i18n';
+import StatusBanner from '../components/StatusBanner';
+import { useStatusMessage } from '../components/useStatusMessage';
 
-// Back Arrow Icon
-const BackArrowIcon = () => (
-  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M19 12H5M5 12L12 19M5 12L12 5"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-// Tracking Event Interface
 interface TrackingEvent {
   wilaya: string;
   wilayaCode: string;
@@ -37,514 +31,339 @@ interface OrderTrackingScreenProps {
   navigate?: (screenId: string) => void;
   orderId?: string;
   orderNumber?: string;
-  customerName: string;
-  orderStatus?: string;
-  // Mock data - in real app, this would come from API
-  trackingHistory?: TrackingEvent[];
-  storeLocation: string;
-  destinationWilaya: string;
 }
 
-// Helper function to get wilaya code
 const getWilayaCode = (wilayaName: string): string => {
-  const city = algeriaCities.find((c: any) => c.wilaya_name === wilayaName);
+  const city = (algeriaCities as any[]).find((c) => c.wilaya_name === wilayaName);
   return city ? city.wilaya_code : '00';
 };
 
+const BackArrow = ({ color, flip }: { color: string; flip?: boolean }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    {flip
+      ? <Path d="M5 12H19M12 5L19 12L12 19" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      : <Path d="M19 12H5M5 12L12 19M5 12L12 5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    }
+  </Svg>
+);
+const SearchIcon = ({ color }: { color: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 21L16.65 16.65M19 11C19 15.4183 15.4183 19 11 19C6.58172 19 3 15.4183 3 11C3 6.58172 6.58172 3 11 3C15.4183 3 19 6.58172 19 11Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
 const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
   navigate,
-  orderId = '#1234',
-  orderNumber = '#1234',
-  customerName: initialCustomerName,
-  orderStatus = 'Shipped',
-  trackingHistory: initialTrackingHistory,
-  storeLocation: initialStoreLocation,
-  destinationWilaya: initialDestinationWilaya,
+  orderId,
+  orderNumber: initialOrderNumber,
 }) => {
-  const [customerName, setCustomerName] = useState(initialCustomerName || '');
-  const [storeLocation, setStoreLocation] = useState(initialStoreLocation || '');
-  const [destinationWilaya, setDestinationWilaya] = useState(initialDestinationWilaya || '');
-  const [trackingHistory, setTrackingHistory] = useState<TrackingEvent[]>(initialTrackingHistory || []);
+  const { mode } = useTheme();
+  const COLORS = getColors(mode);
+  const { t, isRTL, language } = useTranslation();
+  const { message, showError, clear } = useStatusMessage();
+
+  const [searchInput, setSearchInput] = useState(initialOrderNumber || '');
+  const [orderNumber, setOrderNumber] = useState(initialOrderNumber || '');
   const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    const fetchOrderData = async () => {
-      if (orderNumber && orderNumber !== '#1234' && (!customerName || !storeLocation || !destinationWilaya)) {
-        setLoading(true);
-        try {
-          const { order } = await orderAPI.getOrderByOrderNumber(orderNumber);
-          setCustomerName(order.user.fullName);
-          setStoreLocation(order.store.location || 'Store Location');
-          setDestinationWilaya(order.shippingAddress.stateProvince);
-          if (order.trackingHistory) {
-            setTrackingHistory(order.trackingHistory);
-          }
-        } catch (error) {
-          console.error('Failed to fetch order:', error);
-        } finally {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchOrderData();
-  }, [orderNumber, customerName, storeLocation, destinationWilaya]);
-  // Mock tracking history if not provided
-  const defaultTrackingHistory: TrackingEvent[] = trackingHistory.length > 0 ? trackingHistory : [
-    {
-      wilaya: storeLocation || 'Store Location',
-      wilayaCode: getWilayaCode(storeLocation || 'Algiers'),
-      timestamp: '2024-01-15T08:00:00Z',
-      status: 'arrived',
-      description: 'Order placed',
-    },
-    {
-      wilaya: destinationWilaya || 'Algiers',
-      wilayaCode: getWilayaCode(destinationWilaya || 'Algiers'),
-      timestamp: new Date().toISOString(),
-      status: 'in_transit',
-      description: 'In transit to destination',
-    },
-  ];
-
-  const trackingData = defaultTrackingHistory;
+  const [refreshing, setRefreshing] = useState(false);
+  const [orderData, setOrderData] = useState<{
+    customerName: string;
+    status: string;
+    storeLocation: string;
+    destinationWilaya: string;
+    trackingHistory: TrackingEvent[];
+  } | null>(null);
 
   const formatDate = (timestamp: string) => {
     const date = new Date(timestamp);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    const locale = language === 'ar' ? 'ar-DZ' : language === 'fr' ? 'fr-FR' : 'en-US';
+    return date.toLocaleDateString(locale, {
+      month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
     });
+  };
+
+  const fetchOrder = useCallback(async (num: string, isRefresh = false) => {
+    if (!num) return;
+    if (!isRefresh) setLoading(true);
+    try {
+      const { order } = await orderAPI.getOrderByOrderNumber(num);
+      const history: TrackingEvent[] = (order.trackingHistory || []).map((e: any) => ({
+        wilaya: e.wilaya || '',
+        wilayaCode: e.wilayaCode || getWilayaCode(e.wilaya || ''),
+        timestamp: e.timestamp || new Date().toISOString(),
+        status: e.status || 'in_transit',
+        description: e.description || '',
+      }));
+      setOrderData({
+        customerName: order.user?.fullName || order.customerName || '',
+        status: order.status || 'Processing',
+        storeLocation: order.store?.location || '',
+        destinationWilaya: order.shippingAddress?.stateProvince || '',
+        trackingHistory: history,
+      });
+    } catch (e: any) {
+      showError(t('tracking_notFound'));
+      setOrderData(null);
+    } finally { setLoading(false); setRefreshing(false); }
+  }, [language]);
+
+  useEffect(() => {
+    if (initialOrderNumber) fetchOrder(initialOrderNumber);
+  }, []);
+
+  const handleSearch = () => {
+    if (!searchInput.trim()) return;
+    setOrderNumber(searchInput.trim());
+    fetchOrder(searchInput.trim());
   };
 
   const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Delivered':
-        return { bg: 'rgba(16,185,129,0.12)', text: COLORS.success };
-      case 'Shipped':
-        return { bg: 'rgba(56,189,248,0.12)', text: COLORS.secondary };
-      case 'Processing':
-        return { bg: 'rgba(245,158,11,0.12)', text: COLORS.warning };
-      default:
-        return { bg: COLORS.surface, text: COLORS.textSecondary };
+    switch (status.toLowerCase()) {
+      case 'delivered': return { bg: COLORS.success + '20', text: COLORS.success };
+      case 'shipped': return { bg: COLORS.info + '20', text: COLORS.info };
+      case 'processing': return { bg: COLORS.warning + '20', text: COLORS.warning };
+      case 'cancelled': return { bg: COLORS.error + '20', text: COLORS.error };
+      default: return { bg: COLORS.surface, text: COLORS.textSecondary };
     }
   };
 
-  const handleBack = () => {
-    if (navigate) {
-      navigate('orders');
-    }
+  const getStatusLabel = (status: string) => {
+    const map: Record<string, string> = {
+      delivered: t('tracking_statusDelivered'),
+      shipped: t('tracking_statusShipped'),
+      processing: t('tracking_statusProcessing'),
+      cancelled: t('tracking_statusCancelled'),
+      pending: t('tracking_statusPending'),
+    };
+    return map[status.toLowerCase()] || status;
   };
 
-  // Group tracking events by wilaya (remove duplicates for visualization)
-  const uniqueWilayas = trackingData.reduce((acc, event) => {
-    if (!acc.find((w) => w.wilaya === event.wilaya)) {
-      acc.push(event);
-    }
-    return acc;
-  }, [] as TrackingEvent[]);
+  /* Build wilaya path for visualization */
+  const buildPath = () => {
+    if (!orderData) return [];
+    const { trackingHistory, storeLocation, destinationWilaya } = orderData;
+    const history = trackingHistory.length > 0 ? trackingHistory : [
+      {
+        wilaya: storeLocation || t('tracking_storeLocation'),
+        wilayaCode: getWilayaCode(storeLocation || ''),
+        timestamp: new Date(Date.now() - 86400000).toISOString(),
+        status: 'arrived' as const,
+        description: t('tracking_orderPlaced'),
+      },
+      {
+        wilaya: destinationWilaya || 'Algiers',
+        wilayaCode: getWilayaCode(destinationWilaya || ''),
+        timestamp: new Date().toISOString(),
+        status: 'in_transit' as const,
+        description: t('tracking_inTransit'),
+      },
+    ];
 
-  // Add destination if not in tracking history
-  const allWilayas = [...uniqueWilayas];
-  const lastWilaya = allWilayas[allWilayas.length - 1];
-  if (lastWilaya && lastWilaya.wilaya !== destinationWilaya) {
-    allWilayas.push({
-      wilaya: destinationWilaya,
-      wilayaCode: '31',
-      timestamp: new Date().toISOString(),
-      status: 'in_transit',
-      description: 'Final destination',
-    });
-  }
+    const unique = history.reduce((acc: TrackingEvent[], ev) => {
+      if (!acc.find(w => w.wilaya === ev.wilaya)) acc.push(ev);
+      return acc;
+    }, []);
+
+    const last = unique[unique.length - 1];
+    if (last && destinationWilaya && last.wilaya !== destinationWilaya) {
+      unique.push({
+        wilaya: destinationWilaya,
+        wilayaCode: getWilayaCode(destinationWilaya),
+        timestamp: new Date().toISOString(),
+        status: 'in_transit',
+        description: t('tracking_finalDestination'),
+      });
+    }
+    return unique;
+  };
+
+  const allWilayas = orderData ? buildPath() : [];
 
   return (
-    <View style={styles.container}>
+    <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
+        contentContainerStyle={{ padding: 20, paddingTop: 54, paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => { if (orderNumber) { setRefreshing(true); fetchOrder(orderNumber, true); } }}
+            tintColor={COLORS.primary}
+          />
+        }
       >
-        {/* Header */}
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={handleBack}
-          activeOpacity={0.7}
-        >
-          <BackArrowIcon />
-        </TouchableOpacity>
-
-        <View style={styles.header}>
-          <Text style={styles.heading}>Order Tracking</Text>
-          <Text style={styles.orderNumber}>Order {orderNumber}</Text>
+        {/* ── Header ── */}
+        <View style={[s.header, isRTL && { flexDirection: 'row-reverse' }]}>
+          <TouchableOpacity
+            style={[s.backBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }, isRTL && { marginRight: 0, marginLeft: 12 }]}
+            onPress={() => navigate?.('orders')}
+            activeOpacity={0.7}
+          >
+            <BackArrow color={COLORS.text} flip={isRTL} />
+          </TouchableOpacity>
+          <Text style={[s.headerTitle, { color: COLORS.text }, isRTL && { textAlign: 'right' }]}>
+            {t('tracking_title')}
+          </Text>
         </View>
 
-        {/* Order Info Card */}
-        <View style={styles.orderInfoCard}>
-          <View style={styles.orderInfoRow}>
-            <Text style={styles.orderInfoLabel}>Customer:</Text>
-            <Text style={styles.orderInfoValue}>{customerName}</Text>
+        <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
+
+        {/* ── Search ── */}
+        <View style={[s.searchRow, isRTL && { flexDirection: 'row-reverse' }, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+          <TextInput
+            style={[s.searchInput, { color: COLORS.text }, isRTL && { textAlign: 'right' }]}
+            placeholder={t('tracking_enterOrderNumber')}
+            placeholderTextColor={COLORS.textMuted}
+            value={searchInput}
+            onChangeText={setSearchInput}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+          />
+          <TouchableOpacity
+            style={[s.searchBtn, { backgroundColor: COLORS.primary }]}
+            onPress={handleSearch}
+            activeOpacity={0.8}
+          >
+            <SearchIcon color="#FFFFFF" />
+          </TouchableOpacity>
+        </View>
+
+        {loading ? (
+          <View style={{ paddingTop: 60, alignItems: 'center' }}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+            <Text style={{ color: COLORS.textMuted, marginTop: 12, fontSize: 13 }}>{t('common_loading')}</Text>
           </View>
-          <View style={styles.orderInfoRow}>
-            <Text style={styles.orderInfoLabel}>Status:</Text>
-            <View
-              style={[
-                styles.statusBadge,
-                { backgroundColor: getStatusColor(orderStatus).bg },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.statusText,
-                  { color: getStatusColor(orderStatus).text },
-                ]}
-              >
-                {orderStatus}
+        ) : !orderData ? (
+          <View style={[s.emptyCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+            <Text style={{ fontSize: 40, marginBottom: 12 }}>📦</Text>
+            <Text style={[s.emptyTitle, { color: COLORS.text }]}>{t('tracking_noOrderTitle')}</Text>
+            <Text style={[s.emptyDesc, { color: COLORS.textMuted }]}>{t('tracking_noOrderDesc')}</Text>
+          </View>
+        ) : (
+          <>
+            {/* ── Order Info ── */}
+            <View style={[s.card, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+              <Text style={[s.sectionTitle, { color: COLORS.text }, isRTL && { textAlign: 'right' }]}>
+                {t('tracking_orderInfo')}
               </Text>
-            </View>
-          </View>
-        </View>
-
-        {/* Tracking Visualization */}
-        <View style={styles.trackingSection}>
-          <Text style={styles.sectionTitle}>Delivery Progress</Text>
-
-          {/* Wilaya Path Visualization */}
-          <View style={styles.pathContainer}>
-            {allWilayas.map((event, index) => {
-              const isFirst = index === 0;
-              const isLast = index === allWilayas.length - 1;
-              const isCurrent = index === allWilayas.length - 2; // Second to last is current
-              const isCompleted = index < allWilayas.length - 2;
-
-              return (
-                <View key={`${event.wilaya}-${index}`} style={styles.pathItem}>
-                  {/* Connection Line */}
-                  {!isLast && (
-                    <View style={styles.connectionLine}>
-                      <Svg height="40" width="2">
-                        <Line
-                          x1="1"
-                          y1="0"
-                          x2="1"
-                          y2="40"
-                          stroke={
-                            isCompleted || isCurrent
-                              ? '#4CAF50'
-                              : '#E0E0E0'
-                          }
-                          strokeWidth="2"
-                        />
-                      </Svg>
-                      {/* Arrow */}
-                      <View
-                        style={[
-                          styles.arrow,
-                          {
-                            borderTopColor:
-                              isCompleted || isCurrent
-                                ? '#4CAF50'
-                                : '#E0E0E0',
-                          },
-                        ]}
-                      />
+              {[
+                { lbl: t('tracking_orderNumber'), val: orderNumber },
+                { lbl: t('tracking_customer'), val: orderData.customerName },
+                { lbl: t('tracking_status'), val: null, status: orderData.status },
+              ].map((row, i) => (
+                <View key={i} style={[s.infoRow, { borderBottomColor: COLORS.border }, isRTL && { flexDirection: 'row-reverse' }]}>
+                  <Text style={[s.infoLbl, { color: COLORS.textMuted }]}>{row.lbl}</Text>
+                  {row.status ? (
+                    <View style={[s.statusBadge, { backgroundColor: getStatusColor(row.status).bg }]}>
+                      <Text style={[s.statusText, { color: getStatusColor(row.status).text }]}>
+                        {getStatusLabel(row.status)}
+                      </Text>
                     </View>
-                  )}
-
-                  {/* Wilaya Circle */}
-                  <View
-                    style={[
-                      styles.wilayaCircle,
-                      isFirst && styles.wilayaCircleStart,
-                      isCurrent && styles.wilayaCircleCurrent,
-                      isLast && styles.wilayaCircleEnd,
-                      isCompleted && styles.wilayaCircleCompleted,
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.wilayaCode,
-                        (isFirst || isLast) && styles.wilayaCodeBold,
-                      ]}
-                    >
-                      {event.wilayaCode}
-                    </Text>
-                  </View>
-
-                  {/* Wilaya Name */}
-                  <View style={styles.wilayaInfo}>
-                    <Text
-                      style={[
-                        styles.wilayaName,
-                        (isFirst || isLast || isCurrent) &&
-                          styles.wilayaNameBold,
-                      ]}
-                    >
-                      {event.wilaya}
-                    </Text>
-                    {isFirst && (
-                      <Text style={styles.wilayaLabel}>Origin</Text>
-                    )}
-                    {isCurrent && (
-                      <Text style={styles.wilayaLabel}>Current Location</Text>
-                    )}
-                    {isLast && (
-                      <Text style={styles.wilayaLabel}>Destination</Text>
-                    )}
-                  </View>
-                </View>
-              );
-            })}
-          </View>
-
-          {/* Tracking Timeline */}
-          <View style={styles.timelineSection}>
-            <Text style={styles.timelineTitle}>Tracking History</Text>
-            {trackingData.map((event, index) => (
-              <View key={index} style={styles.timelineItem}>
-                <View style={styles.timelineDot} />
-                <View style={styles.timelineContent}>
-                  <View style={styles.timelineHeader}>
-                    <Text style={styles.timelineWilaya}>{event.wilaya}</Text>
-                    <Text style={styles.timelineTime}>
-                      {formatDate(event.timestamp)}
-                    </Text>
-                  </View>
-                  {event.description && (
-                    <Text style={styles.timelineDescription}>
-                      {event.description}
-                    </Text>
+                  ) : (
+                    <Text style={[s.infoVal, { color: COLORS.text }]}>{row.val}</Text>
                   )}
                 </View>
+              ))}
+            </View>
+
+            {/* ── Delivery Progress ── */}
+            <View style={[s.card, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+              <Text style={[s.sectionTitle, { color: COLORS.text }, isRTL && { textAlign: 'right' }]}>
+                {t('tracking_deliveryProgress')}
+              </Text>
+              {allWilayas.map((event, index) => {
+                const isFirst = index === 0;
+                const isLast = index === allWilayas.length - 1;
+                const isCurrent = index === allWilayas.length - 2;
+                const isCompleted = index < allWilayas.length - 2;
+                const dotColor = isFirst || isCompleted ? COLORS.success : isCurrent ? COLORS.info : COLORS.border;
+                const lineColor = isCompleted || isCurrent ? COLORS.success : COLORS.border;
+
+                return (
+                  <View key={`${event.wilaya}-${index}`}>
+                    <View style={[s.pathItem, isRTL && { flexDirection: 'row-reverse' }]}>
+                      <View style={{ alignItems: 'center', width: 40 }}>
+                        <View style={[s.wilayaCircle, { backgroundColor: dotColor, borderColor: dotColor + '60' }]}>
+                          <Text style={s.wilayaCode}>{event.wilayaCode}</Text>
+                        </View>
+                        {!isLast && (
+                          <View style={[s.trackLine, { backgroundColor: lineColor }]} />
+                        )}
+                      </View>
+                      <View style={[{ flex: 1, paddingBottom: isLast ? 0 : 20 }, isRTL ? { marginRight: 12 } : { marginLeft: 12 }]}>
+                        <Text style={[s.wilayaName, { color: (isFirst || isLast || isCurrent) ? COLORS.text : COLORS.textSecondary, fontWeight: (isFirst || isLast || isCurrent) ? '700' : '500' }]}>
+                          {event.wilaya}
+                        </Text>
+                        <Text style={[s.wilayaLabel, { color: COLORS.textMuted }]}>
+                          {isFirst ? t('tracking_origin') : isCurrent ? t('tracking_currentLocation') : isLast ? t('tracking_destination') : formatDate(event.timestamp)}
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+
+            {/* ── Timeline ── */}
+            {orderData.trackingHistory.length > 0 && (
+              <View style={[s.card, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
+                <Text style={[s.sectionTitle, { color: COLORS.text }, isRTL && { textAlign: 'right' }]}>
+                  {t('tracking_trackingHistory')}
+                </Text>
+                {orderData.trackingHistory.map((event, index) => (
+                  <View key={index} style={[s.timelineItem, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <View style={[s.timelineDot, { backgroundColor: COLORS.success }, isRTL ? { marginLeft: 12, marginRight: 0 } : {}]} />
+                    <View style={{ flex: 1 }}>
+                      <View style={[s.timelineHeader, isRTL && { flexDirection: 'row-reverse' }]}>
+                        <Text style={[s.timelineWilaya, { color: COLORS.text }]}>{event.wilaya}</Text>
+                        <Text style={[s.timelineTime, { color: COLORS.textMuted }]}>{formatDate(event.timestamp)}</Text>
+                      </View>
+                      {event.description && (
+                        <Text style={[s.timelineDesc, { color: COLORS.textSecondary }, isRTL && { textAlign: 'right' }]}>
+                          {event.description}
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
-        </View>
+            )}
+          </>
+        )}
       </ScrollView>
     </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  scroll: {
-    flex: 1,
-  },
-  content: {
-    flexGrow: 1,
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 32,
-  },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.surface,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  header: {
-    marginBottom: 24,
-  },
-  heading: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  orderNumber: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  orderInfoCard: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 8,
-    padding: 16,
-    marginBottom: 24,
-  },
-  orderInfoRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  orderInfoLabel: {
-    fontSize: 14,
-    color: COLORS.textSecondary,
-  },
-  orderInfoValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  statusBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 12,
-  },
-  statusText: {
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  trackingSection: {
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginBottom: 20,
-  },
-  pathContainer: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 8,
-    padding: 20,
-    marginBottom: 24,
-  },
-  pathItem: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 8,
-  },
-  connectionLine: {
-    width: 2,
-    height: 40,
-    marginLeft: 19,
-    marginTop: 4,
-    position: 'relative',
-  },
-  arrow: {
-    position: 'absolute',
-    bottom: -4,
-    left: -4,
-    width: 0,
-    height: 0,
-    borderLeftWidth: 4,
-    borderRightWidth: 4,
-    borderTopWidth: 8,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-  },
-  wilayaCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.border,
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 3,
-    borderColor: COLORS.surface,
-  },
-  wilayaCircleStart: {
-    backgroundColor: COLORS.success,
-    borderColor: '#4CAF50',
-  },
-  wilayaCircleCurrent: {
-    backgroundColor: COLORS.secondary,
-    borderColor: '#2196F3',
-  },
-  wilayaCircleEnd: {
-    backgroundColor: COLORS.warning,
-    borderColor: '#FF9800',
-  },
-  wilayaCircleCompleted: {
-    backgroundColor: COLORS.success,
-    borderColor: '#4CAF50',
-  },
-  wilayaCode: {
-    fontSize: 12,
-    color: COLORS.background,
-    fontWeight: '500',
-  },
-  wilayaCodeBold: {
-    fontWeight: 'bold',
-    fontSize: 14,
-  },
-  wilayaInfo: {
-    marginLeft: 12,
-    flex: 1,
-    paddingTop: 8,
-  },
-  wilayaName: {
-    fontSize: 14,
-    color: COLORS.text,
-    marginBottom: 4,
-  },
-  wilayaNameBold: {
-    fontWeight: 'bold',
-    fontSize: 16,
-    color: COLORS.text,
-  },
-  wilayaLabel: {
-    fontSize: 11,
-    color: COLORS.textSecondary,
-    fontStyle: 'italic',
-  },
-  timelineSection: {
-    backgroundColor: COLORS.surface,
-    borderRadius: 8,
-    padding: 16,
-  },
-  timelineTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    marginBottom: 16,
-  },
-  timelineItem: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    paddingLeft: 8,
-  },
-  timelineDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: COLORS.success,
-    marginTop: 4,
-    marginRight: 12,
-  },
-  timelineContent: {
-    flex: 1,
-  },
-  timelineHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  timelineWilaya: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.text,
-  },
-  timelineTime: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-  },
-  timelineDescription: {
-    fontSize: 12,
-    color: COLORS.textSecondary,
-    lineHeight: 18,
-  },
+const s = StyleSheet.create({
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  backBtn: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1, marginRight: 12 },
+  headerTitle: { flex: 1, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
+  searchRow: { flexDirection: 'row', alignItems: 'center', borderRadius: 16, borderWidth: 1, marginBottom: 20, overflow: 'hidden', paddingLeft: 16 },
+  searchInput: { flex: 1, height: 52, fontSize: 14, fontWeight: '500' },
+  searchBtn: { width: 52, height: 52, justifyContent: 'center', alignItems: 'center' },
+  card: { borderRadius: 18, borderWidth: 1, padding: 18, marginBottom: 14 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', marginBottom: 14 },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 10, borderBottomWidth: 1 },
+  infoLbl: { fontSize: 13, fontWeight: '500' },
+  infoVal: { fontSize: 13, fontWeight: '700' },
+  statusBadge: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 10 },
+  statusText: { fontSize: 12, fontWeight: '700' },
+  pathItem: { flexDirection: 'row', alignItems: 'flex-start' },
+  wilayaCircle: { width: 40, height: 40, borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 2 },
+  wilayaCode: { fontSize: 11, color: '#FFFFFF', fontWeight: '700' },
+  trackLine: { width: 2, flex: 1, minHeight: 20 },
+  wilayaName: { fontSize: 14, marginBottom: 2 },
+  wilayaLabel: { fontSize: 11, fontStyle: 'italic' },
+  emptyCard: { borderRadius: 22, borderWidth: 1, padding: 36, alignItems: 'center', marginTop: 20 },
+  emptyTitle: { fontSize: 17, fontWeight: '800', marginBottom: 8 },
+  emptyDesc: { fontSize: 13, textAlign: 'center', lineHeight: 18 },
+  timelineItem: { flexDirection: 'row', marginBottom: 16, alignItems: 'flex-start' },
+  timelineDot: { width: 12, height: 12, borderRadius: 6, marginTop: 4, marginRight: 12 },
+  timelineHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
+  timelineWilaya: { fontSize: 14, fontWeight: '700' },
+  timelineTime: { fontSize: 12 },
+  timelineDesc: { fontSize: 12, lineHeight: 18 },
 });
 
 export default OrderTrackingScreen;
-
-
-
-
-
-
-
-
-
-

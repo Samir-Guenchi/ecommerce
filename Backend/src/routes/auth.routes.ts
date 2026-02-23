@@ -12,6 +12,10 @@ router.post('/login', authController.login.bind(authController));
 router.post('/verify', authController.verifyEmail.bind(authController));
 router.post('/resend-verification', authController.resendVerificationCode.bind(authController));
 
+// OAuth completion routes
+router.post('/oauth/complete', authController.completeOAuthRegistration.bind(authController));
+router.post('/oauth/set-password', authController.setOAuthPassword.bind(authController));
+
 // OAuth routes - Google
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get('/google/callback', 

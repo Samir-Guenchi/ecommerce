@@ -3,9 +3,12 @@ import cors from 'cors';
 import session from 'express-session';
 import * as dotenv from 'dotenv';
 import passport from './config/passport';
+import path from 'path';
+import { UPLOADS_DIR } from './config/multer';
 
 // Import routes
 import authRoutes from './routes/auth.routes';
+import adminRoutes from './routes/admin.routes';
 import userRoutes from './routes/user.routes';
 import productRoutes from './routes/product.routes';
 import storeRoutes from './routes/store.routes';
@@ -24,12 +27,13 @@ import marketplaceRoutes from './routes/marketplace.routes';
 import orderTrackingRoutes from './routes/order-tracking.routes';
 import cartRoutes from './routes/cart.routes';
 import dashboardRoutes from './routes/dashboard.routes';
+import uploadRoutes from './routes/upload.routes';
 
 dotenv.config();
 
 const app: Express = express();
 
-// Middleware
+// CORS middleware - MUST be first to handle preflight requests
 app.use(cors({
   origin: process.env.CORS_ORIGINS?.split(',') || [
     'http://localhost:5173',
@@ -42,9 +46,18 @@ app.use(cors({
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
+  preflightContinue: false,
+  optionsSuccessStatus: 204,
 }));
+
+// Handle OPTIONS requests globally
+app.options('*', cors());
+
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Serve uploaded files statically
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 // Session middleware (required for passport)
 app.use(session({
@@ -76,6 +89,9 @@ app.get('/health', (_req: Request, res: Response) => {
 // === API Routes ===
 // Authentication (public + protected)
 app.use('/api/auth', authRoutes);
+
+// Admin management (admin only)
+app.use('/api/admin', adminRoutes);
 
 // User management (admin)
 app.use('/api/users', userRoutes);
@@ -128,6 +144,9 @@ app.use('/api/order-tracking', orderTrackingRoutes);
 
 // Dashboard stats (authenticated)
 app.use('/api/dashboard', dashboardRoutes);
+
+// File upload (authenticated)
+app.use('/api/upload', uploadRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {

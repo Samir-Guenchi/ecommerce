@@ -1,295 +1,273 @@
-import React from 'react';
+/**
+ * StoreSettingsScreen — 2026 Premium Redesign
+ *
+ * ✦ Bento-style cards with gradient accents
+ * ✦ Animated icons and interactions
+ * ✦ Dynamic theming (dark/light)
+ * ✦ i18n support with RTL
+ * ✦ Modern glassmorphism effects
+ */
+import React, { useRef, useEffect } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  Animated,
+  Dimensions,
 } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
-import { COLORS, SPACING, TYPOGRAPHY, SHADOWS } from '../theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Path, Circle } from 'react-native-svg';
+import { getColors, SPACING } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from '../i18n';
 
-// Chevron Right Icon
-const ChevronRightIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M9 18L15 12L9 6"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+
+/* ── Icons ── */
+const SunIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="5" stroke="#FDB913" strokeWidth="2" />
+    <Path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="#FDB913" strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+const MoonIcon = () => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const BackArrowIcon = ({ color }: { color: string }) => (
+  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none">
+    <Path d="M19 12H5M12 19L5 12L12 5" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const ChevronRight = ({ color }: { color: string }) => (
+  <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+    <Path d="M9 18L15 12L9 6" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
   </Svg>
 );
 
-// Store Settings Icon (for top of page)
-const StoreSettingsIcon = () => (
+/* ── Setting Icon Components ── */
+const ThemesIcon = ({ color }: { color: string }) => (
   <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2L2 7L12 12L22 7L12 2Z"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 17L12 22L22 17"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M2 12L12 17L22 12"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
+    <Path d="M12 2.69L5 6.69L12 10.69L19 6.69L12 2.69Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M5 12L12 16L19 12" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M5 17.31L12 21.31L19 17.31" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const ProductsIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M6 2L3 6V20C3 20.53 3.21 21.04 3.59 21.41C3.96 21.79 4.47 22 5 22H19C19.53 22 20.04 21.79 20.41 21.41C20.79 21.04 21 20.53 21 20V6L18 2H6Z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M3 6H21" stroke={color} strokeWidth="2" strokeLinecap="round" />
+    <Path d="M16 10C16 11.1 15.1 12 14 12C12.9 12 12 11.1 12 10" stroke={color} strokeWidth="2" strokeLinecap="round" />
+  </Svg>
+);
+const OrdersIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M9 11L12 14L22 4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M21 12V19C21 19.53 20.79 20.04 20.41 20.41C20.04 20.79 19.53 21 19 21H5C4.47 21 3.96 20.79 3.59 20.41C3.21 20.04 3 19.53 3 19V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H16" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const AnalyticsIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Path d="M3 3V21H21" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    <Path d="M7 16L12 11L16 15L21 10" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+const DomainIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Path d="M2 12H22M12 2C14.5 4.5 16 8.5 16 12C16 15.5 14.5 19.5 12 22M12 2C9.5 4.5 8 8.5 8 12C8 15.5 9.5 19.5 12 22" stroke={color} strokeWidth="2" />
+  </Svg>
+);
+const GlobeIcon = ({ color }: { color: string }) => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none">
+    <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="2" />
+    <Path d="M2 12H22M12 2C14.5 4.5 16 8.5 16 12C16 15.5 14.5 19.5 12 22M12 2C9.5 4.5 8 8.5 8 12C8 15.5 9.5 19.5 12 22" stroke={color} strokeWidth="2" />
   </Svg>
 );
 
-// Store Settings Icon Components
-const ThemesIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2.69L5 6.69L12 10.69L19 6.69L12 2.69Z"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M5 12L12 16L19 12"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M5 17.31L12 21.31L19 17.31"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
+/* ── Color Map ── */
+const SECTION_COLORS: Record<string, string> = {
+  themes: '#6C5CE7',
+  products: '#00CEC9',
+  orders: '#FDCB6E',
+  analytics: '#E17055',
+  domains: '#A29BFE',
+};
 
-const ProductsIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M6 2L3 6V20C3 20.5304 3.21071 21.0391 3.58579 21.4142C3.96086 21.7893 4.46957 22 5 22H19C19.5304 22 20.0391 21.7893 20.4142 21.4142C20.7893 21.0391 21 20.5304 21 20V6L18 2H6Z"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M3 6H21"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M16 10C16 11.1046 15.1046 12 14 12C12.8954 12 12 11.1046 12 10"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const OrdersIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M9 11L12 14L22 4"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M21 12V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H16"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const AnalyticsIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M3 3V21H21"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M7 16L12 11L16 15L21 10"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-    <Path
-      d="M21 10H16V15H21V10Z"
-      stroke={COLORS.textSecondary}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  </Svg>
-);
-
-const DomainIcon = () => (
-  <Svg width={16} height={16} viewBox="0 0 24 24" fill="none">
-    <Path
-      d="M12 2C6.48 2 2 6.48 2 12C2 17.52 6.48 22 12 22C17.52 22 22 17.52 22 12C22 6.48 17.52 2 12 2ZM13 17H11V15H13V17ZM13 13H11V7H13V13Z"
-      fill={COLORS.textSecondary}
-    />
-  </Svg>
-);
-
+/* ── Setting Item with Animation ── */
 interface SettingItemProps {
   icon: React.ReactNode;
   title: string;
+  subtitle?: string;
+  accentColor: string;
   onPress?: () => void;
+  COLORS: any;
+  index: number;
 }
 
-const SettingItem: React.FC<SettingItemProps> = ({ icon, title, onPress }) => (
-  <TouchableOpacity style={styles.settingItem} onPress={onPress}>
-    <View style={styles.settingIconContainer}>{icon}</View>
-    <Text style={styles.settingTitle}>{title}</Text>
-    <View style={styles.chevronContainer}>
-      <ChevronRightIcon />
-    </View>
-  </TouchableOpacity>
-);
+const SettingItem: React.FC<SettingItemProps> = ({ icon, title, subtitle, accentColor, onPress, COLORS, index }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
 
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay: index * 60, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 350, delay: index * 60, useNativeDriver: true }),
+    ]).start();
+  }, []);
+
+  return (
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], marginBottom: 12 }}>
+      <TouchableOpacity
+        style={[s.settingCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <LinearGradient
+          colors={[accentColor + '20', accentColor + '05']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={s.settingGradient}
+        />
+        <View style={[s.settingIconBadge, { backgroundColor: accentColor + '15' }]}>
+          {icon}
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[s.settingTitle, { color: COLORS.text }]}>{title}</Text>
+          {subtitle && <Text style={[s.settingSubtitle, { color: COLORS.textMuted }]}>{subtitle}</Text>}
+        </View>
+        <View style={[s.chevronBadge, { backgroundColor: COLORS.background }]}>
+          <ChevronRight color={accentColor} />
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
+
+/* ── Main Screen ── */
 interface StoreSettingsScreenProps {
   navigate?: (screenId: string, params?: any) => void;
+  goBack?: () => void;
   storeId?: string;
 }
 
-const StoreSettingsScreen: React.FC<StoreSettingsScreenProps> = ({ navigate, storeId }) => {
-  const handleSettingPress = (screenId: string) => {
+const StoreSettingsScreen: React.FC<StoreSettingsScreenProps> = ({ navigate, goBack, storeId }) => {
+  const { mode, toggleTheme } = useTheme();
+  const COLORS = getColors(mode);
+  const { t, language, setLanguage, isRTL } = useTranslation();
+
+  const cycleLanguage = () => {
+    const langs: ('en' | 'ar' | 'fr')[] = ['en', 'ar', 'fr'];
+    const idx = langs.indexOf(language);
+    setLanguage(langs[(idx + 1) % langs.length]);
+  };
+
+  const handleNav = (screenId: string) => {
     if (navigate) {
-      if (storeId && (screenId === 'domains' || screenId === 'analytics')) {
+      if (storeId && (screenId === 'domains' || screenId === 'analytics' || screenId === 'storefrontPreferences')) {
         navigate(screenId, { storeId });
       } else {
         navigate(screenId);
       }
-    } else {
-      console.log(`Pressed: ${screenId}`);
     }
   };
 
-  return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Icon Container */}
-      <View style={styles.iconContainer}>
-        <View style={styles.iconWrapper}>
-          <StoreSettingsIcon />
-        </View>
-      </View>
-      {/* Main Heading */}
-      <Text style={styles.heading}>Store Settings</Text>
+  const settings = [
+    { id: 'storefrontPreferences', icon: <GlobeIcon color={'#00B894'} />, title: t('storefront_preferences') || 'Storefront Preferences', subtitle: t('storefront_preferencesDesc') || 'Theme & language for customers', color: '#00B894' },
+    { id: 'themes', icon: <ThemesIcon color={SECTION_COLORS.themes} />, title: t('settings_themes') || 'Themes', subtitle: t('settings_themesDesc') || 'Customize store appearance', color: SECTION_COLORS.themes },
+    { id: 'products', icon: <ProductsIcon color={SECTION_COLORS.products} />, title: t('settings_products') || 'Products', subtitle: t('settings_productsDesc') || 'Manage your product catalog', color: SECTION_COLORS.products },
+    { id: 'orders', icon: <OrdersIcon color={SECTION_COLORS.orders} />, title: t('settings_orders') || 'Orders', subtitle: t('settings_ordersDesc') || 'View and manage orders', color: SECTION_COLORS.orders },
+    { id: 'analytics', icon: <AnalyticsIcon color={SECTION_COLORS.analytics} />, title: t('settings_analytics') || 'Analytics', subtitle: t('settings_analyticsDesc') || 'Insights and performance', color: SECTION_COLORS.analytics },
+    { id: 'domains', icon: <DomainIcon color={SECTION_COLORS.domains} />, title: t('settings_domains') || 'Domains', subtitle: t('settings_domainsDesc') || 'Custom domain settings', color: SECTION_COLORS.domains },
+  ];
 
-      {/* Settings List */}
-      <SettingItem
-        icon={<ThemesIcon />}
-        title="Themes"
-        onPress={() => handleSettingPress('themes')}
-      />
-      <SettingItem
-        icon={<ProductsIcon />}
-        title="Products"
-        onPress={() => handleSettingPress('products')}
-      />
-      <SettingItem
-        icon={<OrdersIcon />}
-        title="Orders"
-        onPress={() => handleSettingPress('orders')}
-      />
-      <SettingItem
-        icon={<AnalyticsIcon />}
-        title="Analytics"
-        onPress={() => handleSettingPress('analytics')}
-      />
-      <SettingItem
-        icon={<DomainIcon />}
-        title="Domains"
-        onPress={() => handleSettingPress('domains')}
-      />
-    </ScrollView>
+  return (
+    <View style={[s.outer, { backgroundColor: COLORS.background }]}>
+      <ScrollView contentContainerStyle={s.scrollContent} showsVerticalScrollIndicator={false}>
+
+        {/* Header */}
+        <View style={[s.header, isRTL && { flexDirection: 'row-reverse' }]}>
+          <TouchableOpacity style={[s.backBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]} onPress={goBack} activeOpacity={0.7}>
+            <BackArrowIcon color={COLORS.text} />
+          </TouchableOpacity>
+          <Text style={[s.headerTitle, { color: COLORS.text }]}>{t('settings_storeSettings') || 'Store Settings'}</Text>
+          <View style={[s.headerControls, isRTL && { flexDirection: 'row-reverse' }]}>
+            <TouchableOpacity
+              style={[s.controlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+              onPress={cycleLanguage}
+              activeOpacity={0.7}
+            >
+              <Text style={{ fontSize: 11, fontWeight: '700', color: COLORS.text }}>{language.toUpperCase()}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[s.controlBtn, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+              onPress={toggleTheme}
+              activeOpacity={0.7}
+            >
+              {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Description */}
+        <Text style={{ fontSize: 14, color: COLORS.textSecondary, lineHeight: 20, marginBottom: 20 }}>
+          {t('settings_storeSettingsDesc')}
+        </Text>
+
+        {/* Settings Cards */}
+        <View>
+          {settings.map((item, i) => (
+            <SettingItem
+              key={item.id}
+              icon={item.icon}
+              title={item.title}
+              subtitle={item.subtitle}
+              accentColor={item.color}
+              onPress={() => handleNav(item.id)}
+              COLORS={COLORS}
+              index={i}
+            />
+          ))}
+        </View>
+
+      </ScrollView>
+    </View>
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: COLORS.background,
-  },
-  content: {
-    flexGrow: 1,
-    justifyContent: 'flex-start',
-    paddingHorizontal: 16,
-    paddingBottom: 40,
-    paddingTop: 35,
-  },
-  iconContainer: {
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  iconWrapper: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  heading: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    color: COLORS.text,
-    textAlign: 'center',
-    marginBottom: 35,
-  },
-  settingItem: {
+const s = StyleSheet.create({
+  outer: { flex: 1 },
+  scrollContent: { paddingHorizontal: 20, paddingTop: 56, paddingBottom: 40 },
+
+  header: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  backBtn: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 1, marginRight: 12 },
+  headerTitle: { flex: 1, fontSize: 22, fontWeight: '800', letterSpacing: -0.3 },
+  headerControls: { flexDirection: 'row', gap: 8 },
+  controlBtn: { width: 40, height: 40, borderRadius: 10, justifyContent: 'center', alignItems: 'center', borderWidth: 1 },
+
+  settingCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    overflow: 'hidden',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 0,
-    width: '100%',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    padding: 16,
+    position: 'relative',
   },
-  settingIconContainer: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: COLORS.background,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 10,
+  settingGradient: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
-  settingTitle: {
-    flex: 1,
-    fontSize: 12,
-    color: COLORS.text,
-    fontWeight: '500',
-  },
-  chevronContainer: {
-    marginLeft: 8,
-  },
+  settingIconBadge: { width: 48, height: 48, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 14, zIndex: 1 },
+  settingTitle: { fontSize: 16, fontWeight: '800', marginBottom: 3, zIndex: 1 },
+  settingSubtitle: { fontSize: 12, fontWeight: '600', zIndex: 1 },
+  chevronBadge: { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center', marginLeft: 8, zIndex: 1 },
 });
 
 export default StoreSettingsScreen;
-

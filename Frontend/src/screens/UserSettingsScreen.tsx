@@ -199,7 +199,11 @@ interface UserSettingsScreenProps {
 const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, resetTo, onLogout }) => {
   const { mode, toggleTheme } = useTheme();
   const COLORS = getColors(mode);
-  const { t, isRTL } = useTranslation();
+  const { t, isRTL, language, setLanguage } = useTranslation();
+  const cycleLanguage = () => {
+    const langs: ('en' | 'ar' | 'fr')[] = ['en', 'ar', 'fr'];
+    setLanguage(langs[(langs.indexOf(language as any) + 1) % langs.length]);
+  };
   const [profileName, setProfileName] = useState('');
   const [profileEmail, setProfileEmail] = useState('');
   const [profileLoading, setProfileLoading] = useState(true);
@@ -236,17 +240,26 @@ const UserSettingsScreen: React.FC<UserSettingsScreenProps> = ({ navigate, reset
   return (
     <View style={[styles.outer, { backgroundColor: COLORS.background }]}>
       <ScrollView style={styles.scroller} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-        
-        {/* Header with Logo and Theme Toggle */}
-        <View style={styles.topHeader}>
+
+        {/* Header with Logo and Theme Toggle + Language Switcher */}
+        <View style={[styles.topHeader, isRTL && { flexDirection: 'row-reverse' }]}>
           <Logo variant="icon" size={40} />
-          <TouchableOpacity
-            style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
-            onPress={toggleTheme}
-            activeOpacity={0.7}
-          >
-            {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <TouchableOpacity
+              style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+              onPress={cycleLanguage}
+              activeOpacity={0.7}
+            >
+              <Text style={{ fontSize: 10, fontWeight: '800', color: COLORS.text }}>{language.toUpperCase()}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.themeToggle, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+              onPress={toggleTheme}
+              activeOpacity={0.7}
+            >
+              {mode === 'dark' ? <SunIcon /> : <MoonIcon />}
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* ── Profile header ── */}
@@ -420,19 +433,19 @@ const styles = StyleSheet.create({
   },
 
   /* Top Header with Logo and Theme Toggle */
-  topHeader: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    marginBottom: SPACING.lg 
+  topHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.lg
   },
-  themeToggle: { 
-    width: 48, 
-    height: 48, 
-    borderRadius: 24, 
-    justifyContent: 'center', 
-    alignItems: 'center', 
-    borderWidth: 1 
+  themeToggle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1
   },
 
   /* Profile card */

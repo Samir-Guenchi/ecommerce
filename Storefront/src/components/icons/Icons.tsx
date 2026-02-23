@@ -274,3 +274,27 @@ export const CloseIcon: React.FC<IconProps> = ({
     <line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
+
+export const ClockIcon: React.FC<IconProps> = ({ 
+  size = 24, 
+  color = 'currentColor',
+  'aria-label': ariaLabel = 'Time',
+  className = ''
+}) => (
+  <svg
+    width={size}
+    height={size}
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke={color}
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    role="img"
+    aria-label={ariaLabel}
+    className={className}
+  >
+    <circle cx="12" cy="12" r="10" />
+    <polyline points="12 6 12 12 16 14" />
+  </svg>
+);

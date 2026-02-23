@@ -46,6 +46,7 @@ import {
   PolicyDetailScreen,
   UsersPermissionsScreen,
   StoreSettingsScreen,
+  StorefrontPreferencesScreen,
   ThemesScreen,
   ProductsScreen,
   OrdersScreen,
@@ -55,6 +56,20 @@ import {
   AddEditProductScreen,
   AddEditStoreScreen,
   DashboardScreen,
+  BuyerDashboardScreen,
+  AdminDashboardScreen,
+  AdminUsersScreen,
+  AdminStoresScreen,
+  AdminSellersScreen,
+  AdminDeliveryScreen,
+  AdminProductsScreen,
+  DocumentUploadScreen,
+  AdminDocumentReviewScreen,
+  DeliveryDashboardScreen,
+  OAuthSetupScreen,
+  OAuthPasswordScreen,
+  OAuthRoleSelectionScreen,
+  PasswordSetupScreen,
 } from './src/screens';
 
 type ScreenConfig = {
@@ -215,6 +230,12 @@ const SCREEN_REGISTRY = {
     component: StoreSettingsScreen,
     showInGallery: true,
   },
+  storefrontPreferences: {
+    title: 'Storefront Preferences',
+    description: 'Control theme and language for customer-facing storefront.',
+    component: StorefrontPreferencesScreen,
+    showInGallery: false,
+  },
   themes: {
     title: 'Themes',
     description: 'Choose a theme for your store appearance.',
@@ -255,6 +276,90 @@ const SCREEN_REGISTRY = {
     title: 'Add/Edit Store',
     description: 'Create or edit store information.',
     component: AddEditStoreScreen,
+    showInGallery: false,
+  },
+  buyerDashboard: {
+    title: 'Buyer Dashboard',
+    description: 'Shopping journey and orders for buyers.',
+    component: BuyerDashboardScreen,
+    showInGallery: true,
+  },
+  adminDashboard: {
+    title: 'Admin Dashboard',
+    description: 'Platform administration and user management.',
+    component: AdminDashboardScreen,
+    showInGallery: true,
+  },
+  adminUsers: {
+    title: 'Admin Users',
+    description: 'Manage platform users and verifications.',
+    component: AdminUsersScreen,
+    showInGallery: false,
+  },
+  adminStores: {
+    title: 'Admin Stores',
+    description: 'Manage all platform stores with suspend/activate options.',
+    component: AdminStoresScreen,
+    showInGallery: false,
+  },
+  adminSellers: {
+    title: 'Admin Sellers',
+    description: 'Manage sellers and their stores.',
+    component: AdminSellersScreen,
+    showInGallery: false,
+  },
+  adminDelivery: {
+    title: 'Admin Delivery',
+    description: 'Manage delivery personnel and requests.',
+    component: AdminDeliveryScreen,
+    showInGallery: false,
+  },
+  adminProducts: {
+    title: 'Admin Products',
+    description: 'View and manage all platform products.',
+    component: AdminProductsScreen,
+    showInGallery: false,
+  },
+  documentUpload: {
+    title: 'Document Upload',
+    description: 'Upload verification documents for sellers and delivery.',
+    component: DocumentUploadScreen,
+    showInGallery: true,
+  },
+  adminDocumentReview: {
+    title: 'Document Review',
+    description: 'Admin review of user documents with approve/reject.',
+    component: AdminDocumentReviewScreen,
+    showInGallery: false,
+  },
+  deliveryDashboard: {
+    title: 'Delivery Dashboard',
+    description: 'Dashboard for delivery personnel with stats and earnings.',
+    component: DeliveryDashboardScreen,
+    showInGallery: true,
+  },
+  oauthSetup: {
+    title: 'OAuth Setup',
+    description: 'Complete OAuth registration with password and account type.',
+    component: OAuthSetupScreen,
+    showInGallery: false,
+  },
+  oauthPassword: {
+    title: 'OAuth Password',
+    description: 'Set password for new OAuth users (Step 1).',
+    component: OAuthPasswordScreen,
+    showInGallery: false,
+  },
+  oauthRoleSelection: {
+    title: 'OAuth Role Selection',
+    description: 'Choose account type for new OAuth users (Step 2).',
+    component: OAuthRoleSelectionScreen,
+    showInGallery: false,
+  },
+  passwordSetup: {
+    title: 'Password Setup',
+    description: 'Set password for existing OAuth users.',
+    component: PasswordSetupScreen,
     showInGallery: false,
   },
 } satisfies Record<string, ScreenConfig>;
@@ -315,9 +420,15 @@ function RootNavigator() {
   const [screenStack, setScreenStack] = useState<ScreenStackItem[]>([]);
   const [authChecked, setAuthChecked] = useState(false);
   const activeScreen = screenStack.length > 0 ? screenStack[screenStack.length - 1] : null;
+  
+  console.log('📱 Current screen stack:', screenStack.map(s => s.screenId));
+  console.log('📱 Active screen:', activeScreen?.screenId);
+  
   const ScreenComponent = activeScreen
     ? SCREEN_REGISTRY[activeScreen.screenId].component
     : WelcomeScreen;
+    
+  console.log('📱 Rendering component for:', activeScreen?.screenId || 'welcome');
 
   useEffect(() => {
     const bootstrapAuth = async () => {
@@ -328,10 +439,42 @@ function RootNavigator() {
           const token = urlParams.get('token');
           const oauthSuccess = urlParams.get('oauth');
           const oauthError = urlParams.get('error');
+          const oauthSetup = urlParams.get('oauth_setup');
+          const passwordSetup = urlParams.get('password_setup');
+          const oauthData = urlParams.get('data');
 
+          // New OAuth user needs to complete registration
+          if (oauthSetup === 'true' && oauthData) {
+            try {
+              const data = JSON.parse(decodeURIComponent(oauthData));
+              window.history.replaceState({}, document.title, window.location.pathname);
+              // Step 1: Set password first
+              setScreenStack([{ screenId: 'oauthPassword', params: { oauthData: data } }]);
+              setAuthChecked(true);
+              return;
+            } catch (e) {
+              console.error('Failed to parse OAuth data:', e);
+            }
+          }
+
+          // Existing OAuth user needs to set password
+          if (passwordSetup === 'true' && oauthData) {
+            try {
+              const data = JSON.parse(decodeURIComponent(oauthData));
+              window.history.replaceState({}, document.title, window.location.pathname);
+              setScreenStack([{ screenId: 'passwordSetup', params: { userData: data } }]);
+              setAuthChecked(true);
+              return;
+            } catch (e) {
+              console.error('Failed to parse password setup data:', e);
+            }
+          }
+
+          // Successful OAuth login with token
           if (token && oauthSuccess === 'success') {
             // Save token from OAuth callback
             await AsyncStorage.setItem('authToken', token);
+            await AsyncStorage.setItem('accessToken', token);
             // Clean URL
             window.history.replaceState({}, document.title, window.location.pathname);
             // Go to dashboard
@@ -351,7 +494,53 @@ function RootNavigator() {
         // Normal auth check
         const token = await AsyncStorage.getItem('authToken');
         if (token) {
-          setScreenStack([{ screenId: 'dashboard' }]);
+          // Verify token is valid by checking with backend
+          try {
+            const response = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000/api'}/auth/me`, {
+              headers: { 'Authorization': `Bearer ${token}` }
+            });
+            
+            if (response.ok) {
+              const data = await response.json();
+              const user = data.user || data;
+              
+              console.log('🔐 Bootstrap auth - User type:', user.accountType);
+              
+              // Save user data
+              await AsyncStorage.setItem('userData', JSON.stringify(user));
+              
+              // Route based on account type
+              if (user.accountType === 'admin') {
+                console.log('🔐 Routing to adminDashboard');
+                setScreenStack([{ screenId: 'adminDashboard' }]);
+              } else if (user.accountType === 'buyer') {
+                console.log('🔐 Routing to buyerDashboard');
+                setScreenStack([{ screenId: 'buyerDashboard' }]);
+              } else if (user.accountType === 'delivery') {
+                console.log('🔐 Routing to deliveryDashboard');
+                setScreenStack([{ screenId: 'deliveryDashboard' }]);
+              } else if (user.accountType === 'seller') {
+                console.log('🔐 Routing to seller dashboard');
+                setScreenStack([{ screenId: 'dashboard' }]);
+              } else {
+                console.log('🔐 Default routing to seller dashboard');
+                // Default to seller dashboard
+                setScreenStack([{ screenId: 'dashboard' }]);
+              }
+            } else {
+              // Token is invalid, clear it and show welcome
+              await AsyncStorage.removeItem('authToken');
+              await AsyncStorage.removeItem('accessToken');
+              await AsyncStorage.removeItem('userData');
+              setScreenStack([{ screenId: 'welcome' }]);
+            }
+          } catch (error) {
+            // Network error or token invalid, clear and show welcome
+            await AsyncStorage.removeItem('authToken');
+            await AsyncStorage.removeItem('accessToken');
+            await AsyncStorage.removeItem('userData');
+            setScreenStack([{ screenId: 'welcome' }]);
+          }
         } else {
           setScreenStack([{ screenId: 'welcome' }]);
         }
@@ -382,7 +571,13 @@ function RootNavigator() {
   }, [screenStack]);
 
   const navigate = (screenId: ScreenId, params?: Record<string, any>) => {
-    setScreenStack(prev => [...prev, { screenId, params }]);
+    console.log('🚀 NAVIGATE CALLED:', screenId, params);
+    console.log('🚀 Current stack:', screenStack.map(s => s.screenId));
+    setScreenStack(prev => {
+      const newStack = [...prev, { screenId, params }];
+      console.log('🚀 New stack:', newStack.map(s => s.screenId));
+      return newStack;
+    });
   };
 
   const goBack = () => {
@@ -390,7 +585,10 @@ function RootNavigator() {
   };
 
   const resetTo = (screenId: ScreenId, params?: Record<string, any>) => {
+    console.log('🔄 RESET TO:', screenId, params);
+    console.log('🔄 Previous stack:', screenStack.map(s => s.screenId));
     setScreenStack([{ screenId, params }]);
+    console.log('🔄 New stack should be:', [screenId]);
   };
 
   const handleAuthenticated = () => {

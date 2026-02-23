@@ -8,6 +8,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        <Route path="/store/:domain" element={<StorePage />} />
         <Route path="/product/:productId" element={<ProductPage />} />
         <Route path="/contact" element={<ContactPage />} />
         <Route path="/policies" element={<PoliciesPage />} />

@@ -1,40 +1,48 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { COLORS, SPACING } from '../theme';
+import { getColors } from '../theme';
+import { useTheme } from '../theme/ThemeContext';
+import { useTranslation } from '../i18n';
 
 interface BackHeaderProps {
   title: string;
   onBack?: () => void;
 }
 
-const BackHeader: React.FC<BackHeaderProps> = ({ title, onBack }) => (
-  <View style={styles.header}>
-    {onBack ? (
-      <TouchableOpacity
-        onPress={onBack}
-        style={styles.backButton}
-        accessibilityLabel="Go back"
-        accessibilityRole="button"
-        activeOpacity={0.6}
-      >
-        <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
-          <Path
-            d="M19 12H5M5 12L12 19M5 12L12 5"
-            stroke={COLORS.textSecondary}
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </Svg>
-      </TouchableOpacity>
-    ) : (
+const BackHeader: React.FC<BackHeaderProps> = ({ title, onBack }) => {
+  const { mode } = useTheme();
+  const COLORS = getColors(mode);
+  const { isRTL } = useTranslation();
+
+  return (
+    <View style={[styles.header, isRTL && { flexDirection: 'row-reverse' }]}>
+      {onBack ? (
+        <TouchableOpacity
+          onPress={onBack}
+          style={[styles.backButton, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
+          accessibilityLabel="Go back"
+          accessibilityRole="button"
+          activeOpacity={0.6}
+        >
+          <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" style={isRTL ? { transform: [{ scaleX: -1 }] } : undefined}>
+            <Path
+              d="M19 12H5M5 12L12 19M5 12L12 5"
+              stroke={COLORS.text}
+              strokeWidth={2}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </Svg>
+        </TouchableOpacity>
+      ) : (
+        <View style={styles.backPlaceholder} />
+      )}
+      <Text style={[styles.title, { color: COLORS.text }]} numberOfLines={1}>{title}</Text>
       <View style={styles.backPlaceholder} />
-    )}
-    <Text style={styles.title} numberOfLines={1}>{title}</Text>
-    <View style={styles.backPlaceholder} />
-  </View>
-);
+    </View>
+  );
+};
 
 const styles = StyleSheet.create({
   header: {
@@ -50,7 +58,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: COLORS.surfaceHighlight,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -60,11 +68,11 @@ const styles = StyleSheet.create({
   },
   title: {
     flex: 1,
-    fontSize: 17,
-    fontWeight: '600',
-    color: COLORS.text,
+    fontSize: 18,
+    fontWeight: '700',
     textAlign: 'center',
     letterSpacing: -0.2,
+    marginHorizontal: 12,
   },
 });
 

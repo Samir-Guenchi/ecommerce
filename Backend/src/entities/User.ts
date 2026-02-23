@@ -25,6 +25,7 @@ export enum AccountType {
   BUYER = 'buyer',
   SELLER = 'seller',
   BOTH = 'both',
+  DELIVERY = 'delivery',
 }
 
 export enum AccountStatus {
@@ -44,6 +45,12 @@ export class User {
 
   @Column({ type: 'varchar', length: 255, name: 'password_hash', nullable: true })
   passwordHash: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'google_id' })
+  googleId: string | null;
+
+  @Column({ type: 'varchar', length: 255, nullable: true, name: 'facebook_id' })
+  facebookId: string | null;
 
   @Column({ type: 'varchar', length: 255, nullable: true, name: 'full_name' })
   fullName: string | null;
@@ -100,6 +107,30 @@ export class User {
   @Column({ type: 'boolean', default: false, name: 'is_admin' })
   isAdmin: boolean;
 
+  // Document upload tracking
+  @Column({ type: 'boolean', default: false, name: 'documents_uploaded' })
+  documentsUploaded: boolean;
+
+  // Suspension fields
+  @Column({ type: 'text', nullable: true, name: 'suspension_reason' })
+  suspensionReason: string | null;
+
+  @Column({ type: 'timestamp', nullable: true, name: 'suspended_at' })
+  suspendedAt: Date | null;
+
+  @Column({ type: 'int', nullable: true, name: 'suspended_by_id' })
+  suspendedById: number | null;
+
+  // Deletion fields (soft delete)
+  @Column({ type: 'text', nullable: true, name: 'deletion_reason' })
+  deletionReason: string | null;
+
+  @Column({ type: 'timestamp', nullable: true, name: 'deleted_at' })
+  deletedAt: Date | null;
+
+  @Column({ type: 'int', nullable: true, name: 'deleted_by_id' })
+  deletedById: number | null;
+
   // Relations
   @OneToOne(() => SellerRegistration, (registration) => registration.user)
   sellerRegistration: SellerRegistration;
@@ -136,6 +167,15 @@ export class User {
 
   @OneToMany(() => Transaction, (transaction) => transaction.user)
   transactions: Transaction[];
+
+  // Virtual property for password (maps to passwordHash)
+  get password(): string | null {
+    return this.passwordHash;
+  }
+
+  set password(value: string | null) {
+    this.passwordHash = value;
+  }
 }
 
 

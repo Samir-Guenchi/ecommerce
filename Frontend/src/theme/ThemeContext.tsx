@@ -10,7 +10,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  mode: 'dark',
+  mode: 'light',
   toggleTheme: () => {},
   setTheme: () => {},
 });
@@ -18,7 +18,7 @@ const ThemeContext = createContext<ThemeContextType>({
 const STORAGE_KEY = '@app_theme_mode';
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [mode, setModeState] = useState<ThemeMode>('dark');
+  const [mode, setModeState] = useState<ThemeMode>('light');
 
   useEffect(() => {
     const loadTheme = async () => {
@@ -28,7 +28,7 @@ export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           setModeState(saved);
         }
       } catch {
-        // Default to dark
+        // Default to light
       }
     };
     loadTheme();

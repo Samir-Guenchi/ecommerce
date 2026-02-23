@@ -29,11 +29,11 @@ export class SellerRegistration {
   @Column({ type: 'varchar', length: 255, name: 'full_name' })
   fullName: string;
 
-  @Column({ type: 'varchar', length: 50 })
-  ssid: string;
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  ssid: string | null;
 
-  @Column({ type: 'varchar', length: 100, name: 'business_id' })
-  businessId: string;
+  @Column({ type: 'varchar', length: 100, nullable: true, name: 'business_id' })
+  businessId: string | null;
 
   @Column({ type: 'varchar', length: 500, nullable: true, name: 'document1_path' })
   document1Path: string | null;

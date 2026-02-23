@@ -1,5 +1,6 @@
 import React from 'react';
 import { PackageIcon } from './icons/Icons';
+import { getImageUrl } from '../config/api.config';
 import './ProductCard.css';
 
 export type StorefrontProduct = {
@@ -45,7 +46,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onOrder }) 
     ? product.price.toFixed(2)
     : parseFloat(product.price).toFixed(2);
 
-  const productAltText = product.imagePath
+  const imageUrl = getImageUrl(product.imagePath);
+
+  const productAltText = imageUrl
     ? `${product.name}${product.description ? ' - ' + product.description : ''}`
     : undefined;
 
@@ -59,9 +62,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onOrder }) 
       aria-label={`Voir les détails de ${product.name}, ${formattedPrice} DZD`}
     >
       <div className="product-image-container">
-        {product.imagePath ? (
+        {imageUrl ? (
           <img
-            src={product.imagePath}
+            src={imageUrl}
             alt={productAltText}
             className="product-image"
           />

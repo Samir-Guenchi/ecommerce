@@ -24,8 +24,8 @@ interface I18nContextType {
 }
 
 const I18nContext = createContext<I18nContextType>({
-  language: 'en',
-  isRTL: false,
+  language: 'ar',
+  isRTL: true,
   setLanguage: () => {},
   t: (key) => key,
 });
@@ -33,7 +33,7 @@ const I18nContext = createContext<I18nContextType>({
 const STORAGE_KEY = '@app_language';
 
 export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [language, setLanguageState] = useState<SupportedLanguage>('en');
+  const [language, setLanguageState] = useState<SupportedLanguage>('ar');
 
   /* Load saved language on mount */
   useEffect(() => {
@@ -44,11 +44,20 @@ export const I18nProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setLanguageState(saved as SupportedLanguage);
         }
       } catch {
-        // ignore – defaults to 'en'
+        // ignore – defaults to 'ar'
       }
     };
     load();
   }, []);
+
+  /* Initialize RTL for current language */
+  useEffect(() => {
+    const shouldBeRTL = RTL_LANGUAGES.includes(language);
+    if (I18nManager.isRTL !== shouldBeRTL) {
+      I18nManager.allowRTL(shouldBeRTL);
+      I18nManager.forceRTL(shouldBeRTL);
+    }
+  }, [language]);
 
   const isRTL = RTL_LANGUAGES.includes(language);
 

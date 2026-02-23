@@ -7,13 +7,14 @@ import { Store } from '../entities/Store';
 
 export const ratingController = {
   // Create a rating (buyer rates seller after purchase)
-  async createRating(req: Request, res: Response) {
+  async createRating(req: Request, res: Response): Promise<void> {
     try {
       const buyerId = req.user?.id;
       const { orderId, sellerId, storeId, rating, review, productQuality, communication, shippingSpeed, packaging } = req.body;
 
       if (!buyerId) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
       }
 
       // Verify order exists and belongs to buyer
@@ -24,12 +25,14 @@ export const ratingController = {
       });
 
       if (!order || order.user.id !== buyerId) {
-        return res.status(403).json({ message: 'Order not found or unauthorized' });
+        res.status(403).json({ message: 'Order not found or unauthorized' });
+        return;
       }
 
       // Check if order is delivered
       if (order.status !== 'delivered') {
-        return res.status(400).json({ message: 'Can only rate after order is delivered' });
+        res.status(400).json({ message: 'Can only rate after order is delivered' });
+        return;
       }
 
       // Check if already rated
@@ -39,7 +42,8 @@ export const ratingController = {
       });
 
       if (existingRating) {
-        return res.status(400).json({ message: 'Order already rated' });
+        res.status(400).json({ message: 'Order already rated' });
+        return;
       }
 
       // Create rating
@@ -156,14 +160,15 @@ export const ratingController = {
   },
 
   // Seller responds to a rating
-  async respondToRating(req: Request, res: Response) {
+  async respondToRating(req: Request, res: Response): Promise<void> {
     try {
       const sellerId = req.user?.id;
       const { ratingId } = req.params;
       const { response } = req.body;
 
       if (!sellerId) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
       }
 
       const ratingRepo = AppDataSource.getRepository(SellerRating);
@@ -172,7 +177,8 @@ export const ratingController = {
       });
 
       if (!rating || rating.sellerId !== sellerId) {
-        return res.status(403).json({ message: 'Rating not found or unauthorized' });
+        res.status(403).json({ message: 'Rating not found or unauthorized' });
+        return;
       }
 
       rating.sellerResponse = response;
@@ -190,7 +196,7 @@ export const ratingController = {
   },
 
   // Mark rating as helpful
-  async markHelpful(req: Request, res: Response) {
+  async markHelpful(req: Request, res: Response): Promise<void> {
     try {
       const { ratingId } = req.params;
 
@@ -200,7 +206,8 @@ export const ratingController = {
       });
 
       if (!rating) {
-        return res.status(404).json({ message: 'Rating not found' });
+        res.status(404).json({ message: 'Rating not found' });
+        return;
       }
 
       rating.helpfulCount += 1;
@@ -217,13 +224,14 @@ export const ratingController = {
   },
 
   // Check if buyer can rate an order
-  async canRateOrder(req: Request, res: Response) {
+  async canRateOrder(req: Request, res: Response): Promise<void> {
     try {
       const buyerId = req.user?.id;
       const { orderId } = req.params;
 
       if (!buyerId) {
-        return res.status(401).json({ message: 'Unauthorized' });
+        res.status(401).json({ message: 'Unauthorized' });
+        return;
       }
 
       const orderRepo = AppDataSource.getRepository(Order);
@@ -233,11 +241,13 @@ export const ratingController = {
       });
 
       if (!order || order.user.id !== buyerId) {
-        return res.json({ canRate: false, reason: 'Order not found' });
+        res.json({ canRate: false, reason: 'Order not found' });
+        return;
       }
 
       if (order.status !== 'delivered') {
-        return res.json({ canRate: false, reason: 'Order not delivered yet' });
+        res.json({ canRate: false, reason: 'Order not delivered yet' });
+        return;
       }
 
       const ratingRepo = AppDataSource.getRepository(SellerRating);
@@ -246,7 +256,8 @@ export const ratingController = {
       });
 
       if (existingRating) {
-        return res.json({ canRate: false, reason: 'Already rated' });
+        res.json({ canRate: false, reason: 'Already rated' });
+        return;
       }
 
       res.json({ canRate: true });

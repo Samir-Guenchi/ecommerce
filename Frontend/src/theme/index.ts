@@ -46,9 +46,13 @@ export const getColors = (mode: 'light' | 'dark' = 'dark') => {
 
     // Status
     success: '#10B981',
+    successBg: isDark ? '#10B98115' : '#ECFDF5',
     error: '#EF4444',
+    errorBg: isDark ? '#EF444415' : '#FEF2F2',
     warning: '#FDB913',
+    warningBg: isDark ? '#FDB91315' : '#FFFBEB',
     info: '#3B82F6',
+    infoBg: isDark ? '#3B82F615' : '#EFF6FF',
 
     // Borders
     border: isDark ? '#1A2438' : '#E2E8F0',

@@ -7,6 +7,34 @@ export class UserController {
   private userRepository = AppDataSource.getRepository(User);
 
   /**
+   * Get current authenticated user
+   * GET /api/users/me
+   */
+  async getCurrentUser(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const user = await this.userRepository.findOne({
+        where: { id: req.user.id },
+        relations: ['sellerRegistration'],
+        select: ['id', 'email', 'fullName', 'accountType', 'accountStatus', 'phone', 'bio', 'averageRating', 'totalRatings', 'isAdmin', 'documentsUploaded'],
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      res.status(200).json(user);
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to get current user' });
+    }
+  }
+
+  /**
    * Get all users (Admin only)
    * GET /api/users
    */
@@ -162,6 +190,110 @@ export class UserController {
       });
     } catch (error: any) {
       res.status(500).json({ error: error.message || 'Failed to delete user' });
+    }
+  }
+
+  /**
+   * Update current user's account type
+   * PATCH /api/users/me/account-type
+   */
+  async updateAccountType(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const { accountType } = req.body;
+
+      if (!accountType || !['buyer', 'seller', 'both', 'delivery'].includes(accountType)) {
+        res.status(400).json({ error: 'Invalid account type' });
+        return;
+      }
+
+      const user = await this.userRepository.findOne({
+        where: { id: req.user.id },
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      user.accountType = accountType as any;
+      await this.userRepository.save(user);
+
+      res.status(200).json({
+        message: 'Account type updated successfully',
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          accountType: user.accountType,
+          accountStatus: user.accountStatus,
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to update account type' });
+    }
+  }
+
+  /**
+   * Update current user's profile
+   * PATCH /api/users/me
+   */
+  async updateCurrentUser(req: AuthRequest, res: Response): Promise<void> {
+    try {
+      if (!req.user) {
+        res.status(401).json({ error: 'Not authenticated' });
+        return;
+      }
+
+      const { accountStatus, documentsUploaded, fullName, phone, bio } = req.body;
+
+      const user = await this.userRepository.findOne({
+        where: { id: req.user.id },
+      });
+
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Update allowed fields
+      if (accountStatus !== undefined) {
+        user.accountStatus = accountStatus;
+      }
+      if (documentsUploaded !== undefined) {
+        user.documentsUploaded = documentsUploaded;
+      }
+      if (fullName !== undefined) {
+        user.fullName = fullName;
+      }
+      if (phone !== undefined) {
+        user.phone = phone;
+      }
+      if (bio !== undefined) {
+        user.bio = bio;
+      }
+
+      await this.userRepository.save(user);
+
+      res.status(200).json({
+        message: 'Profile updated successfully',
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName,
+          phone: user.phone,
+          bio: user.bio,
+          accountType: user.accountType,
+          accountStatus: user.accountStatus,
+          documentsUploaded: user.documentsUploaded,
+        },
+      });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message || 'Failed to update profile' });
     }
   }
 }

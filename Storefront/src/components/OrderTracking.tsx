@@ -203,7 +203,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ orderId, deliveryA
             {/* Map */}
             <div className="tracking-map-container">
                 <MapContainer
-                    center={center}
+                    center={center as [number, number]}
                     zoom={14}
                     style={{ height: '400px', width: '100%', borderRadius: '16px' }}
                 >
