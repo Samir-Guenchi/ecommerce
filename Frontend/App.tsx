@@ -491,6 +491,114 @@ function RootNavigator() {
           }
         }
 
+        // Handle deep links for mobile OAuth (React Native only, not web)
+        if (typeof window === 'undefined' || (typeof window !== 'undefined' && typeof (window as any).ReactNativeWebView !== 'undefined')) {
+          try {
+            const { Linking } = require('react-native');
+            
+            const handleDeepLink = async (url: string) => {
+              console.log('📱 Deep link received:', url);
+              console.log('📱 URL type:', typeof url);
+              console.log('📱 URL includes ap-ecom:', url.includes('ap-ecom'));
+              
+              if (url.includes('ap-ecom://oauth')) {
+                try {
+                  console.log('📱 Processing OAuth deep link...');
+                  const urlObj = new URL(url);
+                  console.log('📱 URL parsed:', urlObj.href);
+                  const params = new URLSearchParams(urlObj.search);
+                  
+                  const setup = params.get('setup');
+                  const passwordSetup = params.get('password_setup');
+                  const token = params.get('token');
+                  const success = params.get('success');
+                  const error = params.get('error');
+                  const data = params.get('data');
+                  
+                  console.log('📱 Params:', { setup, passwordSetup, token: token ? 'present' : 'missing', success, error, data: data ? 'present' : 'missing' });
+                  
+                  // New OAuth user needs to complete registration
+                  if (setup === 'true' && data) {
+                    try {
+                      const oauthData = JSON.parse(decodeURIComponent(data));
+                      console.log('📝 OAuth setup required:', oauthData);
+                      setScreenStack([{ screenId: 'oauthPassword', params: { oauthData } }]);
+                      setAuthChecked(true);
+                      return true;
+                    } catch (e) {
+                      console.error('❌ Failed to parse OAuth data:', e);
+                    }
+                  }
+                  
+                  // Existing OAuth user needs to set password
+                  if (passwordSetup === 'true' && data) {
+                    try {
+                      const userData = JSON.parse(decodeURIComponent(data));
+                      console.log('🔑 Password setup required:', userData);
+                      setScreenStack([{ screenId: 'passwordSetup', params: { userData } }]);
+                      setAuthChecked(true);
+                      return true;
+                    } catch (e) {
+                      console.error('❌ Failed to parse password setup data:', e);
+                    }
+                  }
+                  
+                  // Successful OAuth login with token
+                  if (token && success === 'true') {
+                    console.log('✅ OAuth success, saving token');
+                    await AsyncStorage.setItem('authToken', token);
+                    await AsyncStorage.setItem('accessToken', token);
+                    setScreenStack([{ screenId: 'dashboard' }]);
+                    setAuthChecked(true);
+                    return true;
+                  }
+                  
+                  // OAuth error
+                  if (error) {
+                    console.error('❌ OAuth error:', error);
+                    setScreenStack([{ screenId: 'welcome' }]);
+                    setAuthChecked(true);
+                    return true;
+                  }
+                  
+                  console.log('⚠️ No matching OAuth parameters found');
+                } catch (e) {
+                  console.error('❌ Failed to parse deep link:', e);
+                }
+              } else {
+                console.log('📱 Not an OAuth deep link');
+              }
+              
+              return false;
+            };
+            
+            console.log('📱 Setting up deep link listeners...');
+            
+            // Check initial URL (for deep link on app launch)
+            const initialUrl = await Linking.getInitialURL();
+            console.log('📱 Initial URL:', initialUrl);
+            if (initialUrl) {
+              const handled = await handleDeepLink(initialUrl);
+              console.log('📱 Initial URL handled:', handled);
+              if (handled) return;
+            }
+            
+            // Listen for deep links while app is running
+            const linkingSubscription = Linking.addEventListener('url', async ({ url }: { url: string }) => {
+              console.log('📱 Deep link event triggered');
+              await handleDeepLink(url);
+            });
+            
+            console.log('📱 Deep link listeners ready');
+            
+            // Store subscription for cleanup
+            (bootstrapAuth as any).linkingSubscription = linkingSubscription;
+          } catch (err) {
+            console.error('❌ Deep linking error:', err);
+            console.log('Deep linking not available on this platform');
+          }
+        }
+
         // Normal auth check
         const token = await AsyncStorage.getItem('authToken');
         if (token) {

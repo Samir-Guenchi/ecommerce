@@ -26,8 +26,7 @@ import { Platform } from 'react-native';
 // - 10.232.243.165 (likely your main network - USE THIS ONE)
 //
 // IMPORTANT: Make sure your phone and computer are on the same WiFi network!
-// const DEVICE_IP = '10.11.22.165'; // <-- COMMENTED OUT TO USE EMULATOR DEFAULTS
-const DEVICE_IP = '';
+const DEVICE_IP = ''; // <-- Leave empty for now (Google OAuth doesn't support private IPs)
 
 // ============================================
 

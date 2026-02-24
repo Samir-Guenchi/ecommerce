@@ -17,6 +17,11 @@ router.get('/users', adminController.getAllUsers.bind(adminController));
 router.post('/suspend-user/:id', adminController.suspendUser.bind(adminController));
 router.post('/activate-user/:id', adminController.activateUser.bind(adminController));
 router.delete('/delete-user/:id', adminController.deleteUser.bind(adminController));
+// PATCH aliases for frontend compatibility
+router.patch('/users/:id/suspend', adminController.suspendUser.bind(adminController));
+router.patch('/users/:id/activate', adminController.activateUser.bind(adminController));
+router.patch('/users/:id/ban', adminController.suspendUser.bind(adminController)); // Ban is same as suspend
+router.patch('/users/:id/unban', adminController.activateUser.bind(adminController)); // Unban is same as activate
 
 // Store management
 router.get('/stores', adminController.getAllStores.bind(adminController));

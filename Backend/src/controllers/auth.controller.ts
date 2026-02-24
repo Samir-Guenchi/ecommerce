@@ -246,13 +246,28 @@ export class AuthController {
     try {
       const user = (req as any).user;
       
+      console.log('🔐 Google OAuth Callback - User:', user ? 'Found' : 'Not found');
+      console.log('🔐 Query params:', req.query);
+      console.log('🔐 User-Agent:', req.headers['user-agent']);
+      
       if (!user) {
+        console.error('❌ No user in OAuth callback');
         res.redirect(`${process.env.FRONTEND_URL}?error=oauth_failed`);
         return;
       }
 
+      // Detect if request is from mobile (check user agent or use a query parameter)
+      const isMobile = req.query.mobile === 'true' || 
+                      req.headers['user-agent']?.includes('Expo') ||
+                      req.headers['user-agent']?.includes('Mobile');
+
+      console.log('📱 Is mobile request:', isMobile);
+      const frontendUrl = isMobile ? 'ap-ecom://oauth' : process.env.FRONTEND_URL;
+      console.log('🔗 Frontend URL:', frontendUrl);
+
       // Check if this is a new OAuth user who needs to complete registration
       if ((user as any).isNewOAuthUser) {
+        console.log('✨ New OAuth user - needs setup');
         // Redirect to registration completion page with OAuth data
         const oauthData = encodeURIComponent(JSON.stringify({
           email: (user as any).email,
@@ -260,27 +275,56 @@ export class AuthController {
           googleId: (user as any).googleId,
           provider: 'google'
         }));
-        res.redirect(`${process.env.FRONTEND_URL}?oauth_setup=true&data=${oauthData}`);
+        
+        const redirectUrl = isMobile 
+          ? `ap-ecom://oauth?setup=true&data=${oauthData}`
+          : `${process.env.FRONTEND_URL}?oauth_setup=true&data=${oauthData}`;
+        
+        console.log('🔗 Redirecting to:', redirectUrl);
+        res.redirect(redirectUrl);
         return;
       }
 
       // Check if user needs to set password
       if ((user as any).needsPasswordSetup) {
+        console.log('🔑 Existing OAuth user - needs password setup');
         const setupData = encodeURIComponent(JSON.stringify({
           userId: user.id,
           email: user.email,
           fullName: user.fullName,
         }));
-        res.redirect(`${process.env.FRONTEND_URL}?password_setup=true&data=${setupData}`);
+        
+        const redirectUrl = isMobile
+          ? `ap-ecom://oauth?password_setup=true&data=${setupData}`
+          : `${process.env.FRONTEND_URL}?password_setup=true&data=${setupData}`;
+        
+        console.log('🔗 Redirecting to:', redirectUrl);
+        res.redirect(redirectUrl);
         return;
       }
 
       // Existing user with password - generate token and login
+      console.log('✅ Existing user with password - generating token');
       const token = authService.generateToken(user);
-      res.redirect(`${process.env.FRONTEND_URL}?token=${token}&oauth=success`);
+      
+      const redirectUrl = isMobile
+        ? `ap-ecom://oauth?token=${token}&success=true`
+        : `${process.env.FRONTEND_URL}?token=${token}&oauth=success`;
+      
+      console.log('🔗 Redirecting to:', redirectUrl);
+      res.redirect(redirectUrl);
     } catch (error: any) {
-      console.error('Google OAuth callback error:', error);
-      res.redirect(`${process.env.FRONTEND_URL}?error=oauth_failed`);
+      console.error('❌ Google OAuth callback error:', error);
+      const isMobile = req.query.mobile === 'true' || 
+                      req.headers['user-agent']?.includes('Expo') ||
+                      req.headers['user-agent']?.includes('Mobile');
+      
+      const redirectUrl = isMobile
+        ? `ap-ecom://oauth?error=oauth_failed`
+        : `${process.env.FRONTEND_URL}?error=oauth_failed`;
+      
+      console.log('🔗 Error redirect to:', redirectUrl);
+      res.redirect(redirectUrl);
     }
   }
 

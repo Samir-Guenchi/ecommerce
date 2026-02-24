@@ -138,6 +138,27 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
       const token = urlParams.get('token');
       const oauthSuccess = urlParams.get('oauth');
       const oauthError = urlParams.get('error');
+      const oauthSetup = urlParams.get('oauth_setup');
+      const oauthData = urlParams.get('data');
+
+      // Handle new OAuth user who needs to complete registration
+      if (oauthSetup === 'true' && oauthData) {
+        try {
+          const parsedData = JSON.parse(decodeURIComponent(oauthData));
+          console.log('📝 OAuth setup required:', parsedData);
+          
+          // Clear URL parameters
+          window.history.replaceState({}, document.title, window.location.pathname);
+          
+          // Navigate to OAuth setup screen
+          navigate?.('oauthSetup', { oauthData: parsedData });
+        } catch (err) {
+          console.error('Failed to parse OAuth data:', err);
+          setError(t('auth_oauthFailed'));
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        return;
+      }
 
       if (token && oauthSuccess === 'success') {
         // Save token and fetch user data
@@ -540,22 +561,34 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
 
   const handleGoogleSignIn = async () => {
     try {
-      // Redirect to Google OAuth in same window
-      const googleAuthUrl = `${API_URL}/auth/google`;
+      // Add mobile parameter for mobile devices
+      const isMobile = Platform.OS !== 'web';
+      const googleAuthUrl = `${API_URL}/auth/google${isMobile ? '?mobile=true' : ''}`;
+      
+      console.log('🔐 Starting Google OAuth...');
+      console.log('🔐 Platform:', Platform.OS);
+      console.log('🔐 Is mobile:', isMobile);
+      console.log('🔐 OAuth URL:', googleAuthUrl);
       
       // For web, redirect in same window
       if (Platform.OS === 'web') {
+        console.log('🔐 Redirecting in browser...');
         window.location.href = googleAuthUrl;
       } else {
         // For mobile, use Linking
+        console.log('🔐 Opening URL with Linking...');
         const supported = await Linking.canOpenURL(googleAuthUrl);
+        console.log('🔐 URL supported:', supported);
         if (supported) {
           await Linking.openURL(googleAuthUrl);
+          console.log('🔐 URL opened successfully');
         } else {
+          console.error('❌ Cannot open URL:', googleAuthUrl);
           setError(t('auth_googleUnavailable'));
         }
       }
     } catch (err: any) {
+      console.error('❌ Google OAuth error:', err);
       setError(err.message || t('auth_googleUnavailable'));
     }
   };

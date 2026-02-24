@@ -18,6 +18,7 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  Platform,
   Alert,
   Modal,
   TextInput,
@@ -106,7 +107,7 @@ const AdminSellersScreen: React.FC<AdminSellersScreenProps> = ({ navigate, goBac
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [sellers, setSellers] = useState<Seller[]>([]);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'active'>('all');
+  const [filter, setFilter] = useState<'all' | 'pending' | 'approved' | 'active' | 'suspended'>('all');
   const [modalVisible, setModalVisible] = useState(false);
   const [modalAction, setModalAction] = useState<'approve' | 'reject' | 'suspend' | 'delete'>('approve');
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
@@ -258,39 +259,39 @@ const AdminSellersScreen: React.FC<AdminSellersScreenProps> = ({ navigate, goBac
     const newStatus = seller.accountStatus === 'active' ? 'suspended' : 'active';
     const action = newStatus === 'suspended' ? 'Suspend' : 'Activate';
 
-    Alert.alert(
-      `${action} Seller`,
-      `Are you sure you want to ${action.toLowerCase()} ${seller.fullName}?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: action,
-          style: newStatus === 'suspended' ? 'destructive' : 'default',
-          onPress: async () => {
-            try {
-              const token = await AsyncStorage.getItem('accessToken') || await AsyncStorage.getItem('authToken');
-              const endpoint = newStatus === 'suspended' ? 'suspend-user' : 'activate-user';
-              const response = await fetch(`${API_URL}/admin/${endpoint}/${seller.id}`, {
-                method: 'POST',
-                headers: {
-                  'Authorization': `Bearer ${token}`,
-                  'Content-Type': 'application/json',
-                },
-              });
-
-              if (response.ok) {
-                Alert.alert('Success', `Seller ${action.toLowerCase()}d successfully`);
-                fetchSellers();
-              } else {
-                Alert.alert('Error', 'Failed to update seller status');
-              }
-            } catch (error) {
-              Alert.alert('Error', 'Failed to update seller status');
-            }
-          },
+    try {
+      const token = await AsyncStorage.getItem('accessToken') || await AsyncStorage.getItem('authToken');
+      const endpoint = newStatus === 'suspended' ? 'suspend-user' : 'activate-user';
+      const url = `${API_URL}/admin/${endpoint}/${seller.id}`;
+      
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-      ]
-    );
+      });
+
+      const responseData = await response.json();
+
+      if (response.ok) {
+        fetchSellers();
+      } else {
+        const errorMsg = responseData.error || 'Failed to update seller status';
+        if (Platform.OS === 'web') {
+          alert(`Error: ${errorMsg}`);
+        } else {
+          Alert.alert('Error', errorMsg);
+        }
+      }
+    } catch (error) {
+      const errorMsg = `Failed to update seller status: ${error.message}`;
+      if (Platform.OS === 'web') {
+        alert(errorMsg);
+      } else {
+        Alert.alert('Error', errorMsg);
+      }
+    }
   };
 
   const filteredSellers = sellers.filter(seller => {
@@ -298,6 +299,7 @@ const AdminSellersScreen: React.FC<AdminSellersScreenProps> = ({ navigate, goBac
     if (filter === 'pending') return seller.sellerRegistration?.verificationStatus === 'pending';
     if (filter === 'approved') return seller.sellerRegistration?.verificationStatus === 'approved';
     if (filter === 'active') return seller.accountStatus === 'active';
+    if (filter === 'suspended') return seller.accountStatus === 'suspended';
     return true;
   });
 
@@ -357,6 +359,15 @@ const AdminSellersScreen: React.FC<AdminSellersScreenProps> = ({ navigate, goBac
             {t('admin_filterActive', { count: sellers.filter(s => s.accountStatus === 'active').length })}
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[s.filterTab, filter === 'suspended' && { backgroundColor: COLORS.error + '15' }]}
+          onPress={() => setFilter('suspended')}
+          activeOpacity={0.7}
+        >
+          <Text style={[s.filterTabText, { color: filter === 'suspended' ? COLORS.error : COLORS.textSecondary }]}>
+            {t('admin_filterSuspended', { count: sellers.filter(s => s.accountStatus === 'suspended').length })}
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -371,7 +382,7 @@ const AdminSellersScreen: React.FC<AdminSellersScreenProps> = ({ navigate, goBac
             <StoreIcon color={COLORS.textMuted} size={48} />
             <Text style={[s.emptyTitle, { color: COLORS.text }]}>{t('admin_noSellersFound')}</Text>
             <Text style={[s.emptyDesc, { color: COLORS.textSecondary }]}>
-              {filter === 'all' ? t('admin_noSellersAll') : t('admin_noSellersFilter', { filter })}
+              {filter === 'all' ? t('admin_noSellersAll') : `No ${filter} sellers found`}
             </Text>
           </View>
         ) : (
@@ -471,7 +482,7 @@ const AdminSellersScreen: React.FC<AdminSellersScreenProps> = ({ navigate, goBac
                           onPress={() => openDocument(seller.sellerRegistration!.document2Path, 'Tax ID')}
                         >
                           <FileTextIcon color={COLORS.textMuted} size={16} />
-                          <Text style=[s.documentName, { color: COLORS.text }]}>{t('admin_taxId')}</Text>
+                          <Text style={[s.documentName, { color: COLORS.text }]}>{t('admin_taxId')}</Text>
                         </TouchableOpacity>
                       )}
                       {seller.sellerRegistration.document3Path && (
@@ -545,17 +556,28 @@ const AdminSellersScreen: React.FC<AdminSellersScreenProps> = ({ navigate, goBac
                   </>
                 ) : (
                   <>
-                    <TouchableOpacity
-                      style={[s.actionButton, { backgroundColor: COLORS.warning + '15', borderColor: COLORS.warning + '30', flex: 1 }]}
-                      onPress={() => {
-                        setSelectedSeller(seller);
-                        setModalAction('suspend');
-                        setModalVisible(true);
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[s.actionButtonText, { color: COLORS.warning }]}>{t('admin_suspend')}</Text>
-                    </TouchableOpacity>
+                    {seller.accountStatus === 'suspended' ? (
+                      <TouchableOpacity
+                        style={[s.actionButton, { backgroundColor: '#10B981' + '15', borderColor: '#10B981' + '30', flex: 1 }]}
+                        onPress={() => handleToggleStatus(seller)}
+                        activeOpacity={0.7}
+                      >
+                        <CheckIcon color="#10B981" />
+                        <Text style={[s.actionButtonText, { color: '#10B981' }]}>{t('admin_activateSeller')}</Text>
+                      </TouchableOpacity>
+                    ) : (
+                      <TouchableOpacity
+                        style={[s.actionButton, { backgroundColor: COLORS.warning + '15', borderColor: COLORS.warning + '30', flex: 1 }]}
+                        onPress={() => {
+                          setSelectedSeller(seller);
+                          setModalAction('suspend');
+                          setModalVisible(true);
+                        }}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={[s.actionButtonText, { color: COLORS.warning }]}>{t('admin_suspendSeller')}</Text>
+                      </TouchableOpacity>
+                    )}
                     <TouchableOpacity
                       style={[s.actionButton, { backgroundColor: COLORS.error + '15', borderColor: COLORS.error + '30', flex: 1 }]}
                       onPress={() => {
@@ -590,7 +612,7 @@ const AdminSellersScreen: React.FC<AdminSellersScreenProps> = ({ navigate, goBac
             <Text style={[s.modalDesc, { color: COLORS.textMuted }]}>
               {modalAction === 'approve' 
                 ? t('admin_approveSellerMsg', { name: selectedSeller?.fullName || '' })
-                : t('admin_provideReasonFor', { action: modalAction, name: selectedSeller?.fullName || '' })}
+                : `Please provide a reason to ${modalAction} ${selectedSeller?.fullName || ''}`}
             </Text>
             
             {modalAction !== 'approve' && (
