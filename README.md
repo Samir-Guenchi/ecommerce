@@ -1,36 +1,36 @@
 # Algerie Post E-Commerce Platform
 
-![Algerie Post Logo](AlgeriePoste.png)
-
 A comprehensive multi-seller e-commerce platform built for Algerie Post, enabling sellers to create online stores and customers to browse and purchase products through both mobile and web interfaces.
 
-## 📋 Table of Contents
+## Table of Contents
 
 - [Overview](#overview)
 - [Architecture](#architecture)
 - [Features](#features)
+- [Technology Stack](#technology-stack)
 - [Prerequisites](#prerequisites)
 - [Installation & Setup](#installation--setup)
 - [Usage](#usage)
 - [API Documentation](#api-documentation)
 - [Database](#database)
+- [Project Structure](#project-structure)
 - [Deployment](#deployment)
 - [Contributing](#contributing)
 - [License](#license)
 
-## 🎯 Overview
+## Overview
 
 Algerie Post E-Commerce Platform is a full-stack application that provides:
 
-- **Multi-seller marketplace** where sellers can register and manage their stores
-- **Mobile app** for sellers to manage their business on-the-go
-- **Web storefront** for customers to browse stores and make purchases
-- **Centralized backend API** handling all business logic and data management
-- **PostgreSQL database** with comprehensive schema for e-commerce operations
+- Multi-seller marketplace where sellers can register and manage their stores
+- Mobile application for sellers to manage their business on-the-go
+- Web storefront for customers to browse stores and make purchases
+- Centralized backend API handling all business logic and data management
+- PostgreSQL database with comprehensive schema for e-commerce operations
 
 The platform supports the complete e-commerce workflow from seller registration to order fulfillment, with features like product management, payment processing, delivery tracking, and subscription plans.
 
-## 🏗️ Architecture
+## Architecture
 
 The application follows a microservices-like architecture with separate components:
 
@@ -54,16 +54,18 @@ The application follows a microservices-like architecture with separate componen
                                                └─────────────────┘
 ```
 
-### Components:
+### Components
 
-- **Backend**: RESTful API built with Node.js, TypeScript, Express, and TypeORM
-- **Frontend**: React Native mobile application for sellers
-- **Storefront**: React web application for customer-facing store browsing
-- **Database**: PostgreSQL with 18+ tables covering all e-commerce entities
+- Backend: RESTful API built with Node.js, TypeScript, Express, and TypeORM
+- Frontend: React Native mobile application for sellers
+- Storefront: React web application for customer-facing store browsing
+- Database: PostgreSQL with 18+ tables covering all e-commerce entities
 
-## ✨ Features
+## Features
 
-### 🏪 Seller Features
+### Seller Features
+### Seller Features
+
 - Store registration and management
 - Product catalog management
 - Order processing and tracking
@@ -72,7 +74,8 @@ The application follows a microservices-like architecture with separate componen
 - Subscription plan management
 - Analytics and reporting
 
-### 🛒 Customer Features
+### Customer Features
+
 - Browse stores by domain
 - Product search and filtering
 - Shopping cart functionality
@@ -80,48 +83,77 @@ The application follows a microservices-like architecture with separate componen
 - Order tracking
 - Transaction history
 
-### 🔧 Admin Features
+### Admin Features
+
 - User management (approve/reject sellers)
 - Platform-wide analytics
 - System configuration
 - Content moderation
 
-### 🛡️ Security & Authentication
+### Security & Authentication
+
 - JWT-based authentication
 - Email verification system
 - Role-based access control
 - Secure password hashing
 - Admin privilege management
+- Google OAuth integration
 
-## 📋 Prerequisites
+## Technology Stack
 
-- **Node.js** (v18 or higher)
-- **PostgreSQL** (v12 or higher)
-- **npm** or **yarn**
-- **React Native development environment** (for mobile app)
-- **Git**
+### Backend
+- Node.js with TypeScript
+- Express.js framework
+- TypeORM for database management
+- PostgreSQL database
+- JWT for authentication
+- Passport.js for OAuth
+- Nodemailer for email services
 
-### For Mobile Development:
-- **Android Studio** (for Android development)
-- **Xcode** (for iOS development on macOS)
+### Frontend (Mobile)
+- React Native
+- Expo framework
+- React Navigation
+- Axios for API calls
+- AsyncStorage for local data
 
-## 🚀 Installation & Setup
+### Storefront (Web)
+- React with TypeScript
+- Vite build tool
+- React Router for navigation
+- Tailwind CSS for styling
+- Axios for API integration
+
+## Prerequisites
+
+- Node.js (v18 or higher)
+- PostgreSQL (v12 or higher)
+- npm or yarn
+- React Native development environment (for mobile app)
+- Git
+
+### For Mobile Development
+
+- Android Studio (for Android development)
+- Xcode (for iOS development on macOS)
+
+## Installation & Setup
 
 ### 1. Clone the Repository
 
 ```bash
-git clone <repository-url>
-cd "Algerie Post"
+git clone https://github.com/Samir-Guenchi/ecommerce.git
+cd ecommerce
 ```
 
 ### 2. Database Setup
 
 ```bash
 # Create PostgreSQL database
-createdb algerie_post
+createdb algerie_post_ecom
 
 # Run the schema
-psql -U postgres -d algerie_post -f DB/schema.sql
+psql -U postgres -d algerie_post_ecom -f DB/schema.sql
 ```
 
 ### 3. Backend Setup
@@ -133,7 +165,7 @@ cd Backend
 npm install
 
 # Set up environment variables
-cp ENV_TEMPLATE.md .env
+cp .env.example .env
 # Edit .env with your database credentials, JWT secret, and SMTP settings
 
 # Start development server
@@ -149,10 +181,6 @@ cd Frontend
 
 # Install dependencies
 npm install
-
-# For iOS (macOS only)
-bundle install
-bundle exec pod install
 
 # Start Metro bundler
 npm start
@@ -178,30 +206,30 @@ npm run dev
 
 The storefront will run on `http://localhost:5173`
 
-## 📱 Usage
+## Usage
 
 ### Seller Workflow
 
-1. **Registration**: Download the mobile app and register as a seller
-2. **Store Setup**: Configure store details, theme, and settings
-3. **Product Management**: Add products with images, descriptions, and pricing
-4. **Order Management**: Process incoming orders and manage fulfillment
-5. **Analytics**: Monitor sales performance and customer behavior
+1. Registration: Download the mobile app and register as a seller
+2. Store Setup: Configure store details, theme, and settings
+3. Product Management: Add products with images, descriptions, and pricing
+4. Order Management: Process incoming orders and manage fulfillment
+5. Analytics: Monitor sales performance and customer behavior
 
 ### Customer Workflow
 
-1. **Store Discovery**: Visit store domain (e.g., `store.algeriepost.dz`)
-2. **Product Browsing**: Search and filter products
-3. **Purchase**: Add to cart and complete checkout
-4. **Tracking**: Monitor order status and delivery
+1. Store Discovery: Visit store domain (e.g., `store.algeriepost.dz`)
+2. Product Browsing: Search and filter products
+3. Purchase: Add to cart and complete checkout
+4. Tracking: Monitor order status and delivery
 
 ### Admin Workflow
 
-1. **User Management**: Approve seller registrations
-2. **Platform Monitoring**: View system analytics and metrics
-3. **Content Moderation**: Manage stores and products
+1. User Management: Approve seller registrations and manage user accounts
+2. Platform Monitoring: View system analytics and metrics
+3. Content Moderation: Manage stores and products
 
-## 📚 API Documentation
+## API Documentation
 
 The backend provides RESTful APIs for all platform functionality:
 
@@ -209,37 +237,92 @@ The backend provides RESTful APIs for all platform functionality:
 - `POST /api/auth/signup` - User registration
 - `POST /api/auth/login` - User login
 - `POST /api/auth/verify` - Email verification
+- `GET /api/auth/google` - Google OAuth login
+- `GET /api/auth/google/callback` - Google OAuth callback
 
 ### Store Management
 - `GET /api/stores` - List stores
 - `POST /api/stores` - Create store
 - `PUT /api/stores/:id` - Update store
+- `GET /api/stores/:id` - Get store details
 
 ### Product Management
 - `GET /api/products` - List products
 - `POST /api/products` - Create product
 - `PUT /api/products/:id` - Update product
+- `DELETE /api/products/:id` - Delete product
 
 ### Order Processing
 - `GET /api/orders` - List orders
 - `POST /api/orders` - Create order
 - `PUT /api/orders/:id/status` - Update order status
+- `GET /api/orders/:id` - Get order details
+
+### Admin Endpoints
+- `GET /api/admin/users` - List all users
+- `PATCH /api/admin/users/:id/suspend` - Suspend user
+- `PATCH /api/admin/users/:id/activate` - Activate user
+- `GET /api/admin/sellers` - List all sellers
 
 For complete API documentation, see the [Backend README](Backend/README.md)
 
-## 🗄️ Database
+## Database
 
 The platform uses PostgreSQL with a comprehensive schema including:
 
-- **18+ Tables** covering users, stores, products, orders, payments, etc.
-- **Automatic timestamps** with PostgreSQL triggers
-- **Full-text search** capabilities
-- **Foreign key constraints** and data integrity
-- **JSONB fields** for flexible data storage
+- 18+ Tables covering users, stores, products, orders, payments, etc.
+- Automatic timestamps with PostgreSQL triggers
+- Full-text search capabilities
+- Foreign key constraints and data integrity
+- JSONB fields for flexible data storage
 
-See [Database README](DB/README.md) for detailed schema information.
+Key tables include:
+- users: User accounts and authentication
+- stores: Seller store information
+- products: Product catalog
+- orders: Order management
+- order_items: Order line items
+- transactions: Payment transactions
+- seller_registrations: Seller onboarding
+- subscriptions: Subscription plans
 
-## 🚢 Deployment
+## Project Structure
+
+```
+ecommerce/
+├── Backend/                 # Node.js/TypeScript API
+│   ├── src/
+│   │   ├── config/         # Configuration files
+│   │   ├── controllers/    # Request handlers
+│   │   ├── entities/       # TypeORM entities
+│   │   ├── middleware/     # Express middleware
+│   │   ├── routes/         # API routes
+│   │   ├── services/       # Business logic
+│   │   └── utils/          # Utility functions
+│   ├── migrations/         # Database migrations
+│   └── uploads/            # File uploads
+├── Frontend/               # React Native mobile app
+│   ├── src/
+│   │   ├── components/     # Reusable components
+│   │   ├── screens/        # App screens
+│   │   ├── navigation/     # Navigation setup
+│   │   ├── services/       # API services
+│   │   └── i18n/           # Internationalization
+│   └── assets/             # Images and fonts
+├── Storefront/             # React web storefront
+│   ├── src/
+│   │   ├── components/     # React components
+│   │   ├── pages/          # Page components
+│   │   ├── services/       # API integration
+│   │   └── styles/         # CSS styles
+│   └── public/             # Static assets
+├── DB/                     # Database schema
+│   └── schema.sql          # PostgreSQL schema
+└── internship-report/      # LaTeX documentation
+    └── rapport-stage.tex   # Internship report
+```
+
+## Deployment
 
 ### Backend Deployment
 ```bash
@@ -267,8 +350,11 @@ npm run build
 - Configure CORS properly
 - Set up SSL certificates
 - Implement proper logging and monitoring
+- Use a process manager like PM2 for Node.js
+- Set up database backups
+- Configure CDN for static assets
 
-## 🤝 Contributing
+## Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -281,19 +367,23 @@ npm run build
 - Write tests for new features
 - Update documentation as needed
 - Ensure code passes linting and formatting
+- Use meaningful commit messages
 
-## 📄 License
+## License
 
-This project is licensed under the ISC License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the ISC License.
 
-## 📞 Support
+## Authors
+
+- GUENCHI Samir
+- GUERRERODJ Abdennour
+
+Developed as part of an internship project at ENSIA (École Nationale Supérieure d'Informatique) in collaboration with Algérie Poste.
+
+## Support
 
 For support and questions:
 - Create an issue in the repository
-- Contact the development team
 - Check the documentation in each component's README
-
----
-
-**Built with ❤️ for Algerie Post**</content>
+- Review the internship report for detailed system documentation</content>
 <parameter name="filePath">c:\Users\Abdennour\Desktop\Algerie Post\README.md
