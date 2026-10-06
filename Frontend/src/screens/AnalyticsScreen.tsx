@@ -1,10 +1,5 @@
 /**
- * AnalyticsScreen — 2026 Premium Redesign
- *
- * ✦ Bento-style stat cards with gradient accents
- * ✦ Animated counters and charts
- * ✦ Modern glassmorphism effects
- * ✦ Full i18n and dark mode support
+ * AnalyticsScreen — Algérie Poste E-Commerce Analytics
  */
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -23,6 +18,7 @@ import { orderAPI, productAPI, storeAPI } from '../services/api.service';
 import { getColors, SPACING } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
+import { BanknoteIcon, PackageIcon, TagIcon, ChartLineIcon } from '../components/ModernIcons';
 
 const { width: W } = Dimensions.get('window');
 const CARD_R = 18;
@@ -126,26 +122,30 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ navigate, goBack, sto
     { 
       label: t('analytics_totalSales') || 'Total Sales', 
       value: `${analytics.totalSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DZD`,
-      icon: '💰',
-      gradient: ['#00B894', '#55EFC4'],
+      icon: (c: string) => <BanknoteIcon size={24} color={c} strokeWidth={2} />,
+      color: '#0D2C74',
+      gradient: ['#0D2C74', '#1E40AF'],
     },
     { 
       label: t('analytics_totalOrders') || 'Total Orders', 
       value: analytics.totalOrders.toString(),
-      icon: '📦',
-      gradient: ['#6C5CE7', '#A29BFE'],
+      icon: (c: string) => <PackageIcon size={24} color={c} strokeWidth={2} />,
+      color: '#1E3A8A',
+      gradient: ['#1E3A8A', '#3B82F6'],
     },
     { 
       label: t('analytics_totalProducts') || 'Total Products', 
       value: analytics.totalProducts.toString(),
-      icon: '🛍️',
-      gradient: ['#E17055', '#FDCB6E'],
+      icon: (c: string) => <TagIcon size={24} color={c} strokeWidth={2} />,
+      color: '#D97706',
+      gradient: ['#D97706', '#FDB913'],
     },
     { 
       label: t('analytics_avgOrder') || 'Average Order', 
       value: `${analytics.averageOrder.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} DZD`,
-      icon: '📊',
-      gradient: ['#0984E3', '#74B9FF'],
+      icon: (c: string) => <ChartLineIcon size={24} color={c} strokeWidth={2} />,
+      color: '#0F766E',
+      gradient: ['#0F766E', '#14B8A6'],
     },
   ];
 
@@ -200,19 +200,19 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ navigate, goBack, sto
         {/* ── Hero Card ── */}
         <View style={[styles.heroCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
           <LinearGradient
-            colors={[COLORS.primary + '20', COLORS.primary + '05']}
+            colors={['#0D2C7420', '#1E40AF08']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.heroGradient}
           />
-          <View style={[styles.heroIcon, { backgroundColor: COLORS.primary + '15' }]}>
-            <TrendUpIcon color={COLORS.primary} />
+          <View style={[styles.heroIcon, { backgroundColor: '#0D2C7418' }]}>
+            <TrendUpIcon color="#0D2C74" />
           </View>
           <Text style={[styles.heroTitle, { color: COLORS.text }]}>
             {t('analytics_performance') || 'Store Performance'}
           </Text>
           <Text style={[styles.heroDesc, { color: COLORS.textSecondary }]}>
-            {t('analytics_performanceDesc') || 'Real-time insights and statistics for your store'}
+            {t('analytics_performanceDesc') || 'Real-time Algérie Poste merchant insights and sales statistics'}
           </Text>
         </View>
 
@@ -241,8 +241,8 @@ const AnalyticsScreen: React.FC<AnalyticsScreenProps> = ({ navigate, goBack, sto
                     end={{ x: 1, y: 1 }}
                     style={styles.statGradient}
                   />
-                  <View style={[styles.statIconBadge, { backgroundColor: stat.gradient[0] + '15' }]}>
-                    <Text style={{ fontSize: 28 }}>{stat.icon}</Text>
+                  <View style={[styles.statIconBadge, { backgroundColor: stat.color + '15' }]}>
+                    {stat.icon(stat.color)}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.statLabel, { color: COLORS.textMuted }]}>{stat.label}</Text>

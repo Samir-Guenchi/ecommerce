@@ -1,4 +1,5 @@
 import React from 'react';
+import { MapPinIcon } from './icons/Icons';
 import './StoreHeader.css';
 
 export type StorefrontStore = {
@@ -26,7 +27,9 @@ const StoreHeader: React.FC<StoreHeaderProps> = ({ store }) => {
         <p className="store-description">Discover curated products from this seller.</p>
       )}
       {store.location ? (
-        <p className="store-location">📍 {store.location}</p>
+        <p className="store-location" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+          <MapPinIcon size={14} /> {store.location}
+        </p>
       ) : null}
     </div>
   );

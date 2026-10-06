@@ -19,6 +19,15 @@ import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import { Logo } from '../components/Logo';
 import BottomNav from './BottomNav';
+import {
+  SunIcon,
+  MoonIcon,
+  PackageIcon,
+  TruckIcon,
+  CheckCircleIcon,
+  StoreIcon,
+  ReceiptIcon,
+} from '../components/ModernIcons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -156,7 +165,7 @@ const BuyerDashboardScreen = ({ navigate, resetTo }: BuyerDashboardScreenProps) 
                   <Logo variant="icon" size={48} />
                   <View style={[styles.greetingBox, isRTL && { alignItems: 'flex-end' }]}>
                     <Text style={styles.greetingText}>
-                      {t('buyer_hello')}, {userName}! 👋
+                      {t('buyer_hello')}, {userName}!
                     </Text>
                     <Text style={styles.subtitleText}>
                       {t('buyer_shoppingJourney')}
@@ -170,7 +179,7 @@ const BuyerDashboardScreen = ({ navigate, resetTo }: BuyerDashboardScreenProps) 
                   </TouchableOpacity>
 
                   <TouchableOpacity style={styles.controlBtn} onPress={toggleTheme} activeOpacity={0.8}>
-                    <Text style={styles.controlIcon}>{mode === 'dark' ? '☀️' : '🌙'}</Text>
+                    {mode === 'dark' ? <SunIcon size={18} color="#FDB913" /> : <MoonIcon size={18} color="#3B82F6" />}
                   </TouchableOpacity>
                 </View>
               </View>
@@ -214,7 +223,7 @@ const BuyerDashboardScreen = ({ navigate, resetTo }: BuyerDashboardScreenProps) 
             <View style={styles.bentoGrid}>
               <View style={[styles.bentoLarge, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
                 <View style={[styles.bentoIcon, { backgroundColor: COLORS.primary + '15' }]}>
-                  <Text style={styles.bentoEmoji}>📦</Text>
+                  <PackageIcon size={24} color={COLORS.primary} />
                 </View>
                 <Text style={[styles.bentoValue, { color: COLORS.text }]}>
                   {stats.processingOrders || 0}
@@ -226,7 +235,7 @@ const BuyerDashboardScreen = ({ navigate, resetTo }: BuyerDashboardScreenProps) 
 
               <View style={styles.bentoColumn}>
                 <View style={[styles.bentoSmall, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-                  <Text style={styles.bentoEmoji}>🚚</Text>
+                  <TruckIcon size={22} color={COLORS.primary} />
                   <Text style={[styles.bentoValue, { color: COLORS.text }]}>
                     {stats.shippedOrders || 0}
                   </Text>
@@ -236,7 +245,7 @@ const BuyerDashboardScreen = ({ navigate, resetTo }: BuyerDashboardScreenProps) 
                 </View>
 
                 <View style={[styles.bentoSmall, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-                  <Text style={styles.bentoEmoji}>✓</Text>
+                  <CheckCircleIcon size={22} color={COLORS.success} />
                   <Text style={[styles.bentoValue, { color: COLORS.text }]}>
                     {stats.completedOrders || 0}
                   </Text>
@@ -256,7 +265,7 @@ const BuyerDashboardScreen = ({ navigate, resetTo }: BuyerDashboardScreenProps) 
               activeOpacity={0.85}
             >
               <View style={[styles.actionIconCircle, { backgroundColor: COLORS.primary + '15' }]}>
-                <Text style={styles.actionEmoji}>🏪</Text>
+                <StoreIcon size={22} color={COLORS.primary} />
               </View>
               <Text style={[styles.actionLabel, { color: COLORS.text }]}>
                 {t('buyer_browseStores')}
@@ -272,7 +281,7 @@ const BuyerDashboardScreen = ({ navigate, resetTo }: BuyerDashboardScreenProps) 
               activeOpacity={0.85}
             >
               <View style={[styles.actionIconCircle, { backgroundColor: COLORS.success + '15' }]}>
-                <Text style={styles.actionEmoji}>📋</Text>
+                <ReceiptIcon size={22} color={COLORS.success} />
               </View>
               <Text style={[styles.actionLabel, { color: COLORS.text }]}>
                 {t('buyer_trackOrders')}

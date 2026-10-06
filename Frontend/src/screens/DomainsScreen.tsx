@@ -1,10 +1,5 @@
 /**
- * DomainsScreen — 2026 Premium Redesign
- *
- * ✦ Bento-style domain cards with gradient accents
- * ✦ Modern input fields with glassmorphism
- * ✦ DNS configuration guide
- * ✦ Full i18n and dark mode support
+ * DomainsScreen — Algérie Poste E-Commerce Domain Management
  */
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -248,7 +243,7 @@ const DomainsScreen: React.FC<DomainsScreenProps> = ({ navigate, goBack, storeId
 
         {/* ── Save Button ── */}
         <TouchableOpacity
-          style={[styles.saveBtn, { backgroundColor: COLORS.primary }, (saving || !storeId) && { opacity: 0.6 }]}
+          style={[styles.saveBtn, { backgroundColor: '#0D2C74' }, (saving || !storeId) && { opacity: 0.6 }]}
           onPress={handleSave}
           disabled={saving || !storeId}
           activeOpacity={0.8}

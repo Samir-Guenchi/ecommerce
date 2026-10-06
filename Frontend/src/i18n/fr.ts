@@ -1,11 +1,11 @@
-﻿import { TranslationKeys } from './en';
+import { TranslationKeys } from './en';
 
 const fr: Record<TranslationKeys, string> = {
-  nav_dashboard: 'Tableau de bord',
+  nav_dashboard: 'Accueil',
   nav_products: 'Produits',
   nav_orders: 'Commandes',
   nav_stores: 'Boutiques',
-  nav_settings: 'Parametres',
+  nav_settings: 'Paramètres',
 
   dashboard_welcome: 'Bon retour',
   dashboard_overview: 'Vue d ensemble',
@@ -245,7 +245,7 @@ const fr: Record<TranslationKeys, string> = {
   stores_draft: 'Brouillon',
   stores_active: 'Actif',
   stores_suspended: 'Suspendu',
-  stores_suspendedByAdmin: '⚠️ Suspendu par l\'admin',
+  stores_suspendedByAdmin: 'Suspendu par l\'admin',
   stores_contactAdmin: 'Contactez l\'admin pour reactiver cette boutique',
   stores_statusUpdated: 'Statut de la boutique mis a jour avec succes',
   stores_statusUpdateFailed: 'Echec de la mise a jour du statut',
@@ -850,10 +850,10 @@ const fr: Record<TranslationKeys, string> = {
   oauth_reenterPassword: 'Ressaisissez le mot de passe',
   oauth_accountType: 'Type de compte',
   oauth_accountTypeRequired: 'Type de compte *',
-  oauth_buyerOption: '🛒 Acheteur',
-  oauth_sellerOption: '🏪 Vendeur',
-  oauth_deliveryOption: '🚚 Livreur',
-  oauth_bothOption: '🔄 Les deux',
+  oauth_buyerOption: 'Acheteur',
+  oauth_sellerOption: 'Vendeur',
+  oauth_deliveryOption: 'Livreur',
+  oauth_bothOption: 'Les deux (Acheteur et Vendeur)',
   oauth_completeButton: 'Terminer l\'inscription',
   oauth_loginNextTime: 'Vous pourrez vous connecter avec votre email et mot de passe la prochaine fois',
   oauth_invalidData: 'Données OAuth invalides. Veuillez réessayer de vous connecter.',

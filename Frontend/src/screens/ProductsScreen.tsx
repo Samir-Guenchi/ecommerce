@@ -1,9 +1,5 @@
-﻿/**
- * ProductsScreen — 2026 Redesign
- * ✦ Lang/Theme controls in header
- * ✦ Full i18n coverage
- * ✦ Premium product cards with stock indicator
- * ✦ Gradient summary strip
+/**
+ * ProductsScreen — Algérie Poste E-Commerce Product Management
  */
 import React, { useState, useEffect } from 'react';
 import {
@@ -16,17 +12,20 @@ import {
   RefreshControl,
   Alert,
   Dimensions,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import Svg, { Path, Circle } from 'react-native-svg';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 import * as API from '../services/api.service';
+import { getImageUrl } from '../config/api.config';
 import { getColors, SPACING } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import BottomNav, { BottomTabId } from './BottomNav';
 import { confirmAction } from '../components/confirmAction';
+import { PackageIcon, StoreIcon, CheckCircleIcon, AlertTriangleIcon } from '../components/ModernIcons';
 
 const { width: W } = Dimensions.get('window');
 const CARD_R = 18;
@@ -64,9 +63,12 @@ const TrashIcon = ({ color }: { color: string }) => (
 interface Product {
   id: number;
   name: string;
+  description?: string | null;
   price: number;
   stock: number;
   status: string;
+  category?: string | null;
+  imagePath?: string | null;
   store?: { name: string } | null;
   storeId?: number;
 }
@@ -132,7 +134,7 @@ const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBa
     );
     if (!confirmed) return;
     try {
-      await API.productAPI.deleteProduct(product.id.toString());
+      await API.productAPI.deleteProduct(Number(product.id));
       setProducts(prev => prev.filter(p => p.id !== product.id));
       showSuccess(t('products_deleteSuccess'));
     } catch (error: any) {
@@ -140,13 +142,27 @@ const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBa
     }
   };
 
-  const getStatusConfig = (status: string) => {
-    switch (status?.toLowerCase()) {
-      case 'active': return { bg: COLORS.success + '18', text: COLORS.success, dot: COLORS.success };
-      case 'low_stock': case 'low stock': return { bg: COLORS.warning + '18', text: COLORS.warning, dot: COLORS.warning };
-      case 'out_of_stock': case 'out of stock': return { bg: COLORS.error + '18', text: COLORS.error, dot: COLORS.error };
-      default: return { bg: COLORS.border, text: COLORS.textMuted, dot: COLORS.textMuted };
+  const getStatusConfig = (status: string, stock: number) => {
+    const s = status?.toLowerCase();
+    if (stock <= 0 || s === 'out_of_stock' || s === 'out of stock') {
+      return {
+        label: t('seller_outOfStock') || 'Épuisé',
+        color: COLORS.error,
+        icon: <AlertTriangleIcon size={13} color={COLORS.error} strokeWidth={2.2} />
+      };
     }
+    if (stock < 10 || s === 'low_stock' || s === 'low stock') {
+      return {
+        label: t('seller_lowStock') || 'Stock faible',
+        color: COLORS.warning,
+        icon: <AlertTriangleIcon size={13} color={COLORS.warning} strokeWidth={2.2} />
+      };
+    }
+    return {
+      label: t('seller_active') || 'En vente',
+      color: COLORS.success,
+      icon: <CheckCircleIcon size={13} color={COLORS.success} strokeWidth={2.2} />
+    };
   };
 
   const handleTabPress = (tab: BottomTabId) => {
@@ -196,8 +212,8 @@ const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBa
 
         <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
 
-        {/* ── Gradient Summary Strip ── */}
-        <LinearGradient colors={['#00B894', '#00B894BB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.summaryGrad}>
+        {/* ── Algérie Poste Summary Strip ── */}
+        <LinearGradient colors={['#0D2C74', '#1E40AF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.summaryGrad}>
           {[
             { val: products.length, label: t('products_total') },
             { val: activeCount, label: t('seller_active') },
@@ -217,7 +233,9 @@ const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBa
         {/* ── Product list ── */}
         {products.length === 0 ? (
           <View style={{ padding: 48, alignItems: 'center' }}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>🛍️</Text>
+            <View style={[styles.emptyIconBadge, { backgroundColor: COLORS.primary + '15' }]}>
+              <PackageIcon size={36} color={COLORS.primary} strokeWidth={2} />
+            </View>
             <Text style={{ fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 8 }}>{t('products_noProducts')}</Text>
             <Text style={{ fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 }}>
               {stores.length === 0 ? t('products_createStoreFirst') : t('products_addFirst')}
@@ -226,47 +244,128 @@ const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBa
         ) : (
           <View style={{ gap: 12 }}>
             {products.map((product) => {
-              const sc = getStatusConfig(product.status);
-              const storeName = product.store?.name || 'No Store';
-              const stockPct = Math.min((product.stock / 100) * 100, 100);
+              const sc = getStatusConfig(product.status, product.stock);
+              const storeName = product.store?.name || 'Boutique Principale';
+              const initial = product.name?.charAt(0)?.toUpperCase() || 'P';
+              const imgUri = getImageUrl(product.imagePath);
+
               return (
                 <TouchableOpacity
                   key={product.id}
                   style={[styles.productCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}
                   onPress={() => handleEditProduct(product.id)}
-                  activeOpacity={0.7}
+                  activeOpacity={0.75}
                 >
-                  <View style={[styles.cardTop, isRTL && { flexDirection: 'row-reverse' }]}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.productName, { color: COLORS.text }]} numberOfLines={1}>{product.name}</Text>
-                      <Text style={[styles.storeName, { color: COLORS.textMuted }]}>{storeName}</Text>
+                  {/* Top: Product Image Photo + Metadata & Store + Clean Typographic Status (NO bubble, NO dot) */}
+                  <View style={[styles.cardHeader, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <View style={[styles.productAvatar, { backgroundColor: COLORS.border + '25', borderColor: COLORS.border }]}>
+                      {imgUri ? (
+                        <Image
+                          source={{ uri: imgUri }}
+                          style={styles.avatarImg}
+                          resizeMode="cover"
+                        />
+                      ) : (
+                        <LinearGradient
+                          colors={['#0D2C74', '#1E40AF']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                          style={styles.avatarGrad}
+                        >
+                          <Text style={styles.avatarInitial}>{initial}</Text>
+                        </LinearGradient>
+                      )}
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
-                      <View style={[styles.statusDot, { backgroundColor: sc.dot }]} />
-                      <Text style={[styles.statusText, { color: sc.text }]}>{product.status}</Text>
+
+                    <View style={styles.productInfo}>
+                      <View style={[styles.metaRow, isRTL && { flexDirection: 'row-reverse' }]}>
+                        <Text style={[styles.refCode, { color: COLORS.textMuted }]}>
+                          REF #{product.id}
+                        </Text>
+                        {product.category ? (
+                          <Text style={[styles.categoryBadge, { color: COLORS.textSecondary }]}>
+                            • {product.category}
+                          </Text>
+                        ) : null}
+                      </View>
+                      <Text style={[styles.productName, { color: COLORS.text }]} numberOfLines={1}>
+                        {product.name}
+                      </Text>
+                      <View style={[styles.storeBadge, isRTL && { flexDirection: 'row-reverse' }]}>
+                        <StoreIcon size={12} color={COLORS.textMuted} />
+                        <Text style={[styles.storeName, { color: COLORS.textMuted }]} numberOfLines={1}>
+                          {storeName}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Innovative Status: Clean typography + icon (NO bubble, NO dot!) */}
+                    <View style={styles.statusIndicator}>
+                      {sc.icon}
+                      <Text style={[styles.statusLabel, { color: sc.color }]}>{sc.label}</Text>
                     </View>
                   </View>
 
-                  <View style={[styles.cardMid, isRTL && { flexDirection: 'row-reverse' }]}>
-                    <Text style={[styles.productPrice, { color: COLORS.primary }]}>{(+product.price || 0).toFixed(2)} DZD</Text>
-                    <Text style={[styles.stockText, { color: COLORS.textSecondary }]}>
-                      {t('products_stock')}: {product.stock}
-                    </Text>
+                  {/* Mid: Price and Stock Meter */}
+                  <View style={[styles.priceStockRow, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <View>
+                      <Text style={[styles.priceLabel, { color: COLORS.textMuted }]}>Prix de vente</Text>
+                      <Text style={[styles.productPrice, { color: COLORS.text }]}>
+                        {(+product.price || 0).toLocaleString()} DZD
+                      </Text>
+                    </View>
+
+                    {/* Innovative Stock Gauge */}
+                    <View style={styles.stockGaugeWrap}>
+                      <View style={styles.stockTextRow}>
+                        <PackageIcon size={12} color={COLORS.textSecondary} />
+                        <Text style={[styles.stockValueText, { color: COLORS.textSecondary }]}>
+                          {product.stock} {product.stock > 1 ? 'unités' : 'unité'}
+                        </Text>
+                      </View>
+                      {/* Discrete 3-segment health bar */}
+                      <View style={styles.segmentTrack}>
+                        <View
+                          style={[
+                            styles.segmentBar,
+                            { backgroundColor: product.stock > 0 ? (product.stock > 10 ? COLORS.success : COLORS.warning) : COLORS.border }
+                          ]}
+                        />
+                        <View
+                          style={[
+                            styles.segmentBar,
+                            { backgroundColor: product.stock > 10 ? COLORS.success : COLORS.border }
+                          ]}
+                        />
+                        <View
+                          style={[
+                            styles.segmentBar,
+                            { backgroundColor: product.stock > 30 ? COLORS.success : COLORS.border }
+                          ]}
+                        />
+                      </View>
+                    </View>
                   </View>
 
-                  {/* Stock bar */}
-                  <View style={[styles.stockBarBg, { backgroundColor: COLORS.border }]}>
-                    <View style={[styles.stockBarFill, { width: `${stockPct}%` as any, backgroundColor: product.stock > 20 ? COLORS.success : product.stock > 5 ? COLORS.warning : COLORS.error }]} />
-                  </View>
-
-                  <View style={[styles.cardActions, isRTL && { flexDirection: 'row-reverse' }]}>
-                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.primary + '12', borderColor: COLORS.primary + '30' }]} onPress={() => handleEditProduct(product.id)} activeOpacity={0.7}>
+                  {/* Action Buttons */}
+                  <View style={[styles.cardActions, isRTL && { flexDirection: 'row-reverse' }, { borderTopColor: COLORS.border }]}>
+                    <TouchableOpacity
+                      style={[styles.editBtn, { backgroundColor: COLORS.primary + '10' }]}
+                      onPress={() => handleEditProduct(product.id)}
+                      activeOpacity={0.7}
+                    >
                       <EditIcon color={COLORS.primary} />
-                      <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>{t('common_edit')}</Text>
+                      <Text style={[styles.editBtnText, { color: COLORS.primary }]}>
+                        {t('common_edit') || 'Modifier l\'article'}
+                      </Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.error + '12', borderColor: COLORS.error + '30' }]} onPress={() => handleDeleteProduct(product)} activeOpacity={0.7}>
+
+                    <TouchableOpacity
+                      style={[styles.deleteBtn, { backgroundColor: COLORS.error + '10' }]}
+                      onPress={() => handleDeleteProduct(product)}
+                      activeOpacity={0.7}
+                    >
                       <TrashIcon color={COLORS.error} />
-                      <Text style={[styles.actionBtnText, { color: COLORS.error }]}>{t('common_delete')}</Text>
                     </TouchableOpacity>
                   </View>
                 </TouchableOpacity>
@@ -281,6 +380,7 @@ const ProductsScreen: React.FC<ProductsScreenProps> = ({ navigate, resetTo, goBa
 };
 
 const styles = StyleSheet.create({
+  content: { padding: 20, paddingTop: 54, paddingBottom: 155 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   title: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
   subtitle: { fontSize: 12, fontWeight: '500', marginTop: 2 },
@@ -295,21 +395,36 @@ const styles = StyleSheet.create({
   sumLabel: { fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: '700', textTransform: 'uppercase', marginTop: 2 },
   sumDiv: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.25)' },
 
-  productCard: { borderRadius: CARD_R, borderWidth: 1, padding: 16, gap: 10 },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  productName: { fontSize: 16, fontWeight: '800', marginBottom: 2 },
-  storeName: { fontSize: 12, fontWeight: '600' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, flexShrink: 0 },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: { fontSize: 10, fontWeight: '700' },
-  cardMid: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  productPrice: { fontSize: 22, fontWeight: '900' },
-  stockText: { fontSize: 13, fontWeight: '600' },
-  stockBarBg: { height: 4, borderRadius: 2, overflow: 'hidden' },
-  stockBarFill: { height: 4, borderRadius: 2 },
-  cardActions: { flexDirection: 'row', gap: 10 },
-  actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 10, borderWidth: 1 },
-  actionBtnText: { fontSize: 13, fontWeight: '700' },
+  productCard: { borderRadius: CARD_R, borderWidth: 1, padding: 16, gap: 12 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center' },
+  productAvatar: { width: 56, height: 56, borderRadius: 14, overflow: 'hidden', flexShrink: 0, borderWidth: 1 },
+  avatarImg: { width: '100%', height: '100%' },
+  avatarGrad: { width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
+  avatarInitial: { color: '#FFFFFF', fontSize: 20, fontWeight: '900' },
+  productInfo: { flex: 1, marginLeft: 12, marginRight: 8 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 },
+  refCode: { fontSize: 10, fontWeight: '700', letterSpacing: 0.5 },
+  categoryBadge: { fontSize: 10, fontWeight: '600' },
+  productName: { fontSize: 15, fontWeight: '800', marginBottom: 3 },
+  storeBadge: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  storeName: { fontSize: 11, fontWeight: '600' },
+  statusIndicator: { flexDirection: 'row', alignItems: 'center', gap: 4, flexShrink: 0 },
+  statusLabel: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.4 },
+
+  priceStockRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  priceLabel: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  productPrice: { fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginTop: 2 },
+  stockGaugeWrap: { alignItems: 'flex-end', gap: 4 },
+  stockTextRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  stockValueText: { fontSize: 12, fontWeight: '600' },
+  segmentTrack: { flexDirection: 'row', gap: 3 },
+  segmentBar: { width: 18, height: 4, borderRadius: 2 },
+
+  cardActions: { flexDirection: 'row', gap: 8, paddingTop: 10, borderTopWidth: 1 },
+  editBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 10 },
+  editBtnText: { fontSize: 12, fontWeight: '700' },
+  deleteBtn: { width: 40, height: 38, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  emptyIconBadge: { width: 64, height: 64, borderRadius: 32, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
 });
 
 export default ProductsScreen;

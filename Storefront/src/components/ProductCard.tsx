@@ -18,6 +18,8 @@ type ProductCardProps = {
 };
 
 const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onOrder }) => {
+  const [imgFailed, setImgFailed] = React.useState(false);
+
   const handleClick = () => {
     onPress?.(product.id);
   };
@@ -42,11 +44,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onOrder }) 
     }
   };
 
-  const formattedPrice = typeof product.price === 'number'
-    ? product.price.toFixed(2)
-    : parseFloat(product.price).toFixed(2);
+  const numPrice = typeof product.price === 'number' ? product.price : parseFloat(product.price) || 0;
+  const formattedPrice = numPrice.toLocaleString('fr-DZ', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-  const imageUrl = getImageUrl(product.imagePath);
+  const rawImageUrl = getImageUrl(product.imagePath);
+  const imageUrl = !imgFailed && rawImageUrl ? rawImageUrl : null;
 
   const productAltText = imageUrl
     ? `${product.name}${product.description ? ' - ' + product.description : ''}`
@@ -67,15 +69,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onOrder }) 
             src={imageUrl}
             alt={productAltText}
             className="product-image"
+            onError={() => setImgFailed(true)}
+            loading="lazy"
           />
         ) : (
           <div className="product-image product-placeholder">
             <PackageIcon
-              size={48}
+              size={44}
               color="#999"
               aria-label="Aucune image de produit disponible"
             />
-            <span className="placeholder-text">Aucune image</span>
+            <span className="placeholder-text">Produit artisanal</span>
           </div>
         )}
       </div>
@@ -83,13 +87,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onOrder }) 
       <div className="product-info">
         <div className="product-header">
           <div className="product-details">
-            <h3 className="product-name">{product.name}</h3>
             <p className="product-id" aria-label={`Identifiant produit ${product.id}`}>
-              ID: {product.id}
+              REF #{product.id}
             </p>
+            <h3 className="product-name">{product.name}</h3>
           </div>
           <span className="product-price" aria-label={`Prix: ${formattedPrice} dinars algériens`}>
-            {formattedPrice} DZD
+            {formattedPrice} <span style={{ fontSize: '0.85em', fontWeight: 600 }}>DZD</span>
           </span>
         </div>
         <button
@@ -99,7 +103,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product, onPress, onOrder }) 
           type="button"
           aria-label={`Ajouter ${product.name} au panier`}
         >
-          Ajouter au panier
+          Commander cet article
         </button>
       </div>
     </div>

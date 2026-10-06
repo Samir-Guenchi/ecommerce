@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { SearchIcon, HeartIcon, CartIcon } from './icons/Icons';
+import { SearchIcon, HeartIcon, CartIcon, SunIcon, MoonIcon, HomeIcon, MailIcon, FileTextIcon, MenuIcon, CloseIcon, PackageIcon } from './icons/Icons';
 import './Navigation.css';
 
 interface NavigationProps {
@@ -212,7 +212,7 @@ const Navigation: React.FC<NavigationProps> = ({ storeName, domain, onNavigate, 
                         aria-label={darkMode ? t('lightMode') : t('darkMode')}
                         title={darkMode ? t('lightMode') : t('darkMode')}
                     >
-                        {darkMode ? '☀️' : '🌙'}
+                        {darkMode ? <SunIcon size={18} /> : <MoonIcon size={18} />}
                     </button>
                     <button
                         className="nav-icon-button search-button desktop-only"
@@ -240,7 +240,7 @@ const Navigation: React.FC<NavigationProps> = ({ storeName, domain, onNavigate, 
                         onClick={() => setShowMobileMenu(!showMobileMenu)}
                         aria-label="Menu"
                     >
-                        ☰
+                        <MenuIcon size={20} />
                     </button>
                 </div>
             </div>
@@ -255,7 +255,7 @@ const Navigation: React.FC<NavigationProps> = ({ storeName, domain, onNavigate, 
                             onClick={() => setShowMobileMenu(false)}
                             aria-label={t('closeMenu')}
                         >
-                            ✕
+                            <CloseIcon size={18} />
                         </button>
                     </div>
                     
@@ -268,7 +268,7 @@ const Navigation: React.FC<NavigationProps> = ({ storeName, domain, onNavigate, 
                                 setShowMobileMenu(false);
                             }}
                         >
-                            <span className="menu-icon">🏠</span>
+                            <span className="menu-icon"><HomeIcon size={16} /></span>
                             {t('home')}
                         </a>
                         <a
@@ -282,7 +282,7 @@ const Navigation: React.FC<NavigationProps> = ({ storeName, domain, onNavigate, 
                                 }, 100);
                             }}
                         >
-                            <span className="menu-icon">🛍️</span>
+                            <span className="menu-icon"><PackageIcon size={16} /></span>
                             {t('products')}
                         </a>
                         <a
@@ -293,7 +293,7 @@ const Navigation: React.FC<NavigationProps> = ({ storeName, domain, onNavigate, 
                                 setShowMobileMenu(false);
                             }}
                         >
-                            <span className="menu-icon">📧</span>
+                            <span className="menu-icon"><MailIcon size={16} /></span>
                             {t('contact')}
                         </a>
                         <a
@@ -304,7 +304,7 @@ const Navigation: React.FC<NavigationProps> = ({ storeName, domain, onNavigate, 
                                 setShowMobileMenu(false);
                             }}
                         >
-                            <span className="menu-icon">📋</span>
+                            <span className="menu-icon"><FileTextIcon size={16} /></span>
                             {t('policies')}
                         </a>
                     </div>

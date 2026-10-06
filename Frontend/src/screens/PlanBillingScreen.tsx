@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PlanBillingScreen — 2026 Redesign
  * ✦ Full i18n EN/AR/FR
  * ✦ RTL layout support
@@ -48,10 +48,10 @@ const ChevronIcon = ({ color, up }: { color: string; up?: boolean }) => (
 
 /* ── Fallback plans used when the server returns none ── */
 const FALLBACK_PLANS = [
-  { id: 0, nameKey: 'billing_planFree', price: 0, period: 'month', popular: false, color: '#6B7280', gradA: '#1a1a2e', gradB: '#16213e', featureKeys: ['billing_feat1Store', 'billing_feat50Products', 'billing_featBasicAnalytics', 'billing_featEmailSupport'] },
-  { id: 1, nameKey: 'billing_planStarter', price: 9.99, period: 'month', popular: false, color: '#3B82F6', gradA: '#0B4F6C', gradB: '#1A936F', featureKeys: ['billing_feat3Stores', 'billing_feat500Products', 'billing_featAdvancedAnalytics', 'billing_featPrioritySupport', 'billing_featCustomDomain'] },
-  { id: 2, nameKey: 'billing_planPro', price: 29.99, period: 'month', popular: true, color: '#8B5CF6', gradA: '#4C1D95', gradB: '#6D28D9', featureKeys: ['billing_feat10Stores', 'billing_featUnlimitedProducts', 'billing_featFullAnalytics', 'billing_feat247Support', 'billing_featAPIAccess', 'billing_featTeamMembers'] },
-  { id: 3, nameKey: 'billing_planEnterprise', price: 99.99, period: 'month', popular: false, color: '#F59E0B', gradA: '#78350F', gradB: '#B45309', featureKeys: ['billing_featUnlimitedStores', 'billing_featUnlimitedProducts', 'billing_featEnterpriseAnalytics', 'billing_featDedicatedManager', 'billing_featCustomIntegrations', 'billing_featSLAGuarantee'] },
+  { id: 0, nameKey: 'billing_planFree', price: 0, period: 'month', popular: false, color: '#64748B', gradA: '#0F172A', gradB: '#1E293B', featureKeys: ['billing_feat1Store', 'billing_feat50Products', 'billing_featBasicAnalytics', 'billing_featEmailSupport'] },
+  { id: 1, nameKey: 'billing_planStarter', price: 9.99, period: 'month', popular: false, color: '#1E3A8A', gradA: '#0D2C74', gradB: '#1E40AF', featureKeys: ['billing_feat3Stores', 'billing_feat500Products', 'billing_featAdvancedAnalytics', 'billing_featPrioritySupport', 'billing_featCustomDomain'] },
+  { id: 2, nameKey: 'billing_planPro', price: 29.99, period: 'month', popular: true, color: '#D97706', gradA: '#0D2C74', gradB: '#1E3A8A', featureKeys: ['billing_feat10Stores', 'billing_featUnlimitedProducts', 'billing_featFullAnalytics', 'billing_feat247Support', 'billing_featAPIAccess', 'billing_featTeamMembers'] },
+  { id: 3, nameKey: 'billing_planEnterprise', price: 99.99, period: 'month', popular: false, color: '#0D2C74', gradA: '#0A192F', gradB: '#0D2C74', featureKeys: ['billing_featUnlimitedStores', 'billing_featUnlimitedProducts', 'billing_featEnterpriseAnalytics', 'billing_featDedicatedManager', 'billing_featCustomIntegrations', 'billing_featSLAGuarantee'] },
 ];
 
 const PlanBillingScreen = ({ goBack }: PlanBillingScreenProps) => {

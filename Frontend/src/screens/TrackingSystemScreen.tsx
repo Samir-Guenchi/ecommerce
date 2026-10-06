@@ -1,9 +1,5 @@
-﻿/**
- * TrackingSystemScreen — 2026 Redesign
- * ✦ Full i18n EN/AR/FR — zero hardcoded English strings
- * ✦ RTL layout support
- * ✦ Dynamic dark/light theme
- * ✦ Settings persisted via AsyncStorage
+/**
+ * TrackingSystemScreen — Algérie Poste E-Commerce Tracking Configuration
  */
 import React, { useState, useEffect } from 'react';
 import {
@@ -225,30 +221,30 @@ const TrackingSystemScreen = ({ goBack }: TrackingSystemScreenProps) => {
         </Text>
         <View style={[s.card, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
           <ToggleRow
-            icon={<MailIcon color="#0984E3" />}
+            icon={<MailIcon color="#0D2C74" />}
             label={t('tracking_emailNotif')}
             desc={t('tracking_emailNotifDesc')}
             value={emailNotif}
             onChange={setEmailNotif}
-            accent="#0984E3"
+            accent="#0D2C74"
           />
           <View style={[s.divider, { backgroundColor: COLORS.border }]} />
           <ToggleRow
-            icon={<SmsIcon color="#6C5CE7" />}
+            icon={<SmsIcon color="#1E3A8A" />}
             label={t('tracking_smsNotif')}
             desc={t('tracking_smsNotifDesc')}
             value={smsNotif}
             onChange={setSmsNotif}
-            accent="#6C5CE7"
+            accent="#1E3A8A"
           />
           <View style={[s.divider, { backgroundColor: COLORS.border }]} />
           <ToggleRow
-            icon={<BellIcon color="#E17055" />}
+            icon={<BellIcon color="#D97706" />}
             label={t('tracking_pushNotif')}
             desc={t('tracking_pushNotifDesc')}
             value={pushNotif}
             onChange={setPushNotif}
-            accent="#E17055"
+            accent="#D97706"
           />
         </View>
 
@@ -258,27 +254,27 @@ const TrackingSystemScreen = ({ goBack }: TrackingSystemScreenProps) => {
         </Text>
         <View style={[s.card, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
           <ToggleRow
-            icon={<ZapIcon color="#00B894" />}
+            icon={<ZapIcon color="#0D2C74" />}
             label={t('tracking_realTimeUpdates')}
             desc={t('tracking_realTimeUpdatesDesc')}
             value={realTime}
             onChange={setRealTime}
-            accent="#00B894"
+            accent="#0D2C74"
           />
           <View style={[s.divider, { backgroundColor: COLORS.border }]} />
           <ToggleRow
-            icon={<AlertIcon color="#FDCB6E" />}
+            icon={<AlertIcon color="#FDB913" />}
             label={t('tracking_orderStatusAlerts')}
             desc={t('tracking_orderStatusAlertsDesc')}
             value={statusAlerts}
             onChange={setStatusAlerts}
-            accent="#FDCB6E"
+            accent="#FDB913"
           />
         </View>
 
         {/* ── Save ── */}
         <TouchableOpacity
-          style={[s.saveBtn, { backgroundColor: COLORS.primary, opacity: saving ? 0.7 : 1 }]}
+          style={[s.saveBtn, { backgroundColor: '#0D2C74', opacity: saving ? 0.7 : 1 }]}
           onPress={handleSave}
           disabled={saving}
           activeOpacity={0.8}

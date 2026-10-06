@@ -99,9 +99,9 @@ const AccountTypeScreen = ({ goBack }: AccountTypeScreenProps) => {
   }
 
   const types = [
-    { id: 'buyer', emoji: '🛒', icon: (c: string) => <ShoppingBag color={c} />, accent: '#0984E3', label: t('accountType_buyer'), desc: t('accountType_buyerDesc') },
-    { id: 'seller', emoji: '🏪', icon: (c: string) => <StoreIcon color={c} />, accent: '#00B894', label: t('accountType_seller'), desc: t('accountType_sellerDesc') },
-    { id: 'both', emoji: '⚡', icon: (c: string) => <LayersIcon color={c} />, accent: '#6C5CE7', label: t('accountType_both'), desc: t('accountType_bothDesc') },
+    { id: 'buyer', icon: (c: string) => <ShoppingBag color={c} />, accent: '#0984E3', label: t('accountType_buyer'), desc: t('accountType_buyerDesc') },
+    { id: 'seller', icon: (c: string) => <StoreIcon color={c} />, accent: '#00B894', label: t('accountType_seller'), desc: t('accountType_sellerDesc') },
+    { id: 'both', icon: (c: string) => <LayersIcon color={c} />, accent: '#6C5CE7', label: t('accountType_both'), desc: t('accountType_bothDesc') },
   ];
 
   return (

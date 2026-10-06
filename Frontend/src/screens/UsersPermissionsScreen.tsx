@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView,
   ActivityIndicator, RefreshControl, Modal,
@@ -101,9 +101,9 @@ const UsersPermissionsScreen = ({ goBack }: UsersPermissionsScreenProps) => {
   };
 
   const roleColors: Record<string, { bg: string; text: string }> = {
-    admin: { bg: '#EF444418', text: '#EF4444' },
-    seller: { bg: '#3B82F618', text: '#3B82F6' },
-    buyer: { bg: '#8B5CF618', text: '#8B5CF6' },
+    admin: { bg: '#DC262618', text: '#DC2626' },
+    seller: { bg: '#0D2C7418', text: '#0D2C74' },
+    buyer: { bg: '#D9770618', text: '#D97706' },
   };
   const statusColors: Record<string, { bg: string; text: string }> = {
     active: { bg: COLORS.success + '18', text: COLORS.success },
@@ -225,9 +225,9 @@ const UsersPermissionsScreen = ({ goBack }: UsersPermissionsScreenProps) => {
         <View style={[s.rolesCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
           <Text style={[s.rolesTitle, { color: COLORS.text }]}>{t('users_rolePermissions')}</Text>
           {[
-            { roleKey: 'users_roleAdmin' as const, descKey: 'users_roleAdminDesc' as const, color: '#EF4444' },
-            { roleKey: 'users_roleSeller' as const, descKey: 'users_roleSellerDesc' as const, color: '#3B82F6' },
-            { roleKey: 'users_roleBuyer' as const, descKey: 'users_roleBuyerDesc' as const, color: '#8B5CF6' },
+            { roleKey: 'users_roleAdmin' as const, descKey: 'users_roleAdminDesc' as const, color: '#DC2626' },
+            { roleKey: 'users_roleSeller' as const, descKey: 'users_roleSellerDesc' as const, color: '#0D2C74' },
+            { roleKey: 'users_roleBuyer' as const, descKey: 'users_roleBuyerDesc' as const, color: '#D97706' },
           ].map(item => (
             <View key={item.roleKey} style={[s.roleRow, { borderBottomColor: COLORS.border }]}>
               <View style={[s.roleDot, { backgroundColor: item.color }]} />

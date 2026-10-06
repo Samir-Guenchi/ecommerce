@@ -144,10 +144,10 @@ const LogOutIcon = ({ color }: { color: string }) => (
 
 /* ─── Section color map ─── */
 const SECTION_COLORS = {
-  account: '#6C5CE7',
-  store: '#00CEC9',
-  preferences: '#A29BFE',
-  support: '#FD79A8',
+  account: '#0D2C74',     // Algérie Poste Navy
+  store: '#1E3A8A',       // Algérie Poste Royal Blue
+  preferences: '#D97706', // Algérie Poste Gold
+  support: '#0F766E',     // Institutional Teal
 };
 
 /* ─── SettingItem component ─── */

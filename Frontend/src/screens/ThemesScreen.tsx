@@ -1,10 +1,5 @@
 /**
- * ThemesScreen — 2026 Premium Redesign
- *
- * ✦ Bento-style theme cards with gradient accents
- * ✦ Animated selection states
- * ✦ Modern glassmorphism effects
- * ✦ Full i18n and dark mode support
+ * ThemesScreen — Algérie Poste E-Commerce Theme Preferences
  */
 import React, { useState, useRef, useEffect } from 'react';
 import {
@@ -23,6 +18,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
+import { RefreshCwIcon } from '../components/ModernIcons';
 
 const { width: W } = Dimensions.get('window');
 const CARD_R = 18;
@@ -80,22 +76,25 @@ const ThemesScreen: React.FC<ThemesScreenProps> = ({ navigate, goBack }) => {
       id: 'light', 
       name: t('themes_light') || 'Light', 
       description: t('themes_lightDesc') || 'Clean and bright theme',
-      icon: '☀️',
-      gradient: ['#FDB913', '#FDCB6E'],
+      renderIcon: () => <SunIcon />,
+      color: '#FDB913',
+      gradient: ['#FDB913', '#D97706'],
     },
     { 
       id: 'dark', 
       name: t('themes_dark') || 'Dark', 
       description: t('themes_darkDesc') || 'Easy on the eyes',
-      icon: '🌙',
-      gradient: ['#3B82F6', '#60A5FA'],
+      renderIcon: () => <MoonIcon />,
+      color: '#0D2C74',
+      gradient: ['#0D2C74', '#1E40AF'],
     },
     { 
       id: 'auto', 
       name: t('themes_auto') || 'Auto', 
       description: t('themes_autoDesc') || 'Follows system settings',
-      icon: '🔄',
-      gradient: ['#6C5CE7', '#A29BFE'],
+      renderIcon: () => <RefreshCwIcon size={22} color="#1E3A8A" strokeWidth={2} />,
+      color: '#1E3A8A',
+      gradient: ['#1E3A8A', '#3B82F6'],
     },
   ];
 
@@ -153,8 +152,8 @@ const ThemesScreen: React.FC<ThemesScreenProps> = ({ navigate, goBack }) => {
         <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
 
         {/* ── Hero Icon ── */}
-        <View style={[styles.heroIcon, { backgroundColor: COLORS.primary + '15' }]}>
-          <ThemeIcon color={COLORS.primary} />
+        <View style={[styles.heroIcon, { backgroundColor: '#0D2C7418' }]}>
+          <ThemeIcon color="#0D2C74" />
         </View>
 
         <Text style={[styles.description, { color: COLORS.textSecondary }]}>
@@ -185,7 +184,7 @@ const ThemesScreen: React.FC<ThemesScreenProps> = ({ navigate, goBack }) => {
                     styles.themeCard,
                     { 
                       backgroundColor: COLORS.surface, 
-                      borderColor: isSelected ? theme.gradient[0] : COLORS.border,
+                      borderColor: isSelected ? theme.color : COLORS.border,
                       borderWidth: isSelected ? 2 : 1,
                     }
                   ]}
@@ -200,15 +199,15 @@ const ThemesScreen: React.FC<ThemesScreenProps> = ({ navigate, goBack }) => {
                       style={styles.themeGradient}
                     />
                   )}
-                  <View style={[styles.themeIconBadge, { backgroundColor: theme.gradient[0] + '15' }]}>
-                    <Text style={{ fontSize: 28 }}>{theme.icon}</Text>
+                  <View style={[styles.themeIconBadge, { backgroundColor: theme.color + '15' }]}>
+                    {theme.renderIcon()}
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.themeName, { color: COLORS.text }]}>{theme.name}</Text>
                     <Text style={[styles.themeDesc, { color: COLORS.textSecondary }]}>{theme.description}</Text>
                   </View>
                   {isSelected && (
-                    <View style={[styles.checkBadge, { backgroundColor: theme.gradient[0] }]}>
+                    <View style={[styles.checkBadge, { backgroundColor: theme.color }]}>
                       <CheckIcon color="#FFFFFF" />
                     </View>
                   )}
@@ -220,7 +219,7 @@ const ThemesScreen: React.FC<ThemesScreenProps> = ({ navigate, goBack }) => {
 
         {/* ── Save Button ── */}
         <TouchableOpacity 
-          style={[styles.saveBtn, { backgroundColor: COLORS.primary }]} 
+          style={[styles.saveBtn, { backgroundColor: '#0D2C74' }]} 
           onPress={handleSave} 
           activeOpacity={0.8}
         >

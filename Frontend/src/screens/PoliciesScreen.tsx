@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Modal } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { getColors } from '../theme';
@@ -79,11 +79,11 @@ const PoliciesScreen: React.FC<PoliciesScreenProps> = ({ navigate, goBack }) => 
   const [selectedPolicy, setSelectedPolicy] = useState<any | null>(null);
 
   const POLICIES = [
-    { id: '1', icon: (c: string) => <ClipboardIcon color={c} />, title: t('policies_terms'), summary: t('policies_termsSummary'), lastUpdated: '2025-01-15', accent: '#3B82F6', content: t('policies_termsContent') },
-    { id: '2', icon: (c: string) => <LockDocIcon color={c} />, title: t('policies_privacy'), summary: t('policies_privacySummary'), lastUpdated: '2025-01-15', accent: '#10B981', content: t('policies_privacyContent') },
-    { id: '3', icon: (c: string) => <ReturnIcon color={c} />, title: t('policies_refund'), summary: t('policies_refundSummary'), lastUpdated: '2025-01-10', accent: '#F59E0B', content: t('policies_refundContent') },
-    { id: '4', icon: (c: string) => <TruckIcon color={c} />, title: t('policies_shipping'), summary: t('policies_shippingSummary'), lastUpdated: '2025-01-10', accent: '#8B5CF6', content: t('policies_shippingContent') },
-    { id: '5', icon: (c: string) => <CookieIcon color={c} />, title: t('policies_cookie'), summary: t('policies_cookieSummary'), lastUpdated: '2025-01-15', accent: '#EC4899', content: t('policies_cookieContent') },
+    { id: '1', icon: (c: string) => <ClipboardIcon color={c} />, title: t('policies_terms'), summary: t('policies_termsSummary'), lastUpdated: '2025-01-15', accent: '#0D2C74', content: t('policies_termsContent') },
+    { id: '2', icon: (c: string) => <LockDocIcon color={c} />, title: t('policies_privacy'), summary: t('policies_privacySummary'), lastUpdated: '2025-01-15', accent: '#1E3A8A', content: t('policies_privacyContent') },
+    { id: '3', icon: (c: string) => <ReturnIcon color={c} />, title: t('policies_refund'), summary: t('policies_refundSummary'), lastUpdated: '2025-01-10', accent: '#D97706', content: t('policies_refundContent') },
+    { id: '4', icon: (c: string) => <TruckIcon color={c} />, title: t('policies_shipping'), summary: t('policies_shippingSummary'), lastUpdated: '2025-01-10', accent: '#0F766E', content: t('policies_shippingContent') },
+    { id: '5', icon: (c: string) => <CookieIcon color={c} />, title: t('policies_cookie'), summary: t('policies_cookieSummary'), lastUpdated: '2025-01-15', accent: '#334155', content: t('policies_cookieContent') },
   ];
 
   const cycleLanguage = () => {

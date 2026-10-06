@@ -15,6 +15,8 @@ import {
   Text,
   TouchableOpacity,
   View,
+  Platform,
+  Linking,
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -434,7 +436,7 @@ function RootNavigator() {
     const bootstrapAuth = async () => {
       try {
         // Check for OAuth callback parameters (web only)
-        if (typeof window !== 'undefined') {
+        if (Platform.OS === 'web' && typeof window !== 'undefined') {
           const urlParams = new URLSearchParams(window.location.search);
           const token = urlParams.get('token');
           const oauthSuccess = urlParams.get('oauth');
@@ -491,22 +493,22 @@ function RootNavigator() {
           }
         }
 
-        // Handle deep links for mobile OAuth (React Native only, not web)
-        if (typeof window === 'undefined' || (typeof window !== 'undefined' && typeof (window as any).ReactNativeWebView !== 'undefined')) {
+        // Handle deep links for mobile OAuth (React Native on physical devices / emulator)
+        if (Platform.OS !== 'web') {
           try {
-            const { Linking } = require('react-native');
             
             const handleDeepLink = async (url: string) => {
               console.log('📱 Deep link received:', url);
               console.log('📱 URL type:', typeof url);
               console.log('📱 URL includes ap-ecom:', url.includes('ap-ecom'));
               
-              if (url.includes('ap-ecom://oauth')) {
+              const isOAuth = url.includes('oauth') || url.includes('token=') || url.includes('setup=true') || url.includes('password_setup=true');
+              
+              if (isOAuth) {
                 try {
                   console.log('📱 Processing OAuth deep link...');
-                  const urlObj = new URL(url);
-                  console.log('📱 URL parsed:', urlObj.href);
-                  const params = new URLSearchParams(urlObj.search);
+                  const queryString = url.includes('?') ? url.substring(url.indexOf('?') + 1) : '';
+                  const params = new URLSearchParams(queryString);
                   
                   const setup = params.get('setup');
                   const passwordSetup = params.get('password_setup');

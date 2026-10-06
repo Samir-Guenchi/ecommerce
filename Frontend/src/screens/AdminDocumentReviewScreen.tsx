@@ -223,9 +223,9 @@ const AdminDocumentReviewScreen: React.FC<AdminDocumentReviewScreenProps> = ({
                 });
               }
               setPendingUsers(prev => prev.filter(u => u.id !== userId));
-              Alert.alert('✅ Success', 'Registration has been approved successfully.');
+              Alert.alert('Success', 'Registration has been approved successfully.');
             } catch (error) {
-              Alert.alert('❌ Error', 'Failed to approve registration. Please try again.');
+              Alert.alert('Error', 'Failed to approve registration. Please try again.');
             } finally {
               setActionLoading(null);
             }
@@ -244,7 +244,7 @@ const AdminDocumentReviewScreen: React.FC<AdminDocumentReviewScreenProps> = ({
     if (!rejectModalUserId) return;
     const reason = rejectModalReason.trim();
     if (!reason) {
-      Alert.alert('⚠️ Required', 'Please provide a reason for rejection.');
+      Alert.alert('Required', 'Please provide a reason for rejection.');
       return;
     }
     setActionLoading(rejectModalUserId);
@@ -266,9 +266,9 @@ const AdminDocumentReviewScreen: React.FC<AdminDocumentReviewScreenProps> = ({
       setPendingUsers(prev => prev.filter(u => u.id !== rejectModalUserId));
       setRejectModalUserId(null);
       setRejectModalReason('');
-      Alert.alert('✅ Done', 'Registration has been rejected.');
+      Alert.alert('Done', 'Registration has been rejected.');
     } catch (error) {
-      Alert.alert('❌ Error', 'Failed to reject registration. Please try again.');
+      Alert.alert('Error', 'Failed to reject registration. Please try again.');
     } finally {
       setActionLoading(null);
     }
@@ -622,7 +622,7 @@ const AdminDocumentReviewScreen: React.FC<AdminDocumentReviewScreenProps> = ({
               {expandedUser === user.id && (
                 <View style={styles.expandedSection}>
                   {/* Documents Section */}
-                  <Text style={styles.sectionLabel}>📄 Uploaded Documents</Text>
+                  <Text style={styles.sectionLabel}>Uploaded Documents</Text>
 
                   {user.documents && user.documents.length > 0 ? (
                     user.documents.map((doc, idx) => (
@@ -703,7 +703,7 @@ const AdminDocumentReviewScreen: React.FC<AdminDocumentReviewScreenProps> = ({
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>⚠️ Reject Registration</Text>
+            <Text style={styles.modalTitle}>Reject Registration</Text>
             <Text style={styles.modalSubtitle}>
               Please provide a clear reason for rejection. The user will see this message and can resubmit their documents.
             </Text>

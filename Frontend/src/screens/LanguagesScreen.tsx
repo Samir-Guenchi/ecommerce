@@ -49,9 +49,9 @@ interface LanguagesScreenProps {
 }
 
 const LANGUAGES = [
-  { id: 'en', name: 'English', native: 'English', flag: '🇬🇧' },
-  { id: 'ar', name: 'Arabic', native: 'العربية', flag: '🇩🇿' },
-  { id: 'fr', name: 'French', native: 'Français', flag: '🇫🇷' },
+  { id: 'en', code: 'EN', name: 'English', native: 'English' },
+  { id: 'ar', code: 'AR', name: 'العربية', native: 'Arabic' },
+  { id: 'fr', code: 'FR', name: 'Français', native: 'French' },
 ];
 
 const LanguagesScreen = ({ goBack }: LanguagesScreenProps) => {
@@ -190,7 +190,9 @@ const LanguagesScreen = ({ goBack }: LanguagesScreenProps) => {
               activeOpacity={0.65}
               disabled={saving}
             >
-              <Text style={styles.flag}>{lang.flag}</Text>
+              <View style={[styles.langCodeBadge, { backgroundColor: isSelected ? COLORS.primary : COLORS.border }]}>
+                <Text style={[styles.langCodeText, { color: isSelected ? '#FFFFFF' : COLORS.text }]}>{lang.code}</Text>
+              </View>
               <View style={styles.cardText}>
                 <Text style={[styles.langName, { color: isSelected ? COLORS.primary : COLORS.text }]}>{lang.name}</Text>
                 <Text style={[styles.langNative, { color: isSelected ? COLORS.primaryLight : COLORS.textSecondary }]}>{lang.native}</Text>
@@ -295,9 +297,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     borderWidth: 1.5,
   },
-  flag: {
-    fontSize: 28,
+  langCodeBadge: {
+    width: 40,
+    height: 40,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
     marginRight: 14,
+  },
+  langCodeText: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   cardText: {
     flex: 1,

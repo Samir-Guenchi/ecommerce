@@ -66,7 +66,10 @@ const DocumentUpload: React.FC<DocumentUploadProps> = ({ label, description, fil
       <Text style={[styles.documentLabel, { color: COLORS.text }]}>{label}</Text>
       <Text style={[styles.documentDescription, { color: COLORS.textMuted }]}>{description}</Text>
       {fileName ? (
-        <Text style={[styles.documentFileName, { color: COLORS.success }]} numberOfLines={1}>✓ {fileName}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5, marginTop: 4 }}>
+          <CheckIcon color={COLORS.success} />
+          <Text style={[styles.documentFileName, { color: COLORS.success }]} numberOfLines={1}>{fileName}</Text>
+        </View>
       ) : (
         <Text style={[styles.documentPlaceholder, { color: COLORS.textSecondary }]}>Tap to upload</Text>
       )}

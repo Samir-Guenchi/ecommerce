@@ -1,9 +1,5 @@
-﻿/**
- * OrdersScreen — 2026 Redesign
- * ✦ Lang/Theme controls in header
- * ✦ Full i18n coverage
- * ✦ Premium card design with animated status dots
- * ✦ Gradient summary strip
+/**
+ * OrdersScreen — Algérie Poste E-Commerce Order Management
  */
 import React, { useState, useEffect } from 'react';
 import {
@@ -26,6 +22,7 @@ import { getColors, SPACING } from '../theme';
 import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import BottomNav, { BottomTabId } from './BottomNav';
+import { PackageIcon, TruckIcon, UserIcon, CheckCircleIcon } from '../components/ModernIcons';
 
 const { width: W } = Dimensions.get('window');
 const CARD_R = 18;
@@ -104,11 +101,46 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
 
   const getStatusConfig = (status: string) => {
     switch (status?.toLowerCase()) {
-      case 'delivered': return { bg: COLORS.success + '18', text: COLORS.success, label: t('orders_delivered'), dot: COLORS.success };
-      case 'shipped': return { bg: '#3B82F618', text: '#3B82F6', label: t('orders_shipped'), dot: '#3B82F6' };
-      case 'processing': return { bg: COLORS.warning + '18', text: COLORS.warning, label: t('orders_processing'), dot: COLORS.warning };
-      case 'cancelled': return { bg: COLORS.error + '18', text: COLORS.error, label: t('orders_cancelled'), dot: COLORS.error };
-      default: return { bg: COLORS.border, text: COLORS.textMuted, label: status, dot: COLORS.textMuted };
+      case 'delivered':
+        return {
+          bg: COLORS.success + '15',
+          text: COLORS.success,
+          color: COLORS.success,
+          label: t('orders_delivered') || 'Livrée',
+          icon: <CheckCircleIcon size={12} color={COLORS.success} strokeWidth={2.5} />
+        };
+      case 'shipped':
+        return {
+          bg: '#2563EB15',
+          text: '#2563EB',
+          color: '#2563EB',
+          label: t('orders_shipped') || 'Expédiée',
+          icon: <TruckIcon size={12} color="#2563EB" strokeWidth={2.5} />
+        };
+      case 'processing':
+        return {
+          bg: '#D9770615',
+          text: '#D97706',
+          color: '#D97706',
+          label: t('orders_processing') || 'En cours',
+          icon: <PackageIcon size={12} color="#D97706" strokeWidth={2.5} />
+        };
+      case 'cancelled':
+        return {
+          bg: COLORS.error + '15',
+          text: COLORS.error,
+          color: COLORS.error,
+          label: t('orders_cancelled') || 'Annulée',
+          icon: <PackageIcon size={12} color={COLORS.error} strokeWidth={2.5} />
+        };
+      default:
+        return {
+          bg: COLORS.border,
+          text: COLORS.textMuted,
+          color: COLORS.textMuted,
+          label: status,
+          icon: <PackageIcon size={12} color={COLORS.textMuted} strokeWidth={2.5} />
+        };
     }
   };
 
@@ -145,7 +177,7 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
   return (
     <View style={{ flex: 1, backgroundColor: COLORS.background }}>
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingTop: 54, paddingBottom: 110 }}
+        contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { setRefreshing(true); fetchOrders(); }} tintColor={COLORS.primary} />}
       >
@@ -176,7 +208,7 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
         <StatusBanner message={message?.text ?? null} type={message?.type ?? 'error'} onDismiss={clear} />
 
         {/* ── Gradient Summary Strip ── */}
-        <LinearGradient colors={[COLORS.primary, COLORS.primary + 'BB']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.summaryGrad}>
+        <LinearGradient colors={['#0D2C74', '#1E40AF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.summaryGrad}>
           {[
             { val: orders.length, label: t('orders_total') },
             { val: delivered, label: t('orders_delivered') },
@@ -196,7 +228,9 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
         {/* ── Orders list ── */}
         {orders.length === 0 ? (
           <View style={{ padding: 48, alignItems: 'center' }}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>📦</Text>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+              <PackageIcon size={34} color={COLORS.primary} strokeWidth={2} />
+            </View>
             <Text style={{ fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 8 }}>{t('orders_noOrders')}</Text>
             <Text style={{ fontSize: 13, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 }}>{t('orders_noOrdersDesc')}</Text>
           </View>
@@ -205,7 +239,13 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
             {orders.map((order) => {
               const sc = getStatusConfig(order.status);
               const customerName = order.user?.fullName || order.user?.email || t('orders_unknownCustomer');
-              const orderDate = new Date(order.orderDate).toLocaleDateString();
+              const orderDate = new Date(order.orderDate).toLocaleDateString('fr-FR', {
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric'
+              });
+              const city = order.shippingAddress?.city || 'Algérie';
+
               return (
                 <TouchableOpacity
                   key={order.id}
@@ -216,25 +256,48 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
                     customerName,
                     orderStatus: order.status,
                   })}
-                  activeOpacity={0.7}
+                  activeOpacity={0.75}
                 >
-                  {/* Card top: status bar */}
-                  <View style={[styles.cardAccent, { backgroundColor: sc.dot }]} />
-                  <View style={styles.cardInner}>
-                    <View style={[styles.cardTop, isRTL && { flexDirection: 'row-reverse' }]}>
-                      <Text style={[styles.orderNum, { color: COLORS.text }]}>{order.orderNumber}</Text>
-                      <View style={[styles.statusBadge, { backgroundColor: sc.bg }]}>
-                        <View style={[styles.statusDot, { backgroundColor: sc.dot }]} />
-                        <Text style={[styles.statusText, { color: sc.text }]}>{sc.label}</Text>
+                  {/* Top Bar: Order Reference & Status Badge */}
+                  <View style={[styles.cardHeader, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <View style={styles.headerLeft}>
+                      <View style={[styles.orderNumBadge, { backgroundColor: '#0D2C7410' }]}>
+                        <Text style={[styles.orderNum, { color: '#0D2C74' }]}>#{order.orderNumber}</Text>
                       </View>
+                      <Text style={[styles.orderDate, { color: COLORS.textMuted }]}>{orderDate}</Text>
                     </View>
-                    <Text style={[styles.customerName, { color: COLORS.textSecondary }]}>{customerName}</Text>
-                    <View style={[styles.cardBottom, isRTL && { flexDirection: 'row-reverse' }]}>
-                      <Text style={[styles.orderAmt, { color: COLORS.primary }]}>{(Number(order.totalAmount) || 0).toFixed(2)} DZD</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Text style={[styles.orderDate, { color: COLORS.textMuted }]}>{orderDate}</Text>
-                        <ChevronRight color={COLORS.textMuted} />
-                      </View>
+                    <View style={[styles.statusTag, { backgroundColor: sc.bg, borderColor: sc.color + '40' }]}>
+                      {sc.icon}
+                      <Text style={[styles.statusTagText, { color: sc.color }]}>{sc.label}</Text>
+                    </View>
+                  </View>
+
+                  {/* Client & Shipping info */}
+                  <View style={[styles.clientInfoBox, { backgroundColor: COLORS.background, borderColor: COLORS.border }]}>
+                    <View style={styles.clientRow}>
+                      <UserIcon size={14} color={COLORS.textSecondary} />
+                      <Text style={[styles.customerName, { color: COLORS.text }]} numberOfLines={1}>
+                        {customerName}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: COLORS.textMuted }}>• {city}</Text>
+                    </View>
+                    <View style={styles.deliveryBadge}>
+                      <TruckIcon size={13} color="#0D2C74" />
+                      <Text style={styles.deliveryBadgeText}>Colis Express Algérie Poste</Text>
+                    </View>
+                  </View>
+
+                  {/* Financials & Tracking trigger */}
+                  <View style={[styles.cardFooter, isRTL && { flexDirection: 'row-reverse' }]}>
+                    <View>
+                      <Text style={[styles.amountLabel, { color: COLORS.textMuted }]}>Montant total</Text>
+                      <Text style={[styles.orderAmt, { color: COLORS.text }]}>
+                        {(Number(order.totalAmount) || 0).toLocaleString()} DZD
+                      </Text>
+                    </View>
+                    <View style={[styles.trackBtn, { backgroundColor: '#0D2C74' }]}>
+                      <Text style={styles.trackBtnText}>{t('tracking_title') || 'Suivre'}</Text>
+                      <ChevronRight color="#FFFFFF" />
                     </View>
                   </View>
                 </TouchableOpacity>
@@ -249,6 +312,7 @@ const OrdersScreen: React.FC<OrdersScreenProps> = ({ navigate, resetTo, goBack }
 };
 
 const styles = StyleSheet.create({
+  content: { padding: 20, paddingTop: 54, paddingBottom: 155 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 },
   title: { fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
   subtitle: { fontSize: 12, fontWeight: '500', marginTop: 2 },
@@ -263,18 +327,24 @@ const styles = StyleSheet.create({
   sumLabel: { fontSize: 10, color: 'rgba(255,255,255,0.8)', fontWeight: '700', textTransform: 'uppercase', marginTop: 2 },
   sumDiv: { width: 1, height: 32, backgroundColor: 'rgba(255,255,255,0.25)' },
 
-  orderCard: { borderRadius: CARD_R, borderWidth: 1, overflow: 'hidden' },
-  cardAccent: { height: 4 },
-  cardInner: { padding: 16 },
-  cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  orderNum: { fontSize: 15, fontWeight: '800' },
-  statusBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
-  statusDot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: { fontSize: 11, fontWeight: '700' },
-  customerName: { fontSize: 13, fontWeight: '600', marginBottom: 12 },
-  cardBottom: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  orderAmt: { fontSize: 18, fontWeight: '900' },
+  orderCard: { borderRadius: CARD_R, borderWidth: 1, padding: 16, gap: 12 },
+  cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  orderNumBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  orderNum: { fontSize: 13, fontWeight: '800', letterSpacing: 0.2 },
   orderDate: { fontSize: 12, fontWeight: '500' },
+  statusTag: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 4, borderRadius: 8, borderWidth: 1 },
+  statusTagText: { fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3 },
+  clientInfoBox: { borderRadius: 12, borderWidth: 1, padding: 10, gap: 6 },
+  clientRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  customerName: { fontSize: 13, fontWeight: '700', flexShrink: 1 },
+  deliveryBadge: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  deliveryBadgeText: { fontSize: 11, fontWeight: '600', color: '#0D2C74' },
+  cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: 4 },
+  amountLabel: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  orderAmt: { fontSize: 18, fontWeight: '900', letterSpacing: -0.5, marginTop: 2 },
+  trackBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 8 },
+  trackBtnText: { color: '#FFFFFF', fontSize: 12, fontWeight: '700' },
 });
 
 export default OrdersScreen;

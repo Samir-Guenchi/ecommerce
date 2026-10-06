@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { PackageIcon } from './icons/Icons';
 import './OrderTrackingProfessional.css';
 
 interface TrackingData {
@@ -111,7 +112,7 @@ export const OrderTrackingProfessional: React.FC<Props> = ({ orderId }) => {
 
             {/* Delivery Estimate - Prominent Display */}
             <div className="delivery-estimate-card">
-                <div className="estimate-icon">📦</div>
+                <div className="estimate-icon"><PackageIcon size={28} /></div>
                 <div className="estimate-content">
                     <h2>Livraison estimée</h2>
                     <p className="estimate-date">{tracking.estimatedDelivery.formatted}</p>

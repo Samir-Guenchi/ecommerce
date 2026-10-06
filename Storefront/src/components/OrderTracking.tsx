@@ -192,10 +192,10 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ orderId, deliveryA
                     </div>
                     <div className="delivery-person-info">
                         <h4>{deliveryPerson.name}</h4>
-                        <p>{deliveryPerson.vehicle} • ⭐ {deliveryPerson.rating.toFixed(1)}</p>
+                        <p>{deliveryPerson.vehicle} • Note {deliveryPerson.rating.toFixed(1)}/5</p>
                     </div>
                     <a href={`tel:${deliveryPerson.phone}`} className="call-button">
-                        📞 Appeler
+                        Appeler
                     </a>
                 </div>
             )}
@@ -262,7 +262,7 @@ export const OrderTracking: React.FC<OrderTrackingProps> = ({ orderId, deliveryA
 
             {error && (
                 <div className="tracking-warning">
-                    ⚠️ {error}
+                    {error}
                 </div>
             )}
         </div>

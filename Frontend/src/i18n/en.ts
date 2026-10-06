@@ -1,6 +1,6 @@
-﻿const en = {
+const en = {
   // Bottom Nav
-  nav_dashboard: 'Dashboard',
+  nav_dashboard: 'Home',
   nav_products: 'Products',
   nav_orders: 'Orders',
   nav_stores: 'Stores',
@@ -253,7 +253,7 @@
   stores_draft: 'Draft',
   stores_active: 'Active',
   stores_suspended: 'Suspended',
-  stores_suspendedByAdmin: '⚠️ Suspended by Admin',
+  stores_suspendedByAdmin: 'Suspended by Admin',
   stores_contactAdmin: 'Contact admin to reactivate this store',
   stores_statusUpdated: 'Store status updated successfully',
   stores_statusUpdateFailed: 'Failed to update store status',
@@ -1050,10 +1050,10 @@
   oauth_reenterPassword: 'Re-enter password',
   oauth_accountType: 'Account Type',
   oauth_accountTypeRequired: 'Account Type *',
-  oauth_buyerOption: '🛒 Buyer',
-  oauth_sellerOption: '🏪 Seller',
-  oauth_deliveryOption: '🚚 Delivery',
-  oauth_bothOption: '🔄 Both',
+  oauth_buyerOption: 'Buyer',
+  oauth_sellerOption: 'Seller',
+  oauth_deliveryOption: 'Delivery',
+  oauth_bothOption: 'Both (Buyer & Seller)',
   oauth_completeButton: 'Complete Registration',
   oauth_loginNextTime: 'You\'ll be able to login with your email and password next time',
   oauth_invalidData: 'Invalid OAuth data. Please try signing in again.',

@@ -26,7 +26,7 @@ import { Platform } from 'react-native';
 // - 10.232.243.165 (likely your main network - USE THIS ONE)
 //
 // IMPORTANT: Make sure your phone and computer are on the same WiFi network!
-const DEVICE_IP = ''; // <-- Leave empty for now (Google OAuth doesn't support private IPs)
+const DEVICE_IP = '172.20.10.4'; // <-- Your computer's WiFi IP address for physical device testing
 
 // ============================================
 
@@ -69,4 +69,23 @@ const getApiUrl = (): string => {
 };
 
 export const API_URL = getApiUrl();
+
+export const getStorefrontUrl = (domain?: string): string => {
+  const cleanDomain = domain ? domain.trim() : '';
+  const path = cleanDomain ? `/store/${cleanDomain}` : '';
+  if (Platform.OS === 'web') {
+    return `http://localhost:5173${path}`;
+  }
+  const host = DEVICE_IP || '172.20.10.4';
+  return `http://${host}:5173${path}`;
+};
+
+export const getImageUrl = (imagePath?: string | null): string | null => {
+  if (!imagePath) return null;
+  if (imagePath.startsWith('http://') || imagePath.startsWith('https://')) {
+    return imagePath;
+  }
+  const base = API_URL.replace('/api', '');
+  return `${base}${imagePath.startsWith('/') ? '' : '/'}${imagePath}`;
+};
 

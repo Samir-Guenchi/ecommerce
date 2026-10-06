@@ -1,11 +1,5 @@
 /**
- * StoreSettingsScreen — 2026 Premium Redesign
- *
- * ✦ Bento-style cards with gradient accents
- * ✦ Animated icons and interactions
- * ✦ Dynamic theming (dark/light)
- * ✦ i18n support with RTL
- * ✦ Modern glassmorphism effects
+ * StoreSettingsScreen — Algérie Poste E-Commerce Store Settings
  */
 import React, { useRef, useEffect } from 'react';
 import {
@@ -90,11 +84,12 @@ const GlobeIcon = ({ color }: { color: string }) => (
 
 /* ── Color Map ── */
 const SECTION_COLORS: Record<string, string> = {
-  themes: '#6C5CE7',
-  products: '#00CEC9',
-  orders: '#FDCB6E',
-  analytics: '#E17055',
-  domains: '#A29BFE',
+  storefrontPreferences: '#0D2C74',
+  themes: '#1E3A8A',
+  products: '#D97706',
+  orders: '#0D2C74',
+  analytics: '#0F766E',
+  domains: '#1E293B',
 };
 
 /* ── Setting Item with Animation ── */
@@ -176,7 +171,7 @@ const StoreSettingsScreen: React.FC<StoreSettingsScreenProps> = ({ navigate, goB
   };
 
   const settings = [
-    { id: 'storefrontPreferences', icon: <GlobeIcon color={'#00B894'} />, title: t('storefront_preferences') || 'Storefront Preferences', subtitle: t('storefront_preferencesDesc') || 'Theme & language for customers', color: '#00B894' },
+    { id: 'storefrontPreferences', icon: <GlobeIcon color={SECTION_COLORS.storefrontPreferences} />, title: t('storefront_preferences') || 'Storefront Preferences', subtitle: t('storefront_preferencesDesc') || 'Theme & language for customers', color: SECTION_COLORS.storefrontPreferences },
     { id: 'themes', icon: <ThemesIcon color={SECTION_COLORS.themes} />, title: t('settings_themes') || 'Themes', subtitle: t('settings_themesDesc') || 'Customize store appearance', color: SECTION_COLORS.themes },
     { id: 'products', icon: <ProductsIcon color={SECTION_COLORS.products} />, title: t('settings_products') || 'Products', subtitle: t('settings_productsDesc') || 'Manage your product catalog', color: SECTION_COLORS.products },
     { id: 'orders', icon: <OrdersIcon color={SECTION_COLORS.orders} />, title: t('settings_orders') || 'Orders', subtitle: t('settings_ordersDesc') || 'View and manage orders', color: SECTION_COLORS.orders },

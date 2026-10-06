@@ -1,12 +1,5 @@
 /**
- * AddEditStoreScreen — 2026 Premium Design
- *
- * ✦ Dynamic theming (dark/light)
- * ✦ i18n support
- * ✦ Back button header
- * ✦ Theme toggle + language switcher
- * ✦ Document restriction check
- * ✦ Premium form styling
+ * AddEditStoreScreen — Algérie Poste E-Commerce Store Management
  */
 import React, { useState, useEffect } from 'react';
 import {
@@ -30,6 +23,7 @@ import { useTranslation } from '../i18n';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 import { API_URL } from '../config/api.config';
+import { CheckIcon } from '../components/ModernIcons';
 
 const wilayas = [...new Set(algeriaCities.map((city: any) => city.wilaya_name))].sort();
 
@@ -391,8 +385,8 @@ const AddEditStoreScreen: React.FC<AddEditStoreScreenProps> = ({ navigate, goBac
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
                     onPress={() => setUseCustomDomain(!useCustomDomain)}
                   >
-                    <View style={[s.checkbox, { borderColor: COLORS.primary }, useCustomDomain && { backgroundColor: COLORS.primary }]}>
-                      {useCustomDomain && <Text style={{ color: '#FFF', fontSize: 12, fontWeight: 'bold' }}>✓</Text>}
+                    <View style={[s.checkbox, { borderColor: COLORS.primary }, useCustomDomain && { backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center' }]}>
+                      {useCustomDomain && <CheckIcon size={12} color="#FFFFFF" strokeWidth={3} />}
                     </View>
                     <Text style={{ fontSize: 12, color: COLORS.textSecondary, fontWeight: '500' }}>
                       {t('store_customDomain') || 'Use custom domain'}
@@ -430,7 +424,7 @@ const AddEditStoreScreen: React.FC<AddEditStoreScreenProps> = ({ navigate, goBac
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[COLORS.primary, COLORS.primaryLight]}
+                colors={['#0D2C74', '#1E40AF']}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={s.submitGradient}

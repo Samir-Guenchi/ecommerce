@@ -1,9 +1,5 @@
 /**
- * OrderTrackingScreen — 2026 Redesign
- * ✦ Full i18n EN/AR/FR
- * ✦ RTL layout support
- * ✦ Dynamic dark / light theme
- * ✦ Backend: orderAPI.getOrderByOrderNumber() for live data
+ * OrderTrackingScreen — Algérie Poste E-Commerce Tracking
  */
 import React, { useState, useEffect, useCallback } from 'react';
 import {
@@ -18,6 +14,7 @@ import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
+import { PackageIcon } from '../components/ModernIcons';
 
 interface TrackingEvent {
   wilaya: string;
@@ -235,7 +232,9 @@ const OrderTrackingScreen: React.FC<OrderTrackingScreenProps> = ({
           </View>
         ) : !orderData ? (
           <View style={[s.emptyCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-            <Text style={{ fontSize: 40, marginBottom: 12 }}>📦</Text>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+              <PackageIcon size={34} color={COLORS.primary} strokeWidth={2} />
+            </View>
             <Text style={[s.emptyTitle, { color: COLORS.text }]}>{t('tracking_noOrderTitle')}</Text>
             <Text style={[s.emptyDesc, { color: COLORS.textMuted }]}>{t('tracking_noOrderDesc')}</Text>
           </View>

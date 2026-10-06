@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
   ScrollView, ActivityIndicator, Modal, RefreshControl,
@@ -12,6 +12,7 @@ import BackHeader from '../components/BackHeader';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 import { confirmAction } from '../components/confirmAction';
+import { MapPinIcon } from '../components/ModernIcons';
 
 interface LocationsScreenProps { goBack?: () => void; }
 
@@ -231,7 +232,9 @@ const LocationsScreen = ({ goBack }: LocationsScreenProps) => {
         {/* Location cards */}
         {locations.length === 0 ? (
           <View style={{ alignItems: 'center', paddingVertical: 48 }}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>📍</Text>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+              <MapPinIcon size={34} color={COLORS.primary} strokeWidth={2} />
+            </View>
             <Text style={[s.emptyTitle, { color: COLORS.text }]}>{t('locations_noLocations')}</Text>
             <Text style={[s.emptyDesc, { color: COLORS.textMuted, textAlign: 'center' }]}>{t('locations_noLocationsDesc')}</Text>
           </View>
@@ -245,7 +248,7 @@ const LocationsScreen = ({ goBack }: LocationsScreenProps) => {
               }]}>
                 <View style={[s.locTop, isRTL && { flexDirection: 'row-reverse' }]}>
                   <View style={[s.locIcon, { backgroundColor: COLORS.primary + '15' }]}>
-                    <Text style={{ fontSize: 18 }}>📍</Text>
+                    <MapPinIcon size={18} color={COLORS.primary} strokeWidth={2} />
                   </View>
                   <View style={{ 
                     flex: 1, 

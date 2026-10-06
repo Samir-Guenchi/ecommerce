@@ -329,7 +329,7 @@ const AdminDeliveryScreen: React.FC<AdminDeliveryScreenProps> = ({ navigate, goB
                   <Text style={[s.personName, { color: COLORS.text }]}>{person.fullName}</Text>
                   <Text style={[s.personEmail, { color: COLORS.textSecondary }]}>{person.email}</Text>
                   {person.phone && (
-                    <Text style={[s.personPhone, { color: COLORS.textSecondary }]}>📞 {person.phone}</Text>
+                    <Text style={[s.personPhone, { color: COLORS.textSecondary }]}>{person.phone}</Text>
                   )}
                 </View>
                 <View

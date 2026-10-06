@@ -1,14 +1,5 @@
 /**
- * AddEditProductScreen — 2026 Premium Design
- *
- * ✦ Dynamic theming (dark/light)
- * ✦ i18n support (EN / AR / FR)
- * ✦ Back button + theme/language toggle in header
- * ✦ Document restriction check (blocked if not approved)
- * ✦ Mock admin approval/rejection flow displayed inline
- * ✦ Store selector chip row
- * ✦ Image upload placeholder with status
- * ✦ Premium form card styling
+ * AddEditProductScreen — Algérie Poste E-Commerce Product Editor
  */
 import React, { useState, useEffect } from 'react';
 import {
@@ -36,6 +27,7 @@ import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
 import { confirmAction } from '../components/confirmAction';
 import { API_URL } from '../config/api.config';
+import { StoreIcon, ClockIcon, XCircleIcon, FileTextIcon, ShieldIcon } from '../components/ModernIcons';
 
 interface AddEditProductScreenProps {
   navigate?: (screenId: string, params?: any) => void;
@@ -363,7 +355,9 @@ const AddEditProductScreen: React.FC<AddEditProductScreenProps> = ({ navigate, g
         <View style={s.scrollInner}>
           {renderHeader()}
           <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', paddingVertical: 60 }}>
-            <Text style={{ fontSize: 48, marginBottom: 16 }}>🏪</Text>
+            <View style={{ width: 68, height: 68, borderRadius: 34, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center', marginBottom: 18 }}>
+              <StoreIcon size={34} color={COLORS.primary} strokeWidth={2} />
+            </View>
             <Text style={{ fontSize: 18, fontWeight: '800', color: COLORS.text, marginBottom: 8 }}>{t('product_noStore')}</Text>
             <Text style={{ fontSize: 13, color: COLORS.textMuted, textAlign: 'center', marginBottom: 24 }}>{t('product_noStoreDesc')}</Text>
             <TouchableOpacity style={[s.goStoresBtn, { backgroundColor: COLORS.primary }]} onPress={() => navigate?.('stores')}>
@@ -403,7 +397,13 @@ const AddEditProductScreen: React.FC<AddEditProductScreenProps> = ({ navigate, g
     return (
       <View style={[s.restrictCard, { backgroundColor: COLORS.surface, borderColor: color + '40' }]}>
         <View style={[s.restrictIcon, { backgroundColor: color + '15' }]}>
-          <Text style={{ fontSize: 28 }}>{isRejected ? '❌' : isPending ? '⏳' : '📋'}</Text>
+          {isRejected ? (
+            <XCircleIcon size={32} color={COLORS.error} strokeWidth={2} />
+          ) : isPending ? (
+            <ClockIcon size={32} color={COLORS.warning} strokeWidth={2} />
+          ) : (
+            <FileTextIcon size={32} color={COLORS.primary} strokeWidth={2} />
+          )}
         </View>
         <Text style={[s.restrictTitle, { color }]}>{t('product_docRestricted')}</Text>
         <Text style={[s.restrictMsg, { color: COLORS.textMuted }]}>{t('product_docRestrictedMsg')}</Text>
@@ -430,20 +430,6 @@ const AddEditProductScreen: React.FC<AddEditProductScreenProps> = ({ navigate, g
             {isRejected ? t('docState_resubmit') : t('restrict_uploadDocs')}
           </Text>
         </TouchableOpacity>
-
-        {/* ── Dev mock switcher ──────────────────────────── */}
-        <View style={[s.devBox, { backgroundColor: COLORS.background, borderColor: COLORS.border }]}>
-          <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, marginBottom: 8 }}>DEV: Simulate admin state</Text>
-          {(['approved', 'pending', 'rejected', 'not_uploaded'] as AdminMockState[]).map(state => (
-            <TouchableOpacity
-              key={state}
-              style={[s.devBtn, { borderColor: mockState === state ? COLORS.primary : COLORS.border, backgroundColor: mockState === state ? COLORS.primary + '15' : 'transparent' }]}
-              onPress={() => setMockState(state)}
-            >
-              <Text style={{ fontSize: 11, fontWeight: '700', color: mockState === state ? COLORS.primary : COLORS.textMuted }}>{state}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
       </View>
     );
   }
@@ -524,33 +510,22 @@ const AddEditProductScreen: React.FC<AddEditProductScreenProps> = ({ navigate, g
               <Field label={t('product_description')} value={productDescription} set={setProductDescription} placeholder={t('product_descPlaceholder')} COLORS={COLORS} multiline />
             </View>
 
-            {/* ── Mock admin approval info card ──────── */}
+            {/* ── Official Verification Info Card ──────── */}
             {!isEditMode && (
               <View style={[s.infoCard, { backgroundColor: COLORS.primary + '0D', borderColor: COLORS.primary + '25' }]}>
-                <Text style={{ fontSize: 14, color: COLORS.text, fontWeight: '700', marginBottom: 6 }}>📋 Admin Review Process</Text>
-                <Text style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 20 }}>
-                  After submitting, new product listings are reviewed by our admin team within 1–2 business days. You will receive a notification when your product is approved or if additional information is needed.
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                  <ShieldIcon size={18} color={COLORS.primary} strokeWidth={2} />
+                  <Text style={{ fontSize: 13, color: COLORS.text, fontWeight: '700' }}>Algérie Poste Verification Policy</Text>
+                </View>
+                <Text style={{ fontSize: 12, color: COLORS.textMuted, lineHeight: 19 }}>
+                  All listings comply with national commercial standards. Once submitted, your product will be validated by the seller moderation desk within 24 to 48 hours.
                 </Text>
               </View>
             )}
 
-            {/* ── Dev mock switcher (for approved state) */}
-            <View style={[s.devBox, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-              <Text style={{ fontSize: 10, fontWeight: '700', color: COLORS.textMuted, marginBottom: 8 }}>DEV: Simulate admin state</Text>
-              {(['approved', 'pending', 'rejected', 'not_uploaded'] as AdminMockState[]).map(state => (
-                <TouchableOpacity
-                  key={state}
-                  style={[s.devBtn, { borderColor: mockState === state ? COLORS.primary : COLORS.border, backgroundColor: mockState === state ? COLORS.primary + '15' : 'transparent' }]}
-                  onPress={() => setMockState(state)}
-                >
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: mockState === state ? COLORS.primary : COLORS.textMuted }}>{state}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
             {/* ── Save button ──────────────────────────── */}
             <TouchableOpacity style={[s.saveBtn, { opacity: saving ? 0.7 : 1 }]} onPress={handleSave} disabled={saving} activeOpacity={0.8}>
-              <LinearGradient colors={[COLORS.primary, COLORS.primaryLight || COLORS.primary]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.saveBtnGrad}>
+              <LinearGradient colors={['#0D2C74', '#1E40AF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={s.saveBtnGrad}>
                 {saving ? <ActivityIndicator color="#FFFFFF" /> : <Text style={s.saveBtnText}>{isEditMode ? t('product_update') : t('product_create')}</Text>}
               </LinearGradient>
             </TouchableOpacity>
@@ -614,10 +589,6 @@ const s = StyleSheet.create({
   rejectionBox: { borderWidth: 1, borderRadius: 14, padding: 14, marginBottom: 16, width: '100%' },
   pendingBadge: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12, borderWidth: 1, marginBottom: 16 },
   uploadDocBtn: { paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14, marginBottom: 16 },
-
-  // Dev mock box
-  devBox: { borderRadius: 14, borderWidth: 1, padding: 12, marginBottom: 16 },
-  devBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, marginBottom: 6 },
 });
 
 export default AddEditProductScreen;

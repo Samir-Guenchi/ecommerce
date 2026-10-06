@@ -18,6 +18,9 @@ import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import { Logo } from '../components/Logo';
 import { API_URL } from '../config/api.config';
+import * as WebBrowser from 'expo-web-browser';
+
+WebBrowser.maybeCompleteAuthSession();
 
 interface LoginSignUpScreenProps {
   initialMode?: 'login' | 'signup';
@@ -561,9 +564,10 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
 
   const handleGoogleSignIn = async () => {
     try {
-      // Add mobile parameter for mobile devices
       const isMobile = Platform.OS !== 'web';
-      const googleAuthUrl = `${API_URL}/auth/google${isMobile ? '?mobile=true' : ''}`;
+      const host = '172.20.10.4';
+      const expoReturnUrl = encodeURIComponent(`exp://${host}:8081/--/oauth`);
+      const googleAuthUrl = `${API_URL}/auth/google?mobile=${isMobile}&host=${host}&return_url=${expoReturnUrl}`;
       
       console.log('🔐 Starting Google OAuth...');
       console.log('🔐 Platform:', Platform.OS);
@@ -575,16 +579,13 @@ const LoginSignUpScreen: React.FC<LoginSignUpScreenProps> = ({
         console.log('🔐 Redirecting in browser...');
         window.location.href = googleAuthUrl;
       } else {
-        // For mobile, use Linking
-        console.log('🔐 Opening URL with Linking...');
-        const supported = await Linking.canOpenURL(googleAuthUrl);
-        console.log('🔐 URL supported:', supported);
-        if (supported) {
+        // For mobile, try WebBrowser openAuthSessionAsync, fallback to Linking
+        try {
+          console.log('🔐 Opening with WebBrowser...');
+          await WebBrowser.openAuthSessionAsync(googleAuthUrl);
+        } catch (wbErr) {
+          console.log('🔐 Fallback to Linking.openURL:', wbErr);
           await Linking.openURL(googleAuthUrl);
-          console.log('🔐 URL opened successfully');
-        } else {
-          console.error('❌ Cannot open URL:', googleAuthUrl);
-          setError(t('auth_googleUnavailable'));
         }
       }
     } catch (err: any) {

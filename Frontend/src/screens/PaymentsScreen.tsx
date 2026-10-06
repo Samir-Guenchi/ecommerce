@@ -1,4 +1,4 @@
-﻿/**
+/**
  * PaymentsScreen — 2026 Redesign
  * ✦ Dynamic theme (useTheme + getColors)
  * ✦ Full i18n + EN/AR/FR language cycler
@@ -51,6 +51,12 @@ const CloseIcon = ({ color }: { color: string }) => (
     <Path d="M18 6L6 18M6 6L18 18" stroke={color} strokeWidth="2" strokeLinecap="round" />
   </Svg>
 );
+const CheckIcon = ({ color }: { color: string }) => (
+  <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
+    <Path d="M20 6L9 17L4 12" stroke={color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+  </Svg>
+);
+
 
 const PaymentsScreen = ({ goBack }: PaymentsScreenProps) => {
   const { mode, toggleTheme } = useTheme();
@@ -106,9 +112,9 @@ const PaymentsScreen = ({ goBack }: PaymentsScreenProps) => {
   };
 
   const CARD_GRADIENTS: Record<string, [string, string]> = {
-    credit_card: ['#1a1a2e', '#16213e'],
-    debit_card: ['#0B4F6C', '#1A936F'],
-    bank_account: ['#2C3E50', '#4CA1AF'],
+    credit_card: ['#0D2C74', '#1E40AF'],
+    debit_card: ['#1E3A8A', '#3B82F6'],
+    bank_account: ['#B45309', '#FDB913'],
   };
 
   if (loading) {
@@ -157,7 +163,9 @@ const PaymentsScreen = ({ goBack }: PaymentsScreenProps) => {
         {/* Payment cards */}
         {paymentMethods.length === 0 ? (
           <View style={{ alignItems: 'center', paddingVertical: 48 }}>
-            <Text style={{ fontSize: 48, marginBottom: 12 }}>💳</Text>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+              <CardIcon color={COLORS.primary} />
+            </View>
             <Text style={[s.emptyTitle, { color: COLORS.text }]}>No Payment Methods</Text>
             <Text style={[s.emptyDesc, { color: COLORS.textMuted }]}>Add a card to get started with billing.</Text>
           </View>
@@ -168,8 +176,9 @@ const PaymentsScreen = ({ goBack }: PaymentsScreenProps) => {
               return (
                 <LinearGradient key={method.id} colors={grad} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={s.card}>
                   {method.isDefault && (
-                    <View style={s.defaultBadge}>
-                      <Text style={s.defaultText}>✓ Default</Text>
+                    <View style={[s.defaultBadge, { flexDirection: 'row', alignItems: 'center', gap: 4 }]}>
+                      <CheckIcon color="#FFFFFF" />
+                      <Text style={s.defaultText}>Default</Text>
                     </View>
                   )}
                   <View style={[s.cardTop, isRTL && { flexDirection: 'row-reverse' }]}>

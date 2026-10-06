@@ -490,7 +490,7 @@ const AdminUsersScreen: React.FC<AdminUsersScreenProps> = ({
                     </View>
                     {user.documentsUploaded && (
                       <View style={[styles.badge, styles.badgeStatus]}>
-                        <Text style={styles.badgeText}>📄 {t('admin_documents')}</Text>
+                        <Text style={styles.badgeText}>{t('admin_documents')}</Text>
                       </View>
                     )}
                   </View>

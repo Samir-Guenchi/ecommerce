@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { authService, SignUpData, LoginData, VerificationData } from '../services/auth.service';
 import { AppDataSource } from '../config/database';
-import { User, AccountStatus } from '../entities';
+import { User, AccountStatus, AccountType } from '../entities';
 
 export class AuthController {
   /**
@@ -139,6 +139,51 @@ export class AuthController {
   }
 
   /**
+   * Quick demo login for testing in Expo Go
+   * POST /api/auth/quick-login
+   */
+  async quickLogin(req: Request, res: Response): Promise<void> {
+    try {
+      const email = req.body.email || 'samir.guenchi@ensia.edu.dz';
+      const role = req.body.role || 'seller';
+      const userRepository = AppDataSource.getRepository(User);
+      
+      let user = await userRepository.findOne({ where: { email } });
+      if (!user) {
+        user = userRepository.create({
+          email,
+          fullName: 'Samir Guenchi',
+          accountType: role === 'seller' ? AccountType.SELLER : AccountType.BUYER,
+          accountStatus: AccountStatus.ACTIVE,
+          languagePreference: 'fr',
+        });
+      } else {
+        user.accountType = role === 'seller' ? AccountType.SELLER : AccountType.BUYER;
+        user.accountStatus = AccountStatus.ACTIVE;
+      }
+      user.lastLogin = new Date();
+      await userRepository.save(user);
+
+      const token = authService.generateToken(user);
+      res.status(200).json({
+        message: 'Quick login successful',
+        token,
+        user: {
+          id: user.id,
+          email: user.email,
+          fullName: user.fullName || 'Samir Guenchi',
+          accountType: user.accountType,
+          accountStatus: user.accountStatus,
+          isAdmin: user.isAdmin === true,
+        },
+      });
+    } catch (error: any) {
+      console.error('Quick login error:', error);
+      res.status(500).json({ error: error.message || 'Quick login failed' });
+    }
+  }
+
+  /**
    * Verify email with code
    * POST /api/auth/verify
    */
@@ -239,6 +284,124 @@ export class AuthController {
   }
 
   /**
+   * Render HTML bridge for mobile OAuth redirects
+   */
+  public renderOAuthBridge(options: {
+    title: string;
+    message: string;
+    expoUrl: string;
+    appUrl: string;
+    error?: string;
+  }): string {
+    const isError = !!options.error;
+    return `<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Algérie Poste - ${options.title}</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: #0D2C74;
+      color: #FFFFFF;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+    .card {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 24px;
+      padding: 36px 24px;
+      max-width: 440px;
+      width: 100%;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+    .logo-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 68px;
+      height: 68px;
+      border-radius: 20px;
+      background: ${isError ? '#DC2626' : '#FDB913'};
+      color: #0D2C74;
+      font-size: 32px;
+      font-weight: 900;
+      margin-bottom: 20px;
+    }
+    h1 {
+      font-size: 22px;
+      font-weight: 800;
+      margin: 0 0 10px 0;
+      color: #FFFFFF;
+    }
+    p {
+      color: rgba(255, 255, 255, 0.85);
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 0 0 24px 0;
+    }
+    .btn {
+      display: block;
+      width: 100%;
+      background: #FDB913;
+      color: #0D2C74;
+      text-decoration: none;
+      font-weight: 800;
+      font-size: 16px;
+      padding: 16px 20px;
+      border-radius: 14px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      border: none;
+      transition: opacity 0.2s;
+    }
+    .btn:active { opacity: 0.8; }
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.12);
+      color: #FFFFFF;
+      border: 1px solid rgba(255, 255, 255, 0.25);
+    }
+    .hint {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="logo-badge">${isError ? '✕' : '✓'}</div>
+    <h1>${options.title}</h1>
+    <p>${options.message}</p>
+    ${!isError ? `
+      <a class="btn" href="${options.expoUrl}">Ouvrir dans Expo Go</a>
+      <a class="btn btn-secondary" href="${options.appUrl}">Ouvrir l'application installée</a>
+      <div class="hint">Redirection automatique en cours...</div>
+    ` : `
+      <a class="btn btn-secondary" href="${options.expoUrl}">Retourner à l'application</a>
+    `}
+  </div>
+  <script>
+    ${!isError ? `
+      try {
+        window.location.href = "${options.expoUrl}";
+      } catch (e) {}
+    ` : ''}
+  </script>
+</body>
+</html>`;
+  }
+
+  /**
    * Google OAuth Callback
    * GET /api/auth/google/callback
    */
@@ -249,39 +412,63 @@ export class AuthController {
       console.log('🔐 Google OAuth Callback - User:', user ? 'Found' : 'Not found');
       console.log('🔐 Query params:', req.query);
       console.log('🔐 User-Agent:', req.headers['user-agent']);
-      
-      if (!user) {
-        console.error('❌ No user in OAuth callback');
-        res.redirect(`${process.env.FRONTEND_URL}?error=oauth_failed`);
-        return;
+
+      let stateData: any = {};
+      if (req.query.state) {
+        try {
+          stateData = JSON.parse(req.query.state as string);
+        } catch (_) {}
       }
 
-      // Detect if request is from mobile (check user agent or use a query parameter)
-      const isMobile = req.query.mobile === 'true' || 
-                      req.headers['user-agent']?.includes('Expo') ||
-                      req.headers['user-agent']?.includes('Mobile');
+      const isMobile = stateData.mobile ?? (
+        req.query.mobile === 'true' || 
+        req.headers['user-agent']?.includes('Expo') ||
+        req.headers['user-agent']?.includes('Mobile')
+      );
 
-      console.log('📱 Is mobile request:', isMobile);
-      const frontendUrl = isMobile ? 'ap-ecom://oauth' : process.env.FRONTEND_URL;
-      console.log('🔗 Frontend URL:', frontendUrl);
+      const host = stateData.host || (req.hostname !== 'localhost' ? req.hostname : '172.20.10.4');
+      const expoBaseUrl = stateData.returnUrl || `exp://${host}:8081/--/oauth`;
+      
+      console.log('📱 Is mobile request:', isMobile, 'Host:', host, 'Expo base URL:', expoBaseUrl);
+
+      if (!user) {
+        console.error('❌ No user in OAuth callback');
+        if (isMobile) {
+          res.send(this.renderOAuthBridge({
+            title: 'Échec de connexion',
+            message: 'Impossible de récupérer votre profil Google. Veuillez réessayer.',
+            error: 'oauth_failed',
+            expoUrl: `${expoBaseUrl}?error=oauth_failed`,
+            appUrl: `ap-ecom://oauth?error=oauth_failed`,
+          }));
+        } else {
+          res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:8081'}?error=oauth_failed`);
+        }
+        return;
+      }
 
       // Check if this is a new OAuth user who needs to complete registration
       if ((user as any).isNewOAuthUser) {
         console.log('✨ New OAuth user - needs setup');
-        // Redirect to registration completion page with OAuth data
         const oauthData = encodeURIComponent(JSON.stringify({
           email: (user as any).email,
           fullName: (user as any).fullName,
           googleId: (user as any).googleId,
           provider: 'google'
         }));
-        
-        const redirectUrl = isMobile 
-          ? `ap-ecom://oauth?setup=true&data=${oauthData}`
-          : `${process.env.FRONTEND_URL}?oauth_setup=true&data=${oauthData}`;
-        
-        console.log('🔗 Redirecting to:', redirectUrl);
-        res.redirect(redirectUrl);
+
+        if (isMobile) {
+          const expoUrl = `${expoBaseUrl}?setup=true&data=${oauthData}`;
+          const appUrl = `ap-ecom://oauth?setup=true&data=${oauthData}`;
+          res.send(this.renderOAuthBridge({
+            title: 'Finalisation de votre compte',
+            message: 'Bienvenue chez Algérie Poste. Cliquez ci-dessous pour finaliser votre inscription.',
+            expoUrl,
+            appUrl
+          }));
+        } else {
+          res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:8081'}?oauth_setup=true&data=${oauthData}`);
+        }
         return;
       }
 
@@ -293,38 +480,41 @@ export class AuthController {
           email: user.email,
           fullName: user.fullName,
         }));
-        
-        const redirectUrl = isMobile
-          ? `ap-ecom://oauth?password_setup=true&data=${setupData}`
-          : `${process.env.FRONTEND_URL}?password_setup=true&data=${setupData}`;
-        
-        console.log('🔗 Redirecting to:', redirectUrl);
-        res.redirect(redirectUrl);
+
+        if (isMobile) {
+          const expoUrl = `${expoBaseUrl}?password_setup=true&data=${setupData}`;
+          const appUrl = `ap-ecom://oauth?password_setup=true&data=${setupData}`;
+          res.send(this.renderOAuthBridge({
+            title: 'Configuration du mot de passe',
+            message: 'Veuillez configurer un mot de passe pour sécuriser votre compte.',
+            expoUrl,
+            appUrl
+          }));
+        } else {
+          res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:8081'}?password_setup=true&data=${setupData}`);
+        }
         return;
       }
 
       // Existing user with password - generate token and login
       console.log('✅ Existing user with password - generating token');
       const token = authService.generateToken(user);
-      
-      const redirectUrl = isMobile
-        ? `ap-ecom://oauth?token=${token}&success=true`
-        : `${process.env.FRONTEND_URL}?token=${token}&oauth=success`;
-      
-      console.log('🔗 Redirecting to:', redirectUrl);
-      res.redirect(redirectUrl);
+
+      if (isMobile) {
+        const expoUrl = `${expoBaseUrl}?token=${token}&success=true`;
+        const appUrl = `ap-ecom://oauth?token=${token}&success=true`;
+        res.send(this.renderOAuthBridge({
+          title: 'Connexion Réussie !',
+          message: `Ravi de vous revoir, ${user.fullName || user.email}. Redirection vers votre compte Algérie Poste...`,
+          expoUrl,
+          appUrl
+        }));
+      } else {
+        res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:8081'}?token=${token}&oauth=success`);
+      }
     } catch (error: any) {
       console.error('❌ Google OAuth callback error:', error);
-      const isMobile = req.query.mobile === 'true' || 
-                      req.headers['user-agent']?.includes('Expo') ||
-                      req.headers['user-agent']?.includes('Mobile');
-      
-      const redirectUrl = isMobile
-        ? `ap-ecom://oauth?error=oauth_failed`
-        : `${process.env.FRONTEND_URL}?error=oauth_failed`;
-      
-      console.log('🔗 Error redirect to:', redirectUrl);
-      res.redirect(redirectUrl);
+      res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:8081'}?error=oauth_failed`);
     }
   }
 

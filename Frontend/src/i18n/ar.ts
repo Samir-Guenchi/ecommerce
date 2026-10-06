@@ -1,4 +1,4 @@
-﻿import { TranslationKeys } from './en';
+import { TranslationKeys } from './en';
 
 const ar: Record<TranslationKeys, string> = {
   nav_dashboard: 'الرئيسية',
@@ -246,7 +246,7 @@ const ar: Record<TranslationKeys, string> = {
   stores_draft: 'مسودة',
   stores_active: 'نشط',
   stores_suspended: 'معلق',
-  stores_suspendedByAdmin: '⚠️ معلق من قبل المسؤول',
+  stores_suspendedByAdmin: 'معلق من قبل المسؤول',
   stores_contactAdmin: 'اتصل بالمسؤول لإعادة تنشيط هذا المتجر',
   stores_statusUpdated: 'تم تحديث حالة المتجر بنجاح',
   stores_statusUpdateFailed: 'فشل في تحديث حالة المتجر',
@@ -859,10 +859,10 @@ const ar: Record<TranslationKeys, string> = {
   oauth_reenterPassword: 'أعد إدخال كلمة المرور',
   oauth_accountType: 'نوع الحساب',
   oauth_accountTypeRequired: 'نوع الحساب *',
-  oauth_buyerOption: '🛒 مشتري',
-  oauth_sellerOption: '🏪 بائع',
-  oauth_deliveryOption: '🚚 توصيل',
-  oauth_bothOption: '🔄 كلاهما',
+  oauth_buyerOption: 'مشتري',
+  oauth_sellerOption: 'بائع',
+  oauth_deliveryOption: 'توصيل',
+  oauth_bothOption: 'كلاهما (مشتري وبائع)',
   oauth_completeButton: 'إكمال التسجيل',
   oauth_loginNextTime: 'ستتمكن من تسجيل الدخول باستخدام بريدك الإلكتروني وكلمة المرور في المرة القادمة',
   oauth_invalidData: 'بيانات OAuth غير صالحة. يرجى المحاولة مرة أخرى.',

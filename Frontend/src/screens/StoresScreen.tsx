@@ -1,12 +1,5 @@
-﻿/**
- * StoresScreen — 2026 Premium Redesign
- *
- * ✦ Bento-style store cards with gradient accent bar
- * ✦ Animated status dots
- * ✦ Hero stats summary card
- * ✦ Language switcher + theme toggle
- * ✦ Buyer restriction & seller verification states
- * ✦ Full dark mode support
+/**
+ * StoresScreen — Algérie Poste E-Commerce Store Management
  */
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -21,6 +14,7 @@ import {
   Dimensions,
   Alert,
   Platform,
+  Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -34,7 +28,8 @@ import { useTheme } from '../theme/ThemeContext';
 import { useTranslation } from '../i18n';
 import { Logo } from '../components/Logo';
 import BottomNav, { BottomTabId } from './BottomNav';
-import { API_URL } from '../config/api.config';
+import { API_URL, getStorefrontUrl } from '../config/api.config';
+import { StoreIcon, XCircleIcon, AlertTriangleIcon } from '../components/ModernIcons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_R = 22;
@@ -92,66 +87,62 @@ const TrashIcon = ({ color }: { color: string }) => (
   </Svg>
 );
 
-/* ═══════════════ PULSE DOT ═══════════════ */
-const PulseDot = ({ color }: { color: string }) => {
-  const anim = useRef(new Animated.Value(0.5)).current;
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(anim, { toValue: 1, duration: 700, useNativeDriver: true }),
-        Animated.timing(anim, { toValue: 0.5, duration: 700, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-  return <Animated.View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: color, opacity: anim }} />;
-};
-
 /* ═══════════════ STORE CARD ═══════════════ */
-interface Store { id: number; name: string; status: string; location: string | null; description?: string; domain?: string; }
-
-const accentColors = [
-  ['#6C5CE7', '#A29BFE'],
-  ['#00B894', '#55EFC4'],
-  ['#E17055', '#FDCB6E'],
-  ['#0984E3', '#74B9FF'],
-  ['#FD79A8', '#E84393'],
-  ['#00CEC9', '#81ECEC'],
-];
+interface Store { id: number; name: string; status: string; location: string | null; description?: string | null; domain?: string | null; }
 
 const StoreCard = ({ store, index, orderCount, COLORS, onEdit, onSettings, onDelete, onOpenStorefront, onToggleStatus, t }: any) => {
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(24)).current;
+  const slideAnim = useRef(new Animated.Value(18)).current;
 
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(fadeAnim, { toValue: 1, duration: 500, delay: index * 80, useNativeDriver: true }),
-      Animated.timing(slideAnim, { toValue: 0, duration: 400, delay: index * 80, useNativeDriver: true }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 400, delay: index * 60, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 350, delay: index * 60, useNativeDriver: true }),
     ]).start();
   }, []);
 
-  const accent = accentColors[index % accentColors.length];
   const isActive = store.status?.toLowerCase() === 'active';
   const isDraft = store.status?.toLowerCase() === 'draft';
   const isSuspended = store.status?.toLowerCase() === 'suspended';
+
+  const statusLabel = isActive 
+    ? (t('stores_active') || 'En ligne') 
+    : isDraft 
+      ? (t('stores_draft') || 'Brouillon') 
+      : (t('stores_suspended') || 'Suspendu');
+
+  const statusColor = isActive ? COLORS.success : isDraft ? COLORS.warning : COLORS.error;
 
   return (
     <Animated.View style={[
       styles.storeCard,
       { backgroundColor: COLORS.surface, borderColor: COLORS.border, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }
     ]}>
-      {/* Gradient Accent Bar */}
-      <LinearGradient colors={accent as [string, string]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={styles.accentBar} />
+      {/* Top Brand Accent Line */}
+      <View style={[styles.cardTopAccent, { backgroundColor: isActive ? '#0D2C74' : COLORS.border }]} />
 
       <View style={styles.cardBody}>
-        {/* Top Row */}
-        <View style={styles.cardTopRow}>
-          <View style={[styles.storeInitial, { backgroundColor: accent[0] + '20' }]}>
-            <Text style={{ fontSize: 18, fontWeight: '900', color: accent[0] }}>
+        {/* Header: Avatar, Name, Location & Clean Status */}
+        <View style={styles.cardHeader}>
+          <LinearGradient
+            colors={['#0D2C74', '#1E40AF']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.storeAvatar}
+          >
+            <Text style={styles.storeAvatarText}>
               {store.name?.charAt(0)?.toUpperCase() || 'S'}
             </Text>
-          </View>
-          <View style={{ flex: 1, marginLeft: 12 }}>
-            <Text style={[styles.storeName, { color: COLORS.text }]} numberOfLines={1}>{store.name}</Text>
+          </LinearGradient>
+
+          <View style={styles.headerInfo}>
+            <View style={styles.nameRow}>
+              <Text style={[styles.storeName, { color: COLORS.text }]} numberOfLines={1}>{store.name}</Text>
+              <View style={[styles.statusTag, { borderColor: statusColor + '40', backgroundColor: statusColor + '10' }]}>
+                <Text style={[styles.statusTagText, { color: statusColor }]}>{statusLabel}</Text>
+              </View>
+            </View>
+
             {store.location ? (
               <View style={styles.locationRow}>
                 <MapPinIcon color={COLORS.textMuted} />
@@ -159,31 +150,19 @@ const StoreCard = ({ store, index, orderCount, COLORS, onEdit, onSettings, onDel
               </View>
             ) : null}
           </View>
-          {/* Status Badge */}
-          <View style={[
-            styles.statusBadge, 
-            { 
-              backgroundColor: isActive ? COLORS.success + '15' : isSuspended ? COLORS.error + '15' : COLORS.warning + '15', 
-              flexDirection: 'row', 
-              alignItems: 'center', 
-              gap: 6 
-            }
-          ]}>
-            <PulseDot color={isActive ? COLORS.success : isSuspended ? COLORS.error : COLORS.warning} />
-            <Text style={[styles.statusText, { color: isActive ? COLORS.success : isSuspended ? COLORS.error : COLORS.warning }]}>
-              {store.status?.charAt(0).toUpperCase() + store.status?.slice(1)}
-            </Text>
-          </View>
         </View>
 
         {/* Suspended Warning */}
         {isSuspended && (
           <View style={[styles.suspendedWarning, { backgroundColor: COLORS.error + '10', borderColor: COLORS.error + '30' }]}>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.error }}>
-              {t('stores_suspendedByAdmin') || '⚠️ Suspended by Admin'}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <AlertTriangleIcon size={14} color={COLORS.error} strokeWidth={2} />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: COLORS.error }}>
+                {t('stores_suspendedByAdmin') || 'Suspendu par l\'administrateur'}
+              </Text>
+            </View>
             <Text style={{ fontSize: 11, color: COLORS.textSecondary, marginTop: 2 }}>
-              {t('stores_contactAdmin') || 'Contact admin to reactivate this store'}
+              {t('stores_contactAdmin') || 'Contactez le support pour réactiver votre boutique.'}
             </Text>
           </View>
         )}
@@ -193,78 +172,80 @@ const StoreCard = ({ store, index, orderCount, COLORS, onEdit, onSettings, onDel
           <Text style={[styles.storeDesc, { color: COLORS.textSecondary }]} numberOfLines={2}>{store.description}</Text>
         ) : null}
 
-        {/* Meta Row */}
-        <View style={styles.metaRow}>
-          <View style={[styles.metaChip, { backgroundColor: COLORS.background }]}>
-            <Svg width={12} height={12} viewBox="0 0 24 24" fill="none">
-              <Path d="M9 11L12 14L22 4" stroke={COLORS.primary} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-              <Path d="M21 12V19C21 19.53 20.79 20.04 20.41 20.41C20.04 20.79 19.53 21 19 21H5C4.47 21 3.96 20.79 3.59 20.41C3.21 20.04 3 19.53 3 19V5C3 4.47 3.21 3.96 3.59 3.59C3.96 3.21 4.47 3 5 3H16" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" />
-            </Svg>
-            <Text style={[styles.metaText, { color: COLORS.textSecondary }]}>{orderCount || 0} {t('dashboard_orders').toLowerCase()}</Text>
+        {/* Metrics Bar */}
+        <View style={[styles.metricsBar, { backgroundColor: COLORS.background, borderColor: COLORS.border }]}>
+          <View style={styles.metricItem}>
+            <Text style={[styles.metricLabel, { color: COLORS.textMuted }]}>{t('dashboard_orders') || 'Commandes'}</Text>
+            <Text style={[styles.metricValue, { color: COLORS.text }]}>{orderCount || 0}</Text>
           </View>
-          {store.domain ? (
-            <TouchableOpacity 
-              style={[styles.metaChip, { backgroundColor: accent[0] + '15' }]}
-              onPress={onOpenStorefront}
-              activeOpacity={0.7}
-            >
-              <GlobeIcon color={accent[0]} />
-              <Text style={[styles.metaText, { color: accent[0] }]} numberOfLines={1}>{store.domain}</Text>
-              <ExternalLinkIcon color={accent[0]} />
-            </TouchableOpacity>
-          ) : null}
+          <View style={[styles.metricDivider, { backgroundColor: COLORS.border }]} />
+          <View style={styles.metricItem}>
+            <Text style={[styles.metricLabel, { color: COLORS.textMuted }]}>{t('store_domain') || 'Domaine Web'}</Text>
+            <Text style={[styles.metricValue, { color: COLORS.primary }]} numberOfLines={1}>
+              {store.domain ? `${store.domain}.dz` : 'Boutique AP'}
+            </Text>
+          </View>
         </View>
 
-        {/* Status Control Row */}
-        {!isSuspended && (
-          <View style={[styles.statusControlRow, { borderTopColor: COLORS.border, borderBottomColor: COLORS.border }]}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: COLORS.textSecondary }}>
-              {t('stores_storeStatus') || 'Store Status:'}
+        {/* Prominent Storefront Button — Opens the real web storefront */}
+        <TouchableOpacity
+          style={[styles.openStorefrontBtn, { backgroundColor: '#0D2C74' }]}
+          onPress={onOpenStorefront}
+          activeOpacity={0.8}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <GlobeIcon color="#FDB913" />
+            <Text style={styles.openStorefrontText}>
+              {t('stores_visitWeb') || 'Visiter le site web de la boutique'}
             </Text>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
+          </View>
+          <ExternalLinkIcon color="#FFFFFF" />
+        </TouchableOpacity>
+
+        {/* Status Toggle (Draft vs Active) */}
+        {!isSuspended && (
+          <View style={[styles.toggleContainer, { borderTopColor: COLORS.border }]}>
+            <Text style={[styles.toggleLabel, { color: COLORS.textSecondary }]}>
+              {t('stores_storeStatus') || 'État de la boutique :'}
+            </Text>
+            <View style={[styles.segmentedTrack, { backgroundColor: COLORS.background, borderColor: COLORS.border }]}>
               <TouchableOpacity
                 style={[
-                  styles.statusToggleBtn,
-                  { 
-                    backgroundColor: isDraft ? COLORS.warning + '15' : COLORS.background,
-                    borderColor: isDraft ? COLORS.warning : COLORS.border
-                  }
+                  styles.segmentBtn,
+                  isDraft && { backgroundColor: COLORS.warning + '25', borderColor: COLORS.warning }
                 ]}
                 onPress={() => onToggleStatus(store.id, 'draft')}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.statusToggleText, { color: isDraft ? COLORS.warning : COLORS.textMuted }]}>
-                  {t('stores_draft') || 'Draft'}
+                <Text style={[styles.segmentText, { color: isDraft ? COLORS.warning : COLORS.textMuted, fontWeight: isDraft ? '800' : '600' }]}>
+                  {t('stores_draft') || 'Brouillon'}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
                 style={[
-                  styles.statusToggleBtn,
-                  { 
-                    backgroundColor: isActive ? COLORS.success + '15' : COLORS.background,
-                    borderColor: isActive ? COLORS.success : COLORS.border
-                  }
+                  styles.segmentBtn,
+                  isActive && { backgroundColor: COLORS.success + '25', borderColor: COLORS.success }
                 ]}
                 onPress={() => onToggleStatus(store.id, 'active')}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.statusToggleText, { color: isActive ? COLORS.success : COLORS.textMuted }]}>
-                  {t('stores_active') || 'Active'}
+                <Text style={[styles.segmentText, { color: isActive ? COLORS.success : COLORS.textMuted, fontWeight: isActive ? '800' : '600' }]}>
+                  {t('stores_active') || 'Actif'}
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
 
-        {/* Action Buttons */}
+        {/* Manage Action Row */}
         <View style={[styles.actionRow, { borderTopColor: COLORS.border }]}>
           <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.primary + '10' }]} onPress={onEdit} activeOpacity={0.7}>
             <EditIcon color={COLORS.primary} />
             <Text style={[styles.actionBtnText, { color: COLORS.primary }]}>{t('common_edit')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: accent[0] + '10' }]} onPress={onSettings} activeOpacity={0.7}>
-            <SettingsIcon color={accent[0]} />
-            <Text style={[styles.actionBtnText, { color: accent[0] }]}>{t('common_settings')}</Text>
+          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#FDB91318' }]} onPress={onSettings} activeOpacity={0.7}>
+            <SettingsIcon color="#B45309" />
+            <Text style={[styles.actionBtnText, { color: '#B45309' }]}>{t('common_settings')}</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.actionBtn, { backgroundColor: COLORS.error + '10' }]} onPress={onDelete} activeOpacity={0.7}>
             <TrashIcon color={COLORS.error} />
@@ -415,13 +396,24 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
     }
   };
 
-  const handleOpenStorefront = (domain: string) => {
-    const storefrontUrl = `http://localhost:5173/store/${domain}`;
-    // For web, open in new tab
-    if (typeof window !== 'undefined') {
-      window.open(storefrontUrl, '_blank');
+  const handleOpenStorefront = async (domain: string) => {
+    try {
+      const url = getStorefrontUrl(domain);
+      console.log('🌐 Opening Storefront URL:', url);
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        window.open(url, '_blank');
+      } else {
+        const canOpen = await Linking.canOpenURL(url).catch(() => false);
+        if (canOpen) {
+          await Linking.openURL(url);
+        } else {
+          await Linking.openURL(url);
+        }
+      }
+    } catch (err: any) {
+      console.error('Failed to open storefront URL:', err);
+      showError('Impossible d\'ouvrir le site de la boutique');
     }
-    // For mobile, you would use Linking.openURL(storefrontUrl)
   };
 
   const handleCreateStore = () => {
@@ -519,7 +511,6 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
   if (sellerStatus === 'rejected') {
     const cfg = { 
       color: COLORS.error, 
-      icon: '❌', 
       title: t('stores_rejected'), 
       desc: t('stores_rejectedDesc'), 
       btnText: t('stores_resubmit'), 
@@ -532,7 +523,7 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
           <Header />
           <View style={[styles.stateCard, { backgroundColor: COLORS.surface, borderColor: cfg.color + '30' }]}>
             <View style={[styles.stateIconBadge, { backgroundColor: cfg.color + '15' }]}>
-              <Text style={{ fontSize: 36 }}>{cfg.icon}</Text>
+              <XCircleIcon size={36} color={cfg.color} strokeWidth={2} />
             </View>
             <Text style={[styles.stateTitle, { color: cfg.color }]}>{cfg.title}</Text>
             <Text style={[styles.stateDesc, { color: COLORS.textSecondary }]}>{cfg.desc}</Text>
@@ -572,7 +563,7 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
           {sellerStatus === 'pending' && (
             <View style={[styles.pendingBanner, { backgroundColor: COLORS.warning + '12', borderColor: COLORS.warning + '30' }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <PulseDot color={COLORS.warning} />
+                <AlertTriangleIcon size={20} color={COLORS.warning} strokeWidth={2} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 14, fontWeight: '700', color: COLORS.warning, marginBottom: 4 }}>
                     {t('stores_underReview')}
@@ -587,7 +578,7 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
 
           {/* ── Hero Stats ── */}
           <View style={[styles.heroCard, { borderColor: COLORS.border }]}>
-            <LinearGradient colors={[COLORS.primary, COLORS.primaryLight]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroGrad}>
+            <LinearGradient colors={['#0D2C74', '#1E40AF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroGrad}>
               <View style={styles.heroRow}>
                 <View style={styles.heroStat}>
                   <Text style={styles.heroStatValue}>{stores.length}</Text>
@@ -622,7 +613,9 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
           {/* ── Stores List ── */}
           {stores.length === 0 ? (
             <View style={[styles.emptyCard, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-              <Text style={{ fontSize: 48, marginBottom: 12 }}>🏪</Text>
+              <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: COLORS.primary + '15', justifyContent: 'center', alignItems: 'center', marginBottom: 16 }}>
+                <StoreIcon size={34} color={COLORS.primary} strokeWidth={2} />
+              </View>
               <Text style={[styles.emptyTitle, { color: COLORS.text }]}>{t('stores_noStores') || "You don't have any stores yet"}</Text>
               <Text style={[styles.emptyDesc, { color: COLORS.textSecondary }]}>{t('stores_noStoresDesc') || 'Get started by creating your first store above.'}</Text>
             </View>
@@ -655,7 +648,7 @@ const StoresScreen: React.FC<StoresScreenProps> = ({ navigate, resetTo, goBack }
 const styles = StyleSheet.create({
   outer: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  content: { padding: 20, paddingTop: 54, paddingBottom: 110 },
+  content: { padding: 20, paddingTop: 54, paddingBottom: 155 },
 
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
   headerLeft: { flexDirection: 'row', alignItems: 'center', flex: 1 },
@@ -680,24 +673,33 @@ const styles = StyleSheet.create({
   emptyDesc: { fontSize: 13, textAlign: 'center', lineHeight: 20 },
 
   storeCard: { borderRadius: CARD_R, borderWidth: 1, overflow: 'hidden' },
-  accentBar: { height: 4 },
+  cardTopAccent: { height: 4 },
   cardBody: { padding: 18 },
-  cardTopRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  storeInitial: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
-  storeName: { fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  storeAvatar: { width: 46, height: 46, borderRadius: 14, justifyContent: 'center', alignItems: 'center', flexShrink: 0 },
+  storeAvatarText: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
+  headerInfo: { flex: 1, marginLeft: 12 },
+  nameRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 },
+  storeName: { fontSize: 17, fontWeight: '800', flex: 1, marginRight: 8 },
+  statusTag: { paddingHorizontal: 9, paddingVertical: 3, borderRadius: 8, borderWidth: 1 },
+  statusTagText: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.3 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   locationText: { fontSize: 12, fontWeight: '500' },
-  statusBadge: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, flexShrink: 0 },
-  statusText: { fontSize: 11, fontWeight: '700' },
   storeDesc: { fontSize: 13, lineHeight: 18, marginBottom: 12 },
-  metaRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 16 },
-  metaChip: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  metaText: { fontSize: 12, fontWeight: '600' },
-  suspendedWarning: { padding: 10, borderRadius: 8, borderWidth: 1, marginTop: 10 },
-  statusControlRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 12, borderTopWidth: 1, borderBottomWidth: 1, marginTop: 10 },
-  statusToggleBtn: { paddingHorizontal: 16, paddingVertical: 6, borderRadius: 8, borderWidth: 1.5 },
-  statusToggleText: { fontSize: 12, fontWeight: '700' },
-  actionRow: { flexDirection: 'row', gap: 8, paddingTop: 14, borderTopWidth: 1 },
+  suspendedWarning: { padding: 10, borderRadius: 8, borderWidth: 1, marginBottom: 12 },
+  metricsBar: { flexDirection: 'row', alignItems: 'center', borderRadius: 12, borderWidth: 1, padding: 12, marginBottom: 12 },
+  metricItem: { flex: 1, alignItems: 'center' },
+  metricLabel: { fontSize: 10, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 2 },
+  metricValue: { fontSize: 14, fontWeight: '800' },
+  metricDivider: { width: 1, height: 26 },
+  openStorefrontBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, marginBottom: 12 },
+  openStorefrontText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700' },
+  toggleContainer: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderTopWidth: 1 },
+  toggleLabel: { fontSize: 12, fontWeight: '600' },
+  segmentedTrack: { flexDirection: 'row', borderRadius: 10, borderWidth: 1, padding: 2, gap: 4 },
+  segmentBtn: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 8, borderWidth: 1, borderColor: 'transparent' },
+  segmentText: { fontSize: 11 },
+  actionRow: { flexDirection: 'row', gap: 8, paddingTop: 12, borderTopWidth: 1 },
   actionBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10, borderRadius: 10 },
   actionBtnText: { fontSize: 12, fontWeight: '700' },
 

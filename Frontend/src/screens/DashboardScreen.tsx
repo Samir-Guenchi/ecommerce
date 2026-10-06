@@ -1,14 +1,5 @@
-﻿﻿/**
- * DashboardScreen — Complete 2026 Redesign
- *
- * ✦ Completely rebuilt from scratch
- * ✦ SVG smooth bezier area chart with gradient fill
- * ✦ Animated count-up stat counters on mount
- * ✦ LivePulse indicator on hero revenue card
- * ✦ Bento grid metric cards with trend badges
- * ✦ Document restriction banner (pending/rejected)
- * ✦ Buyer dashboard with feature cards & quick start
- * ✦ Dark/Light theme toggle + EN/AR/FR language switcher
+/**
+ * DashboardScreen — Algérie Poste E-Commerce Seller & Buyer Dashboard
  */
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
@@ -172,15 +163,17 @@ const AnimatedCounter = ({ value, prefix = '', suffix = '', style }: any) => {
    SVG AREA CHART (Bezier)
 ══════════════════════════════════════════════════ */
 const AreaChart = ({ data, color, COLORS }: { data: number[]; color: string; COLORS: any }) => {
-  const W_CHART = W - 40;
+  const [chartWidth, setChartWidth] = useState(W - 80);
   const H = 110;
-  const PAD = 16;
-  const pts = data.length;
-  const maxV = Math.max(...data, 1);
+  const PAD_X = 14;
+  const PAD_Y = 14;
+  const plotData = (!data || data.length === 0) ? [0, 0, 0, 0, 0, 0, 0] : data;
+  const pts = plotData.length;
+  const maxV = Math.max(...plotData, 1);
   const minV = 0;
 
-  const xs = data.map((_, i) => PAD + (i / (pts - 1)) * (W_CHART - PAD * 2));
-  const ys = data.map(v => PAD + (1 - (v - minV) / (maxV - minV)) * (H - PAD * 2));
+  const xs = plotData.map((_, i) => PAD_X + (i / Math.max(pts - 1, 1)) * (chartWidth - PAD_X * 2));
+  const ys = plotData.map(v => PAD_Y + (1 - (v - minV) / (maxV - minV)) * (H - PAD_Y * 2));
 
   // Cubic bezier smooth path
   let linePath = `M ${xs[0]} ${ys[0]}`;
@@ -194,8 +187,16 @@ const AreaChart = ({ data, color, COLORS }: { data: number[]; color: string; COL
   const days = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 
   return (
-    <View>
-      <Svg width={W_CHART} height={H}>
+    <View
+      style={{ width: '100%', overflow: 'hidden' }}
+      onLayout={(e) => {
+        const w = e.nativeEvent.layout.width;
+        if (w > 0 && Math.abs(w - chartWidth) > 1) {
+          setChartWidth(w);
+        }
+      }}
+    >
+      <Svg width={chartWidth} height={H}>
         <Defs>
           <SvgGrad id="areaGrad" x1="0" y1="0" x2="0" y2="1">
             <Stop offset="0%" stopColor={color} stopOpacity="0.35" />
@@ -211,10 +212,23 @@ const AreaChart = ({ data, color, COLORS }: { data: number[]; color: string; COL
           <Circle key={i} cx={x} cy={ys[i]} r={3.5} fill={color} />
         ))}
       </Svg>
-      <View style={styles.chartDays}>
-        {days.map((d, i) => (
-          <Text key={i} style={[styles.chartDayLabel, { color: COLORS.textMuted }]}>{d}</Text>
-        ))}
+      <View style={{ width: chartWidth, height: 20, marginTop: 8, position: 'relative' }}>
+        {days.map((d, i) => {
+          const x = xs[i] ?? (PAD_X + (i / Math.max(days.length - 1, 1)) * (chartWidth - PAD_X * 2));
+          return (
+            <View
+              key={i}
+              style={{
+                position: 'absolute',
+                left: x - 15,
+                width: 30,
+                alignItems: 'center',
+              }}
+            >
+              <Text style={[styles.chartDayLabel, { color: COLORS.textMuted }]}>{d}</Text>
+            </View>
+          );
+        })}
       </View>
     </View>
   );
@@ -223,20 +237,13 @@ const AreaChart = ({ data, color, COLORS }: { data: number[]; color: string; COL
 /* ══════════════════════════════════════════════════
    METRIC CARD (Bento)
 ══════════════════════════════════════════════════ */
-const MetricCard = ({ title, value, change, icon, accentColor, COLORS }: any) => {
-  const isPos = change >= 0;
+const MetricCard = ({ title, value, icon, accentColor, COLORS }: any) => {
   const half = (W - 40 - GRID_GAP) / 2;
   return (
     <View style={[styles.metricCard, { width: half, backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
       <View style={styles.metricTop}>
         <View style={[styles.metricIcon, { backgroundColor: accentColor + '18' }]}>
           {icon}
-        </View>
-        <View style={[styles.trendBadge, { backgroundColor: isPos ? COLORS.success + '18' : COLORS.error + '18' }]}>
-          {isPos ? <TrendUp color={COLORS.success} /> : <TrendDown color={COLORS.error} />}
-          <Text style={[styles.trendText, { color: isPos ? COLORS.success : COLORS.error }]}>
-            {isPos ? '+' : ''}{change.toFixed(1)}%
-          </Text>
         </View>
       </View>
       <AnimatedCounter value={value} style={[styles.metricValue, { color: COLORS.text }]} />
@@ -491,14 +498,13 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
 
       {/* ── Hero Revenue Card ── */}
       <View style={[styles.heroCard, { borderColor: COLORS.border }]}>
-        <LinearGradient colors={['#6C5CE7', '#A29BFE']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroGradient}>
+        <LinearGradient colors={['#0D2C74', '#1E40AF']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.heroGradient}>
           {/* Top row */}
           <View style={styles.heroTopRow}>
             <View>
               <Text style={styles.heroLabel}>{t('seller_totalRevenue')}</Text>
               <AnimatedCounter value={revenue} suffix=" DZD" style={styles.heroAmount} />
             </View>
-            <LivePulse />
           </View>
 
           {/* Metrics strip */}
@@ -521,12 +527,12 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
         </LinearGradient>
       </View>
 
-      {/* ── Bento Metric Cards ── */}
+      {/* ── Metric Cards ── */}
       <View style={styles.metricGrid}>
-        <MetricCard title={t('seller_orders')} value={ordersCount} change={12.5} icon={<CartIcon color="#6C5CE7" />} accentColor="#6C5CE7" COLORS={COLORS} />
-        <MetricCard title={t('seller_stores')} value={storesCount} change={5.2} icon={<StoreIcon color="#00B894" />} accentColor="#00B894" COLORS={COLORS} />
-        <MetricCard title={t('seller_products')} value={productsCount} change={-2.1} icon={<BoxIcon color="#E17055" />} accentColor="#E17055" COLORS={COLORS} />
-        <MetricCard title={t('seller_active')} value={Math.max(storesCount - 1, 0)} change={8.9} icon={<QuickOrderIcon color="#0984E3" />} accentColor="#0984E3" COLORS={COLORS} />
+        <MetricCard title={t('seller_orders')} value={ordersCount} icon={<CartIcon color={COLORS.primary} />} accentColor={COLORS.primary} COLORS={COLORS} />
+        <MetricCard title={t('seller_stores')} value={storesCount} icon={<StoreIcon color="#0D2C74" />} accentColor="#0D2C74" COLORS={COLORS} />
+        <MetricCard title={t('seller_products')} value={productsCount} icon={<BoxIcon color="#D97706" />} accentColor="#D97706" COLORS={COLORS} />
+        <MetricCard title={t('seller_active')} value={Math.max(storesCount - 1, 0)} icon={<QuickOrderIcon color={COLORS.primaryLight} />} accentColor={COLORS.primaryLight} COLORS={COLORS} />
       </View>
 
       {/* ── Weekly Activity Chart ── */}
@@ -536,12 +542,8 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
             <Text style={[styles.sectionTitle, { color: COLORS.text }]}>{t('seller_weeklyActivity')}</Text>
             <Text style={[styles.sectionSub, { color: COLORS.textMuted }]}>{t('seller_last7Days')}</Text>
           </View>
-          <View style={[styles.chartBadge, { backgroundColor: COLORS.primary + '18' }]}>
-            <TrendUp color={COLORS.primary} />
-            <Text style={[styles.chartBadgeText, { color: COLORS.primary }]}>Live</Text>
-          </View>
         </View>
-        <AreaChart data={chartData} color="#6C5CE7" COLORS={COLORS} />
+        <AreaChart data={chartData} color={COLORS.primaryLight || '#2563EB'} COLORS={COLORS} />
       </View>
 
       {/* ── Recent Orders ── */}
@@ -569,11 +571,11 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
             </View>
             <Text style={[styles.quickBtnText, { color: COLORS.primary }]}>{t('seller_addProduct')}</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#00B89412' }]} onPress={() => navigate?.('orders')} activeOpacity={0.7}>
-            <View style={[styles.quickBtnIcon, { backgroundColor: '#00B89420' }]}>
-              <QuickOrderIcon color="#00B894" />
+          <TouchableOpacity style={[styles.quickBtn, { backgroundColor: '#FDB91318' }]} onPress={() => navigate?.('orders')} activeOpacity={0.7}>
+            <View style={[styles.quickBtnIcon, { backgroundColor: '#FDB91330' }]}>
+              <QuickOrderIcon color="#B45309" />
             </View>
-            <Text style={[styles.quickBtnText, { color: '#00B894' }]}>{t('seller_viewOrders')}</Text>
+            <Text style={[styles.quickBtnText, { color: '#B45309' }]}>{t('seller_viewOrders')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -691,7 +693,7 @@ const DashboardScreen = ({ navigate, resetTo }: DashboardScreenProps) => {
 const styles = StyleSheet.create({
   outer: { flex: 1 },
   center: { justifyContent: 'center', alignItems: 'center' },
-  content: { padding: 20, paddingTop: 54, paddingBottom: 110 },
+  content: { padding: 20, paddingTop: 54, paddingBottom: 155 },
 
   /* Header */
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20 },
@@ -714,6 +716,9 @@ const styles = StyleSheet.create({
   heroCard: { borderRadius: CARD_R, overflow: 'hidden', marginBottom: 16, borderWidth: 1 },
   heroGradient: { padding: 22 },
   heroTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 16 },
+  brandPill: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: 'rgba(253, 185, 19, 0.2)', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(253, 185, 19, 0.4)' },
+  brandPillDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#FDB913' },
+  brandPillText: { fontSize: 10, fontWeight: '800', color: '#FDB913', letterSpacing: 0.5 },
   heroLabel: { fontSize: 12, color: 'rgba(255,255,255,0.8)', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
   heroAmount: { fontSize: 38, fontWeight: '900', color: '#FFFFFF', letterSpacing: -1.5, marginTop: 4 },
   heroStrip: { flexDirection: 'row', alignItems: 'center' },
@@ -733,7 +738,7 @@ const styles = StyleSheet.create({
   metricLabel: { fontSize: 11, fontWeight: '600', textTransform: 'uppercase', letterSpacing: 0.3 },
 
   /* Chart */
-  chartCard: { borderRadius: CARD_R, padding: 20, borderWidth: 1, marginBottom: 16 },
+  chartCard: { borderRadius: CARD_R, padding: 20, borderWidth: 1, marginBottom: 16, overflow: 'hidden' },
   chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   chartBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
   chartBadgeText: { fontSize: 12, fontWeight: '700' },

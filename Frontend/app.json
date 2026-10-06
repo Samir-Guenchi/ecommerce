@@ -40,6 +40,10 @@
     },
     "web": {
       "favicon": "./assets/icon.png"
-    }
+    },
+    "plugins": [
+      "expo-status-bar",
+      "expo-web-browser"
+    ]
   }
 }

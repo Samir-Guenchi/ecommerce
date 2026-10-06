@@ -124,11 +124,11 @@ const TaxesDutiesScreen = ({ goBack }: TaxesDutiesScreenProps) => {
           Manage tax settings and duty configurations applied to your orders.
         </Text>
 
-        <TaxSection accent="#0984E3" enabled={taxEnabled} onToggle={setTaxEnabled}
+        <TaxSection accent="#0D2C74" enabled={taxEnabled} onToggle={setTaxEnabled}
           label="Enable Taxes" desc="Apply taxes to orders based on your location"
           rateVal={taxRate} setRate={setTaxRate} />
 
-        <TaxSection accent="#6C5CE7" enabled={dutiesEnabled} onToggle={setDutiesEnabled}
+        <TaxSection accent="#D97706" enabled={dutiesEnabled} onToggle={setDutiesEnabled}
           label="Enable Duties" desc="Apply customs duties for international orders"
           rateVal={dutiesRate} setRate={setDutiesRate} />
 

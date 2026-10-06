@@ -1,10 +1,5 @@
 /**
- * StorefrontPreferencesScreen — 2026 Premium Redesign
- *
- * ✦ Control theme and language for customer-facing storefront
- * ✦ Bento-style cards with gradient accents
- * ✦ Real-time preview
- * ✦ Full i18n support
+ * StorefrontPreferencesScreen — Algérie Poste E-Commerce Storefront Customization
  */
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -24,6 +19,7 @@ import { useTranslation } from '../i18n';
 import { storeAPI } from '../services/api.service';
 import StatusBanner from '../components/StatusBanner';
 import { useStatusMessage } from '../components/useStatusMessage';
+import { RefreshCwIcon } from '../components/ModernIcons';
 
 /* ══════ ICONS ══════ */
 const SunIcon = () => (
@@ -142,22 +138,25 @@ const StorefrontPreferencesScreen: React.FC<StorefrontPreferencesScreenProps> = 
       id: 'light', 
       name: t('themes_light') || 'Light', 
       description: t('themes_lightDesc') || 'Clean and bright theme',
-      icon: '☀️',
-      gradient: ['#FDB913', '#FDCB6E'],
+      renderIcon: () => <SunIcon />,
+      color: '#FDB913',
+      gradient: ['#FDB913', '#D97706'],
     },
     { 
       id: 'dark', 
       name: t('themes_dark') || 'Dark', 
       description: t('themes_darkDesc') || 'Easy on the eyes',
-      icon: '🌙',
-      gradient: ['#3B82F6', '#60A5FA'],
+      renderIcon: () => <MoonIcon />,
+      color: '#0D2C74',
+      gradient: ['#0D2C74', '#1E40AF'],
     },
     { 
       id: 'auto', 
       name: t('themes_auto') || 'Auto', 
       description: t('storefront_autoThemeDesc') || 'Follows customer device settings',
-      icon: '🔄',
-      gradient: ['#6C5CE7', '#A29BFE'],
+      renderIcon: () => <RefreshCwIcon size={20} color="#1E3A8A" strokeWidth={2} />,
+      color: '#1E3A8A',
+      gradient: ['#1E3A8A', '#3B82F6'],
     },
   ];
 
@@ -166,29 +165,33 @@ const StorefrontPreferencesScreen: React.FC<StorefrontPreferencesScreenProps> = 
       id: 'en', 
       name: 'English', 
       description: 'Display storefront in English',
-      icon: '🇬🇧',
-      gradient: ['#0984E3', '#74B9FF'],
+      badge: 'EN',
+      color: '#0D2C74',
+      gradient: ['#0D2C74', '#1E40AF'],
     },
     { 
       id: 'fr', 
       name: 'Français', 
       description: 'Afficher la boutique en français',
-      icon: '🇫🇷',
-      gradient: ['#6C5CE7', '#A29BFE'],
+      badge: 'FR',
+      color: '#1E3A8A',
+      gradient: ['#1E3A8A', '#3B82F6'],
     },
     { 
       id: 'ar', 
       name: 'العربية', 
       description: 'عرض المتجر باللغة العربية',
-      icon: '🇩🇿',
-      gradient: ['#00B894', '#55EFC4'],
+      badge: 'DZ',
+      color: '#D97706',
+      gradient: ['#D97706', '#FDB913'],
     },
     { 
       id: 'auto', 
       name: t('themes_auto') || 'Auto', 
       description: t('storefront_autoLangDesc') || 'Detect customer browser language',
-      icon: '🌍',
-      gradient: ['#E17055', '#FDCB6E'],
+      badge: null,
+      color: '#0F766E',
+      gradient: ['#0F766E', '#14B8A6'],
     },
   ];
 
@@ -299,15 +302,15 @@ const StorefrontPreferencesScreen: React.FC<StorefrontPreferencesScreenProps> = 
                     style={styles.optionGradient}
                   />
                 )}
-                <View style={[styles.optionIconBadge, { backgroundColor: theme.gradient[0] + '15' }]}>
-                  <Text style={{ fontSize: 28 }}>{theme.icon}</Text>
+                <View style={[styles.optionIconBadge, { backgroundColor: theme.color + '15' }]}>
+                  {theme.renderIcon()}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.optionName, { color: COLORS.text }]}>{theme.name}</Text>
                   <Text style={[styles.optionDesc, { color: COLORS.textSecondary }]}>{theme.description}</Text>
                 </View>
                 {isSelected && (
-                  <View style={[styles.checkBadge, { backgroundColor: theme.gradient[0] }]}>
+                  <View style={[styles.checkBadge, { backgroundColor: theme.color }]}>
                     <CheckIcon color="#FFFFFF" />
                   </View>
                 )}
@@ -334,7 +337,7 @@ const StorefrontPreferencesScreen: React.FC<StorefrontPreferencesScreenProps> = 
                   styles.optionCard,
                   { 
                     backgroundColor: COLORS.surface, 
-                    borderColor: isSelected ? lang.gradient[0] : COLORS.border,
+                    borderColor: isSelected ? lang.color : COLORS.border,
                     borderWidth: isSelected ? 2 : 1,
                   }
                 ]}
@@ -349,15 +352,19 @@ const StorefrontPreferencesScreen: React.FC<StorefrontPreferencesScreenProps> = 
                     style={styles.optionGradient}
                   />
                 )}
-                <View style={[styles.optionIconBadge, { backgroundColor: lang.gradient[0] + '15' }]}>
-                  <Text style={{ fontSize: 28 }}>{lang.icon}</Text>
+                <View style={[styles.optionIconBadge, { backgroundColor: lang.color + '15' }]}>
+                  {lang.badge ? (
+                    <Text style={{ fontSize: 13, fontWeight: '900', color: lang.color }}>{lang.badge}</Text>
+                  ) : (
+                    <GlobeIcon color={lang.color} />
+                  )}
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.optionName, { color: COLORS.text }]}>{lang.name}</Text>
                   <Text style={[styles.optionDesc, { color: COLORS.textSecondary }]}>{lang.description}</Text>
                 </View>
                 {isSelected && (
-                  <View style={[styles.checkBadge, { backgroundColor: lang.gradient[0] }]}>
+                  <View style={[styles.checkBadge, { backgroundColor: lang.color }]}>
                     <CheckIcon color="#FFFFFF" />
                   </View>
                 )}
@@ -368,7 +375,7 @@ const StorefrontPreferencesScreen: React.FC<StorefrontPreferencesScreenProps> = 
 
         {/* ── Save Button ── */}
         <TouchableOpacity 
-          style={[styles.saveBtn, { backgroundColor: COLORS.primary }, (saving || !currentStoreId) && { opacity: 0.6 }]} 
+          style={[styles.saveBtn, { backgroundColor: '#0D2C74' }, (saving || !currentStoreId) && { opacity: 0.6 }]} 
           onPress={handleSave}
           disabled={saving || !currentStoreId}
           activeOpacity={0.8}
@@ -386,9 +393,12 @@ const StorefrontPreferencesScreen: React.FC<StorefrontPreferencesScreenProps> = 
 
         {/* ── Preview Info ── */}
         <View style={[styles.previewBox, { backgroundColor: COLORS.surface, borderColor: COLORS.border }]}>
-          <Text style={[styles.previewTitle, { color: COLORS.text }]}>
-            🌐 {t('storefront_preview') || 'Preview Your Storefront'}
-          </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+            <GlobeIcon color={COLORS.primary} />
+            <Text style={[styles.previewTitle, { color: COLORS.text, marginBottom: 0 }]}>
+              {t('storefront_preview') || 'Preview Your Storefront'}
+            </Text>
+          </View>
           <Text style={[styles.previewText, { color: COLORS.textSecondary }]}>
             {t('storefront_previewDesc') || 'Visit your store to see how customers will experience your selected theme and language settings.'}
           </Text>

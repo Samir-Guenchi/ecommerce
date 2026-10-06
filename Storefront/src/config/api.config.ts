@@ -22,10 +22,8 @@ const getApiUrl = (): string => {
 
   // Development mode - backend runs on port 3000 by default
   if (import.meta.env.DEV) {
-    // Use localhost for same-machine development
-    // If you need to access from other devices on your network, 
-    // set VITE_API_URL in .env to your computer's IP: http://YOUR_IP:3000/api
-    return 'http://localhost:3000/api';
+    const host = typeof window !== 'undefined' && window.location.hostname ? window.location.hostname : 'localhost';
+    return `http://${host}:3000/api`;
   }
 
   // Production mode - update this with your production API URL
